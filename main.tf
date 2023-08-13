@@ -8,7 +8,7 @@ resource "null_resource" "my_hello_world1" {
 }
 
 data "local_file" "example" {
- # depends_on = [null_resource.generate_file]  # If needed, specify dependencies
+  depends_on = [null_resource.my_hello_world1]  # If needed, specify dependencies
   filename = "local_output.txt"  # Update the path accordingly
 }
 
