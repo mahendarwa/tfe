@@ -10,12 +10,12 @@ resource "null_resource" "my_hello_worl13232" {
   }
 }
 
-variable "file_path" {
-  description = "Path to the input text file"
-  type        = string
-  default     = "inventory.txt"
+data "local_file" "file_content" {
+  depends_on = [null_resource.my_hello_worl13232]
+
+  filename = "inventory.txt"
 }
 
-output "file_contents" {
-  value = file(var.file_path)
+output "captured_value" {
+  value = data.local_file.file_content.content
 }
