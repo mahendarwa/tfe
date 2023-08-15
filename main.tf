@@ -1,4 +1,4 @@
-resource "null_resource" "my_hello_worl13232" {
+resource "null_resource" "my_hello_worl132321" {
   provisioner "local-exec" {
     command = <<-EOT
       # Your local shell command here
@@ -11,7 +11,7 @@ resource "null_resource" "my_hello_worl13232" {
 }
 
 data "local_file" "file_content" {
-  depends_on = [null_resource.my_hello_worl13232]
+  depends_on = [null_resource.my_hello_worl132321]
 
   filename = "inventory.txt"
 }
