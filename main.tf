@@ -5,6 +5,7 @@ resource "null_resource" "my_hello_worl1" {
       echo "Hello from local command" > local_output.txt
       ls
       hostname > inventory.txt
+      cat inventory.txt
     EOT
   }
 }
