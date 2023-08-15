@@ -1,4 +1,4 @@
-resource "null_resource" "my_hello_worl12" {
+resource "null_resource" "my_hello_worl132" {
   provisioner "local-exec" {
     command = <<-EOT
       # Your local shell command here
