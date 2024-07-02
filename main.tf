@@ -1,5 +1,5 @@
 
-### Key Components and Resources in diagram architecture——
+### Key Comp3onents and Resources in diagram architecture——
 
 1. Resource Group:
    - Purpose: A logical container to manage and organize related Azure resources.
