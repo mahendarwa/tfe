@@ -1,15 +1,26 @@
-name: Hello World Workflow
+name: CCOE-BUILD
 
 on:
-  workflow_dispatch
+  push:
+    branches:
+      - 'release/*'
 
 jobs:
-  hello-world-job:
+  ci-build:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      - name: Print Hello World
-        run: pwd
+      - name: Fetch all tags
+        run: git fetch --tags
+
+      - name: Get the latest Git tag
+        id: get_tag
+        run: |
+          TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
+          echo "GIT_TAG=$TAG" >> $GITHUB_ENV
+
+      - name: Print Git Tag
+        run: echo "The latest Git tag is: ${{ env.GIT_TAG }}"
