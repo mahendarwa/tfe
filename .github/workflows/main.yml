@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repositoryasf
         uses: actions/checkout@v3
 
       - name: Print Hello World
