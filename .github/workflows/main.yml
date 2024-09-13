@@ -1,15 +1,17 @@
-name: Hello World Workflow
+name: Build on Tag Push for Release Branches
 
 on:
-  workflow_dispatch
+  push:
+    # Trigger on any tags pushed to the repository
+    tags:
+      - 'main'  # Matches tags like release/v1.0.0, release/v2.0.0
 
 jobs:
-  hello-world-job:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repositoryasf
-        uses: actions/checkout@v3
 
-      - name: Print Hello World
-        run: pwd
+      - name: Print the Tag Triggered
+        run: |
+          echo "Tag Triggered:"
