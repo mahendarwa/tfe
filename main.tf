@@ -6,7 +6,7 @@
    - Why: All resources in the diagram are deployed within a specific resource group.
 
 2. Virtual Network (VNet) and Subnets:
-   - Purpose: Provides network isolation and security for resources.
+   - Purpose: Pr]ovides network isolation and security for resources.
    - Why: Ensures secure communication between resources and with external systems.
 
 3. Azure Data Factory:
