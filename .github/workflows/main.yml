@@ -1,38 +1,101 @@
-name: Scheduled Build and Tag Push Workflow
+name: "Aggengine Image Build"
 
-on:
+on: 
+  push:
+    branches: 
+      - "feature/*"
+    paths-ignore: 
+      - ".github/*"
+    tags:
+      - '*'  # Triggers on any tag push
   schedule:
     - cron: '30 5 * * 1-5'
     - cron: '30 10 * * 1-5'
     - cron: '0 15 * * 1-5'
     - cron: '0 19 * * 1-5'
-  push:
-    tags:
-      - '*'
 
 jobs:
-  build-scheduled:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule'  # Ensures it only runs on schedule
+  kv:
+    runs-on: self-hosted
     steps:
-      - name: Checkout release/develop branch
-        uses: actions/checkout@v2
+      - name: fetch secrets
+        id: kv
+        uses: niq-actions/az-kv-management@v2.3.1
+        env:
+            AZURE_CLIENT_ID: ${{ secrets.OMNSHO_SP_NP_APPID }}
+            AZURE_CLIENT_SECRET: ${{ secrets.OMNSHO_SP_NP_PASSWORD }}
+            AZURE_TENANT_ID: ${{ secrets.OMNSHO_SP_NP_TENANT }}
         with:
-          ref: release/develop
+            kv_name: OMNSHOKVAUTOUS
+            summary: false
+            type: get
+            secretname: artifactory-password
+    outputs:
+      artifactory-password: ${{ steps.kv.outputs.artifactory-password }}
 
-      - name: Print the fixed tag for release/develop branch
-        run: |
-          TAG=00-00-00
-          echo "Scheduled build triggered for release/develop. Tag used: $TAG"
+  CCOE-BUILD:
+    needs: [kv]
+    runs-on: self-hosted
+    uses: niq-actions/niq-build/.github/workflows/build.yml@v3
+    secrets: inherit
+    with:
+      image_name: "aggengapi"
+      dev_acr: "omnshodevacreastus2.azurecr.io"
+      prod_acr: "omnshoprodacreastus2.azurecr.io"
+      build-args: |
+        BRANCH=${{ github.ref_name }}
+        ARTIFACTORY_USERNAME=omnishopper2srv
+        ARTIFACTORY_PASSWORD=${{ needs.kv.outputs.artifactory-password }}
+      push_image: true
+      wiz_feature_scan: false
+      wiz_username: WIZ_USERNAME
+      wiz_password: WIZ_PASSWORD
+      service_principal: OMNSHO_SP_NP
+      path: "./Dockerfile"
+      lfs: false
 
+  # Job for the scheduled build for release/develop branch
+  build-scheduled:
+    if: github.event_name == 'schedule'
+    runs-on: self-hosted
+    uses: niq-actions/niq-build/.github/workflows/build.yml@v3
+    secrets: inherit
+    with:
+      image_name: "aggengapi"
+      dev_acr: "omnshodevacreastus2.azurecr.io"
+      prod_acr: "omnshoprodacreastus2.azurecr.io"
+      build-args: |
+        BRANCH=${{ github.ref_name }}
+        ARTIFACTORY_USERNAME=omnishopper2srv
+        ARTIFACTORY_PASSWORD=${{ needs.kv.outputs.artifactory-password }}
+      push_image: true
+      wiz_feature_scan: false
+      wiz_username: WIZ_USERNAME
+      wiz_password: WIZ_PASSWORD
+      service_principal: OMNSHO_SP_NP
+      path: "./Dockerfile"
+      lfs: false
+      tag: "00-00-00"
+
+  # Job for building when a tag is pushed
   build-on-tag-push:
-    runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Print the tag for tag push
-        run: |
-          TAG=${GITHUB_REF#refs/tags/}
-          echo "Build triggered by tag push. Tag used: $TAG"
+    runs-on: self-hosted
+    uses: niq-actions/niq-build/.github/workflows/build.yml@v3
+    secrets: inherit
+    with:
+      image_name: "aggengapi"
+      dev_acr: "omnshodevacreastus2.azurecr.io"
+      prod_acr: "omnshoprodacreastus2.azurecr.io"
+      build-args: |
+        BRANCH=${{ github.ref_name }}
+        ARTIFACTORY_USERNAME=omnishopper2srv
+        ARTIFACTORY_PASSWORD=${{ needs.kv.outputs.artifactory-password }}
+      push_image: true
+      wiz_feature_scan: false
+      wiz_username: WIZ_USERNAME
+      wiz_password: WIZ_PASSWORD
+      service_principal: OMNSHO_SP_NP
+      path: "./Dockerfile"
+      lfs: false
+      tag: "${{ github.ref#refs/tags/ }}"
