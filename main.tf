@@ -3,7 +3,7 @@
 
 1. Resource Group:
    - Purpose: A logical container to manage and organize related Azure resources.
-   - Why: All resources in the diagram are deployed within a specific resource group.
+   - Why: All resorces in the diagram are deployed within a specific resource group.
 
 2. Virtual Network (VNet) and Subnets:
    - Purpose: Pr]ovides network isolation and security for resources.
