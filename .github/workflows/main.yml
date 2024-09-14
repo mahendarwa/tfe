@@ -1,56 +1,38 @@
-name: Multi-job Workflow
+name: Scheduled Build and Tag Push Workflow
 
 on:
+  schedule:
+    - cron: '30 5 * * 1-5'
+    - cron: '30 10 * * 1-5'
+    - cron: '0 15 * * 1-5'
+    - cron: '0 19 * * 1-5'
   push:
-    branches:
-      - 'release/develop'
-      - 'feature/RBOC-115414_new'
     tags:
-      - '*'  # Trigger on any tag commit
+      - '*'
 
 jobs:
-  build-main:
-    if: github.ref == 'refs/heads/main'
+  build-scheduled:
     runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'  # Ensures it only runs on schedule
     steps:
-      - name: Checkout code
+      - name: Checkout release/develop branch
         uses: actions/checkout@v2
+        with:
+          ref: release/develop
 
-      - name: Build project (main branch)
-        run: echo "Building the project for the main branch..."
-
-  build-develop-release:
-    if: github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Build project (develop or release branch) with static tag 00-00-00
+      - name: Print the fixed tag for release/develop branch
         run: |
           TAG=00-00-00
-          echo "Building the project with tag: $TAG"
+          echo "Scheduled build triggered for release/develop. Tag used: $TAG"
 
-  build-feature-RBOC:
-    if: github.ref == 'refs/heads/feature/RBOC-115414_new'
+  build-on-tag-push:
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Build project with Jenkins-created tag
-        run: |
-          TAG=RBOC115414_new
-          echo "Building the project for feature branch with tag: $TAG"
-
-  build-tag:
-    if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Build project for tag
+      - name: Print the tag for tag push
         run: |
           TAG=${GITHUB_REF#refs/tags/}
-          echo "Building the project for the tag: $TAG"
+          echo "Build triggered by tag push. Tag used: $TAG"
