@@ -1,27 +1,23 @@
-name: CCOE-BUILD
+name: Build on Tag Push for Release Branches
 
 on:
   push:
-    branches:
-      - 'release/*'
+    # This will trigger the workflow only when a tag is pushed from the release/* branches
+    tags:
+      - 'release/**'
 
 jobs:
-  ci-build:
+  build:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Fetch all tags
-        run: git fetch --tags
-
-      - name: Get the latest Git tag
-        id: get_tag
+      - name: Print the Tag Triggered
         run: |
-          TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
-          echo "GIT_TAG=$TAG" >> $GITHUB_ENV
+          echo "Tag Triggered: ${GITHUB_REF#refs/tags/}"
 
-      - name: Print Git Tag
+      - name: Build Step
         run: |
-          echo "The latest Git tag is: $GIT_TAG"
+          echo "Building project based on tag pushed from a release branch"
