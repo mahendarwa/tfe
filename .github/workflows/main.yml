@@ -4,7 +4,7 @@ on:
   push:
     # This will trigger the workflow only when a tag is pushed from the release/* branches
     tags:
-      - 'release/**'
+      - '*'
 
 jobs:
   build:
