@@ -1,19 +1,11 @@
 name: "Aggengine Image Build"
 
 on:
-  push:
-    branches:
-      - "main"
-      - "release/testing"
-    paths-ignore: 
-      - ".github/*"
-    tags:
-      - '*'
   workflow_dispatch:
     inputs:
-      commit_id:
-        description: 'Commit ID to apply to the build'
-        required: false
+      tag_name:
+        description: 'Tag to apply to the latest commit'
+        required: true
         type: string
 
 jobs:
@@ -35,45 +27,28 @@ jobs:
     outputs:
       artifactory-password: ${{ steps.kv.outputs.artifactory-password }}
 
-  CCOE-BUILD-Feature:
-    if: startsWith(github.ref, 'refs/heads/feature/')
-    needs: [kv]
-    uses: niq-actions/niq-build/.github/workflows/build.yml@v3
-    secrets: inherit
-    with:
-      image_name: "aggengapi"
-      dev_acr: "omnshodevacreastus2.azurecr.io"
-      prod_acr: "omnshoprodacreastus2.azurecr.io"
-      build-args: |
-        BRANCH=feature-${{ github.ref_name }}
-        ARTIFACTORY_USERNAME=omnishopper2srv
-        ARTIFACTORY_PASSWORD=${{ needs.kv.outputs.artifactory-password }}
-      push_image: true
-      wiz_feature_scan: false
-      wiz_username: WIZ_USERNAME
-      wiz_password: WIZ_PASSWORD
-      service_principal: OMNSHO_SP_NP
-      path: "./Dockerfile"
-      lfs: false
-
-  CCOE-BUILD-Testing-Prepare:
-    if: github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/heads/release/') && github.ref != 'refs/heads/release/scheduled'
-    needs: [kv]
+  tagging-job:
     runs-on: self-hosted
+    needs: [kv]
     steps:
       - name: Checkout SCM
         uses: actions/checkout@v3
 
       - name: Get Latest Commit ID
-        id: get-latest-commit
         run: |
-          latest_commit=${{ github.event.inputs.commit_id || '$(git rev-parse HEAD)' }}
+          latest_commit=$(git rev-parse HEAD)
           echo "Latest Commit ID: $latest_commit"
           echo "commit_id=$latest_commit" >> $GITHUB_ENV
 
-  CCOE-BUILD-Testing:
+      - name: Tag the Commit
+        run: |
+          git tag ${{ github.event.inputs.tag_name }} ${{ env.commit_id }}
+          git push origin ${{ github.event.inputs.tag_name }}
+
+  ccoe-build-testing:
     if: github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/heads/release/') && github.ref != 'refs/heads/release/scheduled'
-    needs: [kv, CCOE-BUILD-Testing-Prepare]
+    needs: [kv, tagging-job]
+    runs-on: self-hosted
     uses: niq-actions/niq-build/.github/workflows/build.yml@v3
     secrets: inherit
     with:
@@ -81,7 +56,7 @@ jobs:
       dev_acr: "omnshodevacreastus2.azurecr.io"
       prod_acr: "omnshoprodacreastus2.azurecr.io"
       build-args: |
-        BRANCH=testing-${{ env.commit_id }}
+        BRANCH=${{ github.event.inputs.tag_name }}  # Pass the tag_name as the BRANCH
         ARTIFACTORY_USERNAME=omnishopper2srv
         ARTIFACTORY_PASSWORD=${{ needs.kv.outputs.artifactory-password }}
       push_image: true
