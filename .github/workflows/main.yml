@@ -9,6 +9,12 @@ on:
       - ".github/*"
     tags:
       - '*'
+  workflow_dispatch:
+    inputs:
+      commit_id:
+        description: 'Commit ID to apply to the build'
+        required: false
+        type: string
 
 jobs:
   kv:
@@ -45,12 +51,12 @@ jobs:
       wiz_feature_scan: false
       wiz_username: ${{ secrets.WIZ_USERNAME }}
       wiz_password: ${{ secrets.WIZ_PASSWORD }}
-      service_principal: OMNSHO_SP_NP
+      service_principal: ${{ secrets.OMNSHO_SP_NP }}
       path: "./Dockerfile"
       lfs: false
 
   CCOE-BUILD-Testing-Prepare:
-    if: github.ref == 'refs/heads/release/testing'
+    if: github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/heads/release/') && github.ref != 'refs/heads/release/scheduled'
     needs: [kv]
     runs-on: self-hosted
     steps:
@@ -60,12 +66,12 @@ jobs:
       - name: Get Latest Commit ID
         id: get-latest-commit
         run: |
-          latest_commit=$(git rev-parse HEAD)
+          latest_commit=${{ github.event.inputs.commit_id || '$(git rev-parse HEAD)' }}
           echo "Latest Commit ID: $latest_commit"
           echo "commit_id=$latest_commit" >> $GITHUB_ENV
 
   CCOE-BUILD-Testing:
-    if: github.ref == 'refs/heads/release/testing'
+    if: github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/heads/release/') && github.ref != 'refs/heads/release/scheduled'
     needs: [kv, CCOE-BUILD-Testing-Prepare]
     uses: niq-actions/niq-build/.github/workflows/build.yml@v3
     with:
@@ -80,6 +86,6 @@ jobs:
       wiz_feature_scan: false
       wiz_username: ${{ secrets.WIZ_USERNAME }}
       wiz_password: ${{ secrets.WIZ_PASSWORD }}
-      service_principal: OMNSHO_SP_NP
+      service_principal: ${{ secrets.OMNSHO_SP_NP }}
       path: "./Dockerfile"
       lfs: false
