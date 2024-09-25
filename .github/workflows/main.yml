@@ -49,7 +49,7 @@ jobs:
       path: "./Dockerfile"
       lfs: false
 
-  CCOE-BUILD-Testing:
+  CCOE-BUILD-Testing-Prepare:
     if: github.ref == 'refs/heads/release/testing'
     needs: [kv]
     runs-on: self-hosted
@@ -64,6 +64,9 @@ jobs:
           echo "Latest Commit ID: $latest_commit"
           echo "commit_id=$latest_commit" >> $GITHUB_ENV
 
+  CCOE-BUILD-Testing:
+    if: github.ref == 'refs/heads/release/testing'
+    needs: [kv, CCOE-BUILD-Testing-Prepare]
     uses: niq-actions/niq-build/.github/workflows/build.yml@v3
     with:
       image_name: "aggengapi"
