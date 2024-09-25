@@ -3,7 +3,7 @@ name: "Aggengine Image Build"
 on:
   push:
     branches:
-      - "feature/*"
+      - "main"
       - "release/testing"
     paths-ignore: 
       - ".github/*"
