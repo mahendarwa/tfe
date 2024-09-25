@@ -1,17 +1,13 @@
-name: "Aggengine Image Build"
+name: "POD Image Build"
 
 on:
   push:
     branches:
-      - "release/testing"
+      - "release/main"
     paths-ignore: 
       - ".github/*"
+
   workflow_dispatch:
-    inputs:
-      tag_name:
-        description: 'Tag to apply to the latest commit'
-        required: true
-        type: string
 
 jobs:
   kv:
@@ -21,53 +17,40 @@ jobs:
         id: kv
         uses: niq-actions/az-kv-management@v2.3.1
         env:
-            AZURE_CLIENT_ID: ${{ secrets.OMNSHO_SP_NP_APPID }}
-            AZURE_CLIENT_SECRET: ${{ secrets.OMNSHO_SP_NP_PASSWORD }}
-            AZURE_TENANT_ID: ${{ secrets.OMNSHO_SP_NP_TENANT }}
+          AZURE_CLIENT_ID: ${{ secrets.OMNSHO_SP_NP_APPID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.OMNSHO_SP_NP_PASSWORD }}
+          AZURE_TENANT_ID: ${{ secrets.OMNSHO_SP_NP_TENANT }}
         with:
-            kv_name: OMNSHOKVAUTOUS
-            summary: false
-            type: get
-            secretname: artifactory-password
+          kv_name: OMNSHOKVAUTOUS
+          summary: false
+          type: get
+          secretname: artifactory-password
     outputs:
       artifactory-password: ${{ steps.kv.outputs.artifactory-password }}
 
-  Release-branch-build:
-    if: github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/heads/release/')
+  build-on-tag-push:
+    if: github.ref_type == 'tag'
     needs: [kv]
-    uses: niq-actions/niq-build/.github/workflows/build.yml@v3
-    secrets: inherit
-    with:
-      image_name: "aggengapi"
-      dev_acr: "omnshodevacreastus2.azurecr.io"
-      prod_acr: "omnshoprodacreastus2.azurecr.io"
-      build-args: |
-        BRANCH=${{ github.event.inputs.tag_name }}  # Use the input tag as the BRANCH value
-        ARTIFACTORY_USERNAME=omnishopper2srv
-        ARTIFACTORY_PASSWORD=${{ needs.kv.outputs.artifactory-password }}
-      push_image: true
-      wiz_feature_scan: false
-      wiz_username: WIZ_USERNAME
-      wiz_password: WIZ_PASSWORD
-      service_principal: OMNSHO_SP_NP
-      path: "./Dockerfile"
-      lfs: false
-
-  Tagging-job:
-    if: github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/heads/release/')
     runs-on: self-hosted
     steps:
-      - name: Checkout SCM
-        uses: actions/checkout@v3
-
-      - name: Get Latest Commit ID
-        id: get-latest-commit
+      - name: Print GitHub ref name
         run: |
-          latest_commit=$(git rev-parse HEAD)
-          echo "Latest Commit ID: $latest_commit"
-          echo "commit_id=$latest_commit" >> $GITHUB_ENV
+          echo "GitHub Ref Name: ${{ github.ref_name }}"
 
-      - name: Tag the Latest Commit
-        run: |
-          git tag ${{ github.event.inputs.tag_name }} ${{ env.commit_id }}
-          git push origin ${{ github.event.inputs.tag_name }}
+      - name: Run build
+        uses: niq-actions/niq-build/.github/workflows/build.yml@v3
+        with:
+          image_name: "aggengapi"
+          dev_acr: "omnshodevacreastus2.azurecr.io"
+          prod_acr: "omnshoprodacreastus2.azurecr.io"
+          build-args: |
+            BRANCH=${{ github.ref_name }}
+            ARTIFACTORY_USERNAME=omnishopper2srv
+            ARTIFACTORY_PASSWORD=${{ needs.kv.outputs.artifactory-password }}
+          push_image: true
+          wiz_feature_scan: false
+          wiz_username: ${{ secrets.WIZ_USERNAME }}
+          wiz_password: ${{ secrets.WIZ_PASSWORD }}
+          service_principal: OMNSHO_SP_NP
+          path: "./Dockerfile"
+          lfs: false
