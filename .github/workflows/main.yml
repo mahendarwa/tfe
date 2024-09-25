@@ -32,25 +32,22 @@ jobs:
   CCOE-BUILD-Feature:
     if: startsWith(github.ref, 'refs/heads/feature/')
     needs: [kv]
-    runs-on: self-hosted
-    steps:
-      - name: Run build for Feature
-        uses: niq-actions/niq-build/.github/workflows/build.yml@v3
-        with:
-          image_name: "aggengapi"
-          dev_acr: "omnshodevacreastus2.azurecr.io"
-          prod_acr: "omnshoprodacreastus2.azurecr.io"
-          build-args: |
-            BRANCH=feature-${{ github.ref_name }}  # Feature branch mapping
-            ARTIFACTORY_USERNAME=omnishopper2srv
-            ARTIFACTORY_PASSWORD=${{ needs.kv.outputs.artifactory-password }}
-          push_image: true
-          wiz_feature_scan: false
-          wiz_username: ${{ secrets.WIZ_USERNAME }}
-          wiz_password: ${{ secrets.WIZ_PASSWORD }}
-          service_principal: OMNSHO_SP_NP
-          path: "./Dockerfile"
-          lfs: false
+    uses: niq-actions/niq-build/.github/workflows/build.yml@v3
+    with:
+      image_name: "aggengapi"
+      dev_acr: "omnshodevacreastus2.azurecr.io"
+      prod_acr: "omnshoprodacreastus2.azurecr.io"
+      build-args: |
+        BRANCH=feature-${{ github.ref_name }}
+        ARTIFACTORY_USERNAME=omnishopper2srv
+        ARTIFACTORY_PASSWORD=${{ needs.kv.outputs.artifactory-password }}
+      push_image: true
+      wiz_feature_scan: false
+      wiz_username: ${{ secrets.WIZ_USERNAME }}
+      wiz_password: ${{ secrets.WIZ_PASSWORD }}
+      service_principal: OMNSHO_SP_NP
+      path: "./Dockerfile"
+      lfs: false
 
   CCOE-BUILD-Testing:
     if: github.ref == 'refs/heads/release/testing'
@@ -67,20 +64,19 @@ jobs:
           echo "Latest Commit ID: $latest_commit"
           echo "commit_id=$latest_commit" >> $GITHUB_ENV
 
-      - name: Run build for Testing
-        uses: niq-actions/niq-build/.github/workflows/build.yml@v3
-        with:
-          image_name: "aggengapi"
-          dev_acr: "omnshodevacreastus2.azurecr.io"
-          prod_acr: "omnshoprodacreastus2.azurecr.io"
-          build-args: |
-            BRANCH=testing-${{ env.commit_id }}  # Passing latest commit ID as part of the branch
-            ARTIFACTORY_USERNAME=omnishopper2srv
-            ARTIFACTORY_PASSWORD=${{ needs.kv.outputs.artifactory-password }}
-          push_image: true
-          wiz_feature_scan: false
-          wiz_username: ${{ secrets.WIZ_USERNAME }}
-          wiz_password: ${{ secrets.WIZ_PASSWORD }}
-          service_principal: OMNSHO_SP_NP
-          path: "./Dockerfile"
-          lfs: false
+    uses: niq-actions/niq-build/.github/workflows/build.yml@v3
+    with:
+      image_name: "aggengapi"
+      dev_acr: "omnshodevacreastus2.azurecr.io"
+      prod_acr: "omnshoprodacreastus2.azurecr.io"
+      build-args: |
+        BRANCH=testing-${{ env.commit_id }}
+        ARTIFACTORY_USERNAME=omnishopper2srv
+        ARTIFACTORY_PASSWORD=${{ needs.kv.outputs.artifactory-password }}
+      push_image: true
+      wiz_feature_scan: false
+      wiz_username: ${{ secrets.WIZ_USERNAME }}
+      wiz_password: ${{ secrets.WIZ_PASSWORD }}
+      service_principal: OMNSHO_SP_NP
+      path: "./Dockerfile"
+      lfs: false
