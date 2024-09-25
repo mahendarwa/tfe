@@ -39,6 +39,7 @@ jobs:
     if: startsWith(github.ref, 'refs/heads/feature/')
     needs: [kv]
     uses: niq-actions/niq-build/.github/workflows/build.yml@v3
+    secrets: inherit
     with:
       image_name: "aggengapi"
       dev_acr: "omnshodevacreastus2.azurecr.io"
@@ -49,9 +50,9 @@ jobs:
         ARTIFACTORY_PASSWORD=${{ needs.kv.outputs.artifactory-password }}
       push_image: true
       wiz_feature_scan: false
-      wiz_username: ${{ secrets.WIZ_USERNAME }}
-      wiz_password: ${{ secrets.WIZ_PASSWORD }}
-      service_principal: ${{ secrets.OMNSHO_SP_NP }}
+      wiz_username: WIZ_USERNAME
+      wiz_password: WIZ_PASSWORD
+      service_principal: OMNSHO_SP_NP
       path: "./Dockerfile"
       lfs: false
 
@@ -74,6 +75,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/heads/release/') && github.ref != 'refs/heads/release/scheduled'
     needs: [kv, CCOE-BUILD-Testing-Prepare]
     uses: niq-actions/niq-build/.github/workflows/build.yml@v3
+    secrets: inherit
     with:
       image_name: "aggengapi"
       dev_acr: "omnshodevacreastus2.azurecr.io"
@@ -84,8 +86,8 @@ jobs:
         ARTIFACTORY_PASSWORD=${{ needs.kv.outputs.artifactory-password }}
       push_image: true
       wiz_feature_scan: false
-      wiz_username: ${{ secrets.WIZ_USERNAME }}
-      wiz_password: ${{ secrets.WIZ_PASSWORD }}
-      service_principal: ${{ secrets.OMNSHO_SP_NP }}
+      wiz_username: WIZ_USERNAME
+      wiz_password: WIZ_PASSWORD
+      service_principal: OMNSHO_SP_NP
       path: "./Dockerfile"
       lfs: false
