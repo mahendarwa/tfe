@@ -1,13 +1,14 @@
-name: "POD Image Build"
+name: "Aggengine Image Build"
 
 on:
   push:
     branches:
-      - "release/main"
+      - "feature/*"
+      - "release/testing"
     paths-ignore: 
       - ".github/*"
-
-  workflow_dispatch:
+    tags:
+      - '*'
 
 jobs:
   kv:
@@ -28,23 +29,52 @@ jobs:
     outputs:
       artifactory-password: ${{ steps.kv.outputs.artifactory-password }}
 
-  build-on-tag-push:
-    if: github.ref_type == 'tag'
+  CCOE-BUILD-Feature:
+    if: startsWith(github.ref, 'refs/heads/feature/')
     needs: [kv]
     runs-on: self-hosted
     steps:
-      - name: Print GitHub ref name
-        run: |
-          echo "GitHub Ref Name: ${{ github.ref_name }}"
-
-      - name: Run build
+      - name: Run build for Feature
         uses: niq-actions/niq-build/.github/workflows/build.yml@v3
         with:
           image_name: "aggengapi"
           dev_acr: "omnshodevacreastus2.azurecr.io"
           prod_acr: "omnshoprodacreastus2.azurecr.io"
           build-args: |
-            BRANCH=${{ github.ref_name }}
+            BRANCH=feature-${{ github.ref_name }}  # Feature branch mapping
+            ARTIFACTORY_USERNAME=omnishopper2srv
+            ARTIFACTORY_PASSWORD=${{ needs.kv.outputs.artifactory-password }}
+          push_image: true
+          wiz_feature_scan: false
+          wiz_username: ${{ secrets.WIZ_USERNAME }}
+          wiz_password: ${{ secrets.WIZ_PASSWORD }}
+          service_principal: OMNSHO_SP_NP
+          path: "./Dockerfile"
+          lfs: false
+
+  CCOE-BUILD-Testing:
+    if: github.ref == 'refs/heads/release/testing'
+    needs: [kv]
+    runs-on: self-hosted
+    steps:
+      - name: Checkout SCM
+        uses: actions/checkout@v3
+
+      - name: Get Latest Commit ID
+        id: get-latest-commit
+        run: |
+          latest_commit=$(git rev-parse HEAD)
+          echo "Latest Commit ID: $latest_commit"
+          echo "commit_id=$latest_commit" >> $GITHUB_ENV
+
+      - name: Run build for Testing
+        uses: niq-actions/niq-build/.github/workflows/build.yml@v3
+        with:
+          image_name: "aggengapi"
+          dev_acr: "omnshodevacreastus2.azurecr.io"
+          prod_acr: "omnshoprodacreastus2.azurecr.io"
+          build-args: |
+            BRANCH=testing-${{ env.commit_id }}  # Passing latest commit ID as part of the branch
             ARTIFACTORY_USERNAME=omnishopper2srv
             ARTIFACTORY_PASSWORD=${{ needs.kv.outputs.artifactory-password }}
           push_image: true
