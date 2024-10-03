@@ -1,13 +1,36 @@
-name: "Test Cron Job"
+name: Read Environment Config
 
 on:
-  schedule:
-    - cron: "*/5 * * * *"  # Run every 5 minutes
-  workflow_dispatch:  # Manually trigger the workflow
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "The environment to deploy (e.g., usdev, usqa, usprod)"
+        required: true
+        type: string
 
 jobs:
-  test-cron:
+  read-config:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Print current time
-        run: echo "The cron job ran at $(date)"
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set Environment Variable for Config File
+        id: set_env
+        run: |
+          echo "CONFIG_FILE=${GITHUB_WORKSPACE}/${{ inputs.environment }}.jenkins.yaml" >> $GITHUB_ENV
+
+      - name: Print Config File Path
+        run: echo "Jenkins Config File Path: ${{ env.CONFIG_FILE }}"
+
+      - name: Read YAML Config
+        id: read_yaml
+        run: |
+          CONFIG_FILE_PATH="${{ env.CONFIG_FILE }}"
+          yq eval-all '.' "$CONFIG_FILE_PATH" > temp_output.txt
+          YAML_CONTENT=$(cat temp_output.txt)
+          echo "YAML_CONTENT=$YAML_CONTENT" >> $GITHUB_ENV
+
+      - name: Print Jenkins Config Content
+        run: echo "Jenkins Config Content: ${{ env.YAML_CONTENT }}"
