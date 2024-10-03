@@ -19,18 +19,19 @@ jobs:
       - name: Set Environment Variable for Config File
         id: set_env
         run: |
-          echo "CONFIG_FILE=${GITHUB_WORKSPACE}/${{ inputs.environment }}.jenkins.yaml" >> $GITHUB_ENV
-
-      - name: Print Config File Path
-        run: echo "Jenkins Config File Path: ${{ env.CONFIG_FILE }}"
+          CONFIG_FILE="${GITHUB_WORKSPACE}/${{ inputs.environment }}.jenkins.yaml"
+          echo "CONFIG_FILE=${CONFIG_FILE}" >> $GITHUB_ENV
+          echo "Set CONFIG_FILE to: ${CONFIG_FILE}"
 
       - name: Read YAML Config
         id: read_yaml
         run: |
-          CONFIG_FILE_PATH="${{ env.CONFIG_FILE }}"
-          yq eval-all '.' "$CONFIG_FILE_PATH" > temp_output.txt
-          YAML_CONTENT=$(cat temp_output.txt)
-          echo "YAML_CONTENT=$YAML_CONTENT" >> $GITHUB_ENV
+          echo "Attempting to read YAML file: ${{ env.CONFIG_FILE }}"
+          yq eval-all '.' "${{ env.CONFIG_FILE }}" > temp_output.txt || echo "YAML parsing failed"
+          cat temp_output.txt || echo "File read failed"
+          echo "YAML_CONTENT=$(cat temp_output.txt)" >> $GITHUB_ENV
 
       - name: Print Jenkins Config Content
-        run: echo "Jenkins Config Content: ${{ env.YAML_CONTENT }}"
+        run: |
+          echo "Printing Jenkins Config Content..."
+          echo "Jenkins Config Content: ${{ env.YAML_CONTENT }}"
