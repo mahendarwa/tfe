@@ -1,0 +1,28 @@
+###############################
+### Jenkins Deploy Config ###
+###############################
+
+deploy:
+  ## REQUIRED: Helm release name uses below value
+  releaseName: usdev-deploy
+
+  ## REQUIRED: k8s namespace the release will be deployed to
+  namespace: omni2-dev-us-eastus2
+
+  ## REQUIRED: environment you are deploying to: one of [dev, qa, uat, prod]
+  environment: dev
+
+  ## REQUIRED: helm chart to be installed can be a chart from a repo (e.g. ingress-nginx/ingress-nginx) or a directory (e.g. ./cloudops)
+  helmChart: .
+
+  ## REQUIRED: RG of AKS cluster residing
+  aksClusterRG: SC-02-NONPROD-EASTUS2-RG
+
+  ## REQUIRED: AKS Cluster Name
+  aksClusterName: SC-02-NONPROD-EASTUS2
+
+  ## REQUIRED: AKS cluster subscription ID
+  aksSubscriptionID: 5d90e8a4-b18c-48fd-a5ef-a2aac499a156
+
+  ## REQUIRED: Service Principal ID used by AKS to access
+  aksServicePrincipal: OMNSHO-SP-NP
