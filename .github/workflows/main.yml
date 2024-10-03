@@ -21,7 +21,7 @@ jobs:
         run: |
           CONFIG_FILE="${GITHUB_WORKSPACE}/${{ inputs.environment }}.jenkins.yaml"
           echo "CONFIG_FILE=${CONFIG_FILE}" >> $GITHUB_ENV
-          echo "Set CONFIG_FILE to: ${CONFIG_FILE}"
+
 
       - name: Read YAML Config
         id: read_yaml
@@ -29,8 +29,8 @@ jobs:
           echo "Attempting to read YAML file: ${{ env.CONFIG_FILE }}"
           yq eval-all '.' "${{ env.CONFIG_FILE }}" > temp_output.txt || echo "YAML parsing failed"
           cat temp_output.txt || echo "File read failed"
-          echo "YAML_CONTENT=$(cat temp_output.txt)" >> $GITHUB_ENV
-
+          echo "YAML_CONTENT=$(cat temp_output.txt | sed 's/\"//g')" >> $GITHUB_ENV
+          
       - name: Print Jenkins Config Content
         run: |
           echo "Printing Jenkins Config Content..."
