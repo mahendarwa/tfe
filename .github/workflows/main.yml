@@ -1,4 +1,4 @@
-name: Read Environment Config
+name: Read Jenkins YAML File
 
 on:
   workflow_dispatch:
@@ -19,18 +19,23 @@ jobs:
       - name: Set Environment Variable for Config File
         id: set_env
         run: |
-          CONFIG_FILE="${GITHUB_WORKSPACE}/${{ inputs.environment }}.jenkins.yaml"
+          CONFIG_FILE="${{ github.workspace }}/${{ inputs.environment }}.jenkins.yaml"
           echo "CONFIG_FILE=${CONFIG_FILE}" >> $GITHUB_ENV
 
+      - name: Print Config File Path (Robust Way)
+        run: |
+          echo "Reading the Config File Path from ENV"
+          CONFIG_FILE_PATH=${CONFIG_FILE}
+          echo "Jenkins Config File Path: $CONFIG_FILE_PATH"
 
       - name: Read YAML Config
         id: read_yaml
         run: |
-          echo "Attempting to read YAML file: ${{ env.CONFIG_FILE }}"
-          yq eval-all '.' "${{ env.CONFIG_FILE }}" > temp_output.txt || echo "YAML parsing failed"
-          cat temp_output.txt || echo "File read failed"
-          echo "YAML_CONTENT=$(cat temp_output.txt | sed 's/\"//g')" >> $GITHUB_ENV
-          
+          echo "Attempting to read YAML file: $CONFIG_FILE_PATH"
+          yq eval '.' "$CONFIG_FILE_PATH" > config_output.txt || echo "YAML parsing failed"
+          cat config_output.txt || echo "File read failed"
+          echo "YAML_CONTENT=$(cat config_output.txt)" >> $GITHUB_ENV
+
       - name: Print Jenkins Config Content
         run: |
           echo "Printing Jenkins Config Content..."
