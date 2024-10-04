@@ -1,42 +1,41 @@
-name: Read Jenkins YAML File
+name: Read Environment Config
 
 on:
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: "The environment to deploy (e.g., usdev, usqa, usprod)"
-        required: true
-        type: string
+  push:
+    branches:
+      - feature/github
+      - main
 
 jobs:
   read-config:
-    runs-on: ubuntu-latest
-
+    runs-on: self-hosted
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
+      - name: Install yq
+        run: |
+          sudo curl -L https://github.com/mikefarah/yq/releases/download/v4.6.1/yq_linux_amd64 -o /usr/local/bin/yq
+          sudo chmod +x /usr/local/bin/yq
+
       - name: Set Environment Variable for Config File
-        id: set_env
         run: |
-          CONFIG_FILE="${{ github.workspace }}/${{ inputs.environment }}.jenkins.yaml"
+          CONFIG_FILE="${{ github.workspace }}/usdev.jenkins.yaml"
           echo "CONFIG_FILE=${CONFIG_FILE}" >> $GITHUB_ENV
+          echo "Set CONFIG_FILE to: ${CONFIG_FILE}"
 
-      - name: Print Config File Path (Robust Way)
+      - name: Print Config File Path
         run: |
-          echo "Reading the Config File Path from ENV"
-          CONFIG_FILE_PATH=${CONFIG_FILE}
-          echo "Jenkins Config File Path: $CONFIG_FILE_PATH"
+          echo "Jenkins Config File Path: ${{ env.CONFIG_FILE }}"
 
-      - name: Read YAML Config
+      - name: Read YAML Config and Print Deploy Section
         id: read_yaml
         run: |
-          echo "Attempting to read YAML file: $CONFIG_FILE_PATH"
-          yq eval '.' "$CONFIG_FILE_PATH" > config_output.txt || echo "YAML parsing failed"
-          cat config_output.txt || echo "File read failed"
-          echo "YAML_CONTENT=$(cat config_output.txt)" >> $GITHUB_ENV
+          echo "Attempting to read the 'deploy' section from the YAML file: ${{ env.CONFIG_FILE }}"
+          yq eval '.deploy' "${{ env.CONFIG_FILE }}" > deploy_output.yaml
+          cat deploy_output.yaml
 
-      - name: Print Jenkins Config Content
+      - name: Print Deploy Section Contents
         run: |
-          echo "Printing Jenkins Config Content..."
-          echo "Jenkins Config Content: ${{ env.YAML_CONTENT }}"
+          echo "Printing Deploy Section Contents:"
+          cat deploy_output.yaml
