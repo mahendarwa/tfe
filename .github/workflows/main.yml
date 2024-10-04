@@ -1,14 +1,25 @@
-name: Read Environment Config
+name: Helm Deployment Workflow
 
 on:
-  push:
-    branches:
-      - feature/github
-      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'The environment being deployed (e.g., usdev, usqa, usuat, etc.)'
+        required: true
+        type: string
+      chart_version:
+        description: 'Define Chart version for AB deployment'
+        required: true
+        type: string
 
 jobs:
-  read-config:
+  deploy-helm:
     runs-on: self-hosted
+
+    env:
+      DEPLOY_ENVIRONMENT: ${{ github.event.inputs.environment }}
+      CHART_VERSION: ${{ github.event.inputs.chart_version }}
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -18,24 +29,78 @@ jobs:
           sudo curl -L https://github.com/mikefarah/yq/releases/download/v4.6.1/yq_linux_amd64 -o /usr/local/bin/yq
           sudo chmod +x /usr/local/bin/yq
 
-      - name: Set Environment Variable for Config File
+      - name: Set Environment Variables
         run: |
-          CONFIG_FILE="${{ github.workspace }}/usdev.jenkins.yaml"
+          CONFIG_FILE="${{ github.workspace }}/${{ env.DEPLOY_ENVIRONMENT }}.jenkins.yaml"
           echo "CONFIG_FILE=${CONFIG_FILE}" >> $GITHUB_ENV
-          echo "Set CONFIG_FILE to: ${CONFIG_FILE}"
 
       - name: Print Config File Path
         run: |
           echo "Jenkins Config File Path: ${{ env.CONFIG_FILE }}"
 
-      - name: Read YAML Config and Print Deploy Section
+      - name: Read Jenkins Config YAML File
         id: read_yaml
         run: |
-          echo "Attempting to read the 'deploy' section from the YAML file: ${{ env.CONFIG_FILE }}"
-          yq eval '.deploy' "${{ env.CONFIG_FILE }}" > deploy_output.yaml
-          cat deploy_output.yaml
+          yq eval '.deploy' "${{ env.CONFIG_FILE }}" > deploy_content.yaml
+          cat deploy_content.yaml
 
-      - name: Print Deploy Section Contents
+      - name: Parse and Set Deploy Config
+        id: set_deploy_config
         run: |
-          echo "Printing Deploy Section Contents:"
-          cat deploy_output.yaml
+          RELEASE_NAME=$(yq eval '.releaseName' deploy_content.yaml)
+          NAMESPACE=$(yq eval '.namespace' deploy_content.yaml)
+          HELM_CHART=$(yq eval '.helmChart' deploy_content.yaml)
+          AKS_CLUSTER_RG=$(yq eval '.aksClusterRG' deploy_content.yaml)
+          AKS_CLUSTER_NAME=$(yq eval '.aksClusterName' deploy_content.yaml)
+          AKS_SUBSCRIPTION_ID=$(yq eval '.aksSubscriptionID' deploy_content.yaml)
+          AKS_SERVICE_PRINCIPAL=$(yq eval '.aksServicePrincipal' deploy_content.yaml)
+          AZURE_TENANT_ID=${{ secrets[AKS_SERVICE_PRINCIPAL + '_TENANT'] }}
+          AZURE_CLIENT_SECRET=${{ secrets[AKS_SERVICE_PRINCIPAL + '_PASSWORD'] }}
+          echo "RELEASE_NAME=${RELEASE_NAME}" >> $GITHUB_ENV
+          echo "NAMESPACE=${NAMESPACE}" >> $GITHUB_ENV
+          echo "HELM_CHART=${HELM_CHART}" >> $GITHUB_ENV
+          echo "AKS_CLUSTER_RG=${AKS_CLUSTER_RG}" >> $GITHUB_ENV
+          echo "AKS_CLUSTER_NAME=${AKS_CLUSTER_NAME}" >> $GITHUB_ENV
+          echo "AKS_SUBSCRIPTION_ID=${AKS_SUBSCRIPTION_ID}" >> $GITHUB_ENV
+          echo "AKS_SERVICE_PRINCIPAL=${AKS_SERVICE_PRINCIPAL}" >> $GITHUB_ENV
+          echo "AZURE_TENANT_ID=${AZURE_TENANT_ID}" >> $GITHUB_ENV
+          echo "AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}" >> $GITHUB_ENV
+          
+      - name: Construct Environment-Specific Values File Path
+        id: set_values_file
+        run: |
+          ENV_VALUES_FILE="${{ github.workspace }}/${{ env.DEPLOY_ENVIRONMENT }}.values.yaml"
+          echo "ENV_VALUES_FILE=${ENV_VALUES_FILE}" >> $GITHUB_ENV
+          echo "Environment Values File Path: ${ENV_VALUES_FILE}"
+
+      - name: Install Azure CLI
+        run: |
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+      - name: Get Kube Credentials
+        run: |
+          az login --service-principal -u "${{ env.AKS_SERVICE_PRINCIPAL }}" --tenant "${{ env.AZURE_TENANT_ID }}" --password "${{ secrets.AZURE_CLIENT_SECRET }}"
+          az account set --subscription "${{ env.AKS_SUBSCRIPTION_ID }}"
+          az aks get-credentials --resource-group "${{ env.AKS_CLUSTER_RG }}" --name "${{ env.AKS_CLUSTER_NAME }}"
+
+      - name: Helm Linting
+        run: |
+          helm lint ${{ env.HELM_CHART }} -f ${{ env.ENV_VALUES_FILE }}
+
+      - name: Create Release Name
+        run: |
+          VERSION_TAG="${{ env.CHART_VERSION }}".replace('.', '-')
+          RELEASE_NAME="${{ env.RELEASE_NAME }}-${VERSION_TAG}"
+          echo "RELEASE_NAME=${RELEASE_NAME}" >> $GITHUB_ENV
+
+      - name: Install Helm Chart
+        run: |
+          helm upgrade --install ${{ env.RELEASE_NAME }} ${{ env.HELM_CHART }} --namespace ${{ env.NAMESPACE }} -f ${{ env.ENV_VALUES_FILE }} --version "${{ env.CHART_VERSION }}"
+
+      - name: Test Helm Chart
+        run: |
+          helm test ${{ env.RELEASE_NAME }} --namespace ${{ env.NAMESPACE }}
+
+      - name: Post Helm Status
+        run: |
+          helm status ${{ env.RELEASE_NAME }} --namespace ${{ env.NAMESPACE }}
