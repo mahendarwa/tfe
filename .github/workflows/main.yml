@@ -10,22 +10,6 @@ on:
         options:
           - usdev
           - usprod
-      cluster:
-        description: 'Target Cluster'
-        required: true
-        type: choice
-        options:
-          - SC-02-NONPROD-EASTUS2
-          - SC-01-PROD-EASTUS
-        default: 'SC-02-NONPROD-EASTUS2'
-      namespace:
-        description: 'Target Namespace'
-        required: true
-        type: choice
-        options:
-          - omni2-dev-us-eastus2
-          - omni2-prod-us-eastus
-        default: 'omni2-dev-us-eastus2'
       releaseversion:
         description: 'Chart version' 
         required: false
@@ -45,19 +29,12 @@ on:
           - cname
           - deployuninstall
           - cnameuninstall
-      serviceprincipal:
-        description: 'Service Principal to be used for deployment'
-        required: true
-        type: choice
-        options:
-          - OMNSHO-SP-NP
-          - ANOTHER-SP
 
 jobs:
   set-values:
     runs-on: ubuntu-latest
     steps:
-      - name: Set Cluster and Namespace Based on Release Name
+      - name: Set Fixed Values Based on Release Name
         id: set-cluster-namespace
         run: |
           if [[ "${{ github.event.inputs.releasename }}" == "usdev" ]]; then
@@ -68,10 +45,12 @@ jobs:
             echo "##[set-output name=namespace;]omni2-prod-us-eastus"
           fi
 
-      - name: Echo Cluster and Namespace
+
+      - name: Echo Cluster, Namespace, and SPN
         run: |
           echo "Cluster: ${{ steps.set-cluster-namespace.outputs.cluster }}"
           echo "Namespace: ${{ steps.set-cluster-namespace.outputs.namespace }}"
+          echo "Service Principal: OMNSHO-SP-NP"
 
   hello-world:
     runs-on: ubuntu-latest
