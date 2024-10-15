@@ -52,3 +52,30 @@ on:
         options:
           - OMNSHO-SP-NP
           - ANOTHER-SP
+
+jobs:
+  set-values:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set Cluster and Namespace Based on Release Name
+        id: set-cluster-namespace
+        run: |
+          if [[ "${{ github.event.inputs.releasename }}" == "usdev" ]]; then
+            echo "##[set-output name=cluster;]SC-02-NONPROD-EASTUS2"
+            echo "##[set-output name=namespace;]omni2-dev-us-eastus2"
+          elif [[ "${{ github.event.inputs.releasename }}" == "usprod" ]]; then
+            echo "##[set-output name=cluster;]SC-01-PROD-EASTUS"
+            echo "##[set-output name=namespace;]omni2-prod-us-eastus"
+          fi
+
+      - name: Echo Cluster and Namespace
+        run: |
+          echo "Cluster: ${{ steps.set-cluster-namespace.outputs.cluster }}"
+          echo "Namespace: ${{ steps.set-cluster-namespace.outputs.namespace }}"
+
+  hello-world:
+    runs-on: ubuntu-latest
+    needs: set-values
+    steps:
+      - name: Hello World
+        run: echo "Hello World!"
