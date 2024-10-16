@@ -16,6 +16,15 @@ on:
         description: 'Chart version' 
         required: false
         type: string
+      operation:
+        description: 'Operation'
+        required: true
+        type: choice
+        options:
+          - deploy
+          - cname
+          - deployuninstall
+          - cnameuninstall
       tool:
         description: 'Deployment Tool'
         required: true
@@ -34,19 +43,18 @@ jobs:
         id: set-operation
         run: |
           if [ "${{ github.event.inputs.releasename }}" == "usdev" ]; then
-            echo "operation=deploy" >> $GITHUB_ENV
+            echo "::set-output name=operation::deploy"
           elif [ "${{ github.event.inputs.releasename }}" == "usdev2" ]; then
-            echo "operation=cname" >> $GITHUB_ENV
+            echo "::set-output name=operation::cname"
           elif [ "${{ github.event.inputs.releasename }}" == "usdev3" ]; then
-            echo "operation=deployuninstall" >> $GITHUB_ENV
+            echo "::set-output name=deployuninstall"
           elif [ "${{ github.event.inputs.releasename }}" == "usprod" ]; then
-            echo "operation=cnameuninstall" >> $GITHUB_ENV
+            echo "::set-output name=cnameuninstall"
 
   aks-deploy:
     needs: set-operation
     runs-on: ubuntu-latest
     steps:
-      - name: Perform Operation
+      - name: Deploy Application
         run: |
-          echo "Operation: ${{ env.operation }}"
-          # Proceed with the operation logic using the set value
+          echo "Running operation ${{ needs.set-operation.outputs.operation }}"
