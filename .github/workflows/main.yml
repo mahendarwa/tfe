@@ -12,8 +12,6 @@ on:
           - usdev2
           - usdev3
           - usprod
-          - usprod1
-          - usprod2
       releaseversion:
         description: 'Chart version' 
         required: false
@@ -24,62 +22,31 @@ on:
         type: choice
         options:
           - helm
-      operation:
-        description: 'Operation to be carried out using deployment tool'
-        required: true
-        type: choice
-        options:
-          - deploy
-          - cname
-          - deployuninstall
-          - cnameuninstall
 
 jobs:
-  set-values:
+  set-operation:
     runs-on: ubuntu-latest
     outputs:
-      cluster: ${{ steps.set-cluster.outputs.cluster }}
-      namespace: ${{ steps.set-cluster.outputs.namespace }}
-      serviceprincipal: ${{ steps.set-cluster.outputs.serviceprincipal }}
+      operation: ${{ steps.set-operation.outputs.operation }}
 
     steps:
-      - name: Set Cluster, Namespace, and Service Principal
-        id: set-cluster
+      - name: Set Operation Based on Release Name
+        id: set-operation
         run: |
           if [ "${{ github.event.inputs.releasename }}" == "usdev" ]; then
-            echo "cluster=SC-02-NONPROD-EASTUS2" >> $GITHUB_ENV
-            echo "namespace=omni2-dev-us-eastus2" >> $GITHUB_ENV
-            echo "serviceprincipal=OMNSHO-SP-NP-DEV1" >> $GITHUB_ENV
+            echo "operation=deploy" >> $GITHUB_ENV
           elif [ "${{ github.event.inputs.releasename }}" == "usdev2" ]; then
-            echo "cluster=SC-02-NONPROD-EASTUS2" >> $GITHUB_ENV
-            echo "namespace=omni2-dev-us-eastus2" >> $GITHUB_ENV
-            echo "serviceprincipal=OMNSHO-SP-NP-DEV2" >> $GITHUB_ENV
+            echo "operation=cname" >> $GITHUB_ENV
           elif [ "${{ github.event.inputs.releasename }}" == "usdev3" ]; then
-            echo "cluster=SC-02-NONPROD-EASTUS2" >> $GITHUB_ENV
-            echo "namespace=omni2-dev-us-eastus2" >> $GITHUB_ENV
-            echo "serviceprincipal=OMNSHO-SP-NP-DEV3" >> $GITHUB_ENV
+            echo "operation=deployuninstall" >> $GITHUB_ENV
           elif [ "${{ github.event.inputs.releasename }}" == "usprod" ]; then
-            echo "cluster=SC-01-PROD-EASTUS" >> $GITHUB_ENV
-            echo "namespace=omni2-prod-us-eastus" >> $GITHUB_ENV
-            echo "serviceprincipal=OMNSHO-SP-NP-PROD1" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.releasename }}" == "usprod1" ]; then
-            echo "cluster=SC-01-PROD-EASTUS" >> $GITHUB_ENV
-            echo "namespace=omni2-prod-us-eastus" >> $GITHUB_ENV
-            echo "serviceprincipal=OMNSHO-SP-NP-PROD2" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.releasename }}" == "usprod2" ]; then
-            echo "cluster=SC-01-PROD-EASTUS" >> $GITHUB_ENV
-            echo "namespace=omni2-prod-us-eastus" >> $GITHUB_ENV
-            echo "serviceprincipal=OMNSHO-SP-NP-PROD3" >> $GITHUB_ENV
+            echo "operation=cnameuninstall" >> $GITHUB_ENV
 
   aks-deploy:
-    needs: set-values
-    uses: niq-actions/aks/.github/workflows/helm.yaml@main
-    secrets: inherit
-    with:
-      cluster: ${{ needs.set-values.outputs.cluster }}
-      namespace: ${{ needs.set-values.outputs.namespace }}
-      releasename: ${{ github.event.inputs.releasename }}
-      releaseversion: ${{ github.event.inputs.releaseversion }}
-      tool: ${{ github.event.inputs.tool }}
-      operation: ${{ github.event.inputs.operation }}
-      serviceprincipal: ${{ needs.set-values.outputs.serviceprincipal }}
+    needs: set-operation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Perform Operation
+        run: |
+          echo "Operation: ${{ env.operation }}"
+          # Proceed with the operation logic using the set value
