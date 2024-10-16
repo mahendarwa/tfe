@@ -70,11 +70,11 @@ jobs:
             echo "cluster=SC-01-PROD-EASTUS" >> $GITHUB_ENV
             echo "namespace=omni2-prod-us-eastus" >> $GITHUB_ENV
             echo "serviceprincipal=OMNSHO-SP-NP-PROD3" >> $GITHUB_ENV
-          fi
 
   aks-deploy:
     needs: set-values
     uses: niq-actions/aks/.github/workflows/helm.yaml@main
+    secrets: inherit
     with:
       cluster: ${{ needs.set-values.outputs.cluster }}
       namespace: ${{ needs.set-values.outputs.namespace }}
