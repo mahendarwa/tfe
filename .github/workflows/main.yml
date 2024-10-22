@@ -1,86 +1,49 @@
-name: AKS Deploy
+name: crs-api
 
 on:
   workflow_dispatch:
     inputs:
-      releasename:
-        description: 'Release Name'
+      subenv:
+        description: 'Subscription environment type'
         required: true
         type: choice
         options:
-          - usdev
-          - usdev2
-          - usdev3
-          - usprod
-          - usprod1
-          - usprod2
-      releaseversion:
-        description: 'Chart version' 
-        required: false
-        type: string
-      tool:
-        description: 'Deployment Tool'
+          - nonprod
+          - prod
+      location:
+        description: 'CRS instance location'
         required: true
         type: choice
         options:
-          - helm
-      operation:
-        description: 'Operation to be carried out using deployment tool'
-        required: true
-        type: choice
-        options:
-          - deploy
-          - cname
-          - deployuninstall
-          - cnameuninstall
+          - eastus
+          - centralus
 
 jobs:
-  set-values:
-    runs-on: ubuntu-latest
-    outputs:
-      cluster: ${{ steps.set-cluster.outputs.cluster }}
-      namespace: ${{ steps.set-cluster.outputs.namespace }}
-      serviceprincipal: ${{ steps.set-cluster.outputs.serviceprincipal }}
+  analyze:
+    runs-on: [uhg-runner]
 
     steps:
-      - name: Set Cluster, Namespace, and Service Principal
-        id: set-cluster
-        run: |
-          if [ "${{ github.event.inputs.releasename }}" == "usdev" ]; then
-            echo "cluster=SC-02-NONPROD-EASTUS2" >> $GITHUB_ENV
-            echo "namespace=omni2-dev-us-eastus2" >> $GITHUB_ENV
-            echo "serviceprincipal=OMNSHO-SP-NP-DEV1" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.releasename }}" == "usdev2" ]; then
-            echo "cluster=SC-02-NONPROD-EASTUS2" >> $GITHUB_ENV
-            echo "namespace=omni2-dev-us-eastus2" >> $GITHUB_ENV
-            echo "serviceprincipal=OMNSHO-SP-NP-DEV2" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.releasename }}" == "usdev3" ]; then
-            echo "cluster=SC-02-NONPROD-EASTUS2" >> $GITHUB_ENV
-            echo "namespace=omni2-dev-us-eastus2" >> $GITHUB_ENV
-            echo "serviceprincipal=OMNSHO-SP-NP-DEV3" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.releasename }}" == "usprod" ]; then
-            echo "cluster=SC-01-PROD-EASTUS" >> $GITHUB_ENV
-            echo "namespace=omni2-prod-us-eastus" >> $GITHUB_ENV
-            echo "serviceprincipal=OMNSHO-SP-NP-PROD1" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.releasename }}" == "usprod1" ]; then
-            echo "cluster=SC-01-PROD-EASTUS" >> $GITHUB_ENV
-            echo "namespace=omni2-prod-us-eastus" >> $GITHUB_ENV
-            echo "serviceprincipal=OMNSHO-SP-NP-PROD2" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.releasename }}" == "usprod2" ]; then
-            echo "cluster=SC-01-PROD-EASTUS" >> $GITHUB_ENV
-            echo "namespace=omni2-prod-us-eastus" >> $GITHUB_ENV
-            echo "serviceprincipal=OMNSHO-SP-NP-PROD3" >> $GITHUB_ENV
-          fi
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-  aks-deploy:
-    needs: set-values
-    uses: niq-actions/aks/.github/workflows/helm.yaml@main
-    secrets: inherit
-    with:
-      cluster: ${{ env.cluster }}
-      namespace: ${{ env.namespace }}
-      releasename: ${{ github.event.inputs.releasename }}
-      releaseversion: ${{ github.event.inputs.releaseversion }}
-      tool: ${{ github.event.inputs.tool }}
-      operation: ${{ github.event.inputs.operation }}
-      serviceprincipal: ${{ env.serviceprincipal }}
+      - name: Set environment variables
+        run: |
+          echo "AZURE_SUBSCRIPTION=$(if [[ ${{ github.event.inputs.subenv }} == 'prod' ]]; then echo 'crs-azure-prod-sp'; else echo 'crs-azure-nonprod-sp'; fi)" >> $GITHUB_ENV
+          echo "IMAGE_PATH=$(if [[ ${{ github.event.inputs.subenv }} == 'prod' ]]; then echo 'crsprodbootstrapreg.eastus.azurecr.io'; else echo 'crsnonprodbootstrapreg.eastus.azurecr.io'; fi)" >> $GITHUB_ENV
+          echo "CONTAINER_REGISTRY=$(if [[ ${{ github.event.inputs.subenv }} == 'prod' ]]; then echo 'crs-prod-con-reg'; else echo 'crs-nonprod-con-reg'; fi)" >> $GITHUB_ENV
+          echo "SUBSCRIPTION_ID=$(if [[ ${{ github.event.inputs.subenv }} == 'prod' ]]; then echo '5b02df11'; else echo 'e0e5bf14'; fi)" >> $GITHUB_ENV
+          echo "RESOURCE_GROUP=crs-${{ github.event.inputs.subenv }}-shared-${{ github.event.inputs.location }}-rg" >> $GITHUB_ENV
+
+      - name: Set up Maven and Java
+        run: |
+          echo "Setting up Java and Maven"
+          ls -la /tools/java/
+          export JAVA_HOME=/tools/java/jdk17
+          export PATH=$JAVA_HOME/bin:$PATH
+          mvn -v
+          java -version
+          env | grep -e PATH -e JAVA_HOME
+
+      - name: Build the application
+        run: |
+          mvn clean package
