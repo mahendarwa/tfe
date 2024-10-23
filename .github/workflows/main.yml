@@ -1,49 +1,151 @@
-name: crs-api
+name: Build and Deploy CPS UDF Jar
 
 on:
   workflow_dispatch:
     inputs:
-      subenv:
-        description: 'Subscription environment type'
+      cpsUDF_jar_version:
+        description: 'Version of cps-udf jar to build & deploy'
+        required: true
+        default: '0.0.3'
+      envType:
+        description: 'SnowFlake Environment Credentials to be used'
         required: true
         type: choice
         options:
-          - nonprod
-          - prod
-      location:
-        description: 'CRS instance location'
-        required: true
-        type: choice
-        options:
-          - eastus
-          - centralus
+          - US DEV/SI
+          - US UAT
+          - EU UAT
+          - US PROD
+          - EU PROD
+          - CALATAM PROD
+          - APAC PROD
 
 jobs:
-  analyze:
-    runs-on: [uhg-runner]
+  build-deploy:
+    runs-on: self-hosted  # Use self-hosted runner
+
+    environment:
+      GRADLE_HOME: ${{ secrets.GRADLE_HOME }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set environment variables
+      - name: Build UDF Jar
         run: |
-          echo "AZURE_SUBSCRIPTION=$(if [[ ${{ github.event.inputs.subenv }} == 'prod' ]]; then echo 'crs-azure-prod-sp'; else echo 'crs-azure-nonprod-sp'; fi)" >> $GITHUB_ENV
-          echo "IMAGE_PATH=$(if [[ ${{ github.event.inputs.subenv }} == 'prod' ]]; then echo 'crsprodbootstrapreg.eastus.azurecr.io'; else echo 'crsnonprodbootstrapreg.eastus.azurecr.io'; fi)" >> $GITHUB_ENV
-          echo "CONTAINER_REGISTRY=$(if [[ ${{ github.event.inputs.subenv }} == 'prod' ]]; then echo 'crs-prod-con-reg'; else echo 'crs-nonprod-con-reg'; fi)" >> $GITHUB_ENV
-          echo "SUBSCRIPTION_ID=$(if [[ ${{ github.event.inputs.subenv }} == 'prod' ]]; then echo '5b02df11'; else echo 'e0e5bf14'; fi)" >> $GITHUB_ENV
-          echo "RESOURCE_GROUP=crs-${{ github.event.inputs.subenv }}-shared-${{ github.event.inputs.location }}-rg" >> $GITHUB_ENV
+          echo "Started building UDF Jar"
+          ${{ env.GRADLE_HOME }}/bin/gradle jar -PcpsUDF_jar_version=${{ github.event.inputs.cpsUDF_jar_version }}
+          echo "Jar directory:"
+          ls -lrt ${{ github.workspace }}/build/libs/*
+          echo "Completed building UDF Jar"
 
-      - name: Set up Maven and Java
+      - name: Test UDF Jar
         run: |
-          echo "Setting up Java and Maven"
-          ls -la /tools/java/
-          export JAVA_HOME=/tools/java/jdk17
-          export PATH=$JAVA_HOME/bin:$PATH
-          mvn -v
-          java -version
-          env | grep -e PATH -e JAVA_HOME
+          echo "Started test stage"
+          ${{ env.GRADLE_HOME }}/bin/gradle test -PcpsUDF_jar_version=${{ github.event.inputs.cpsUDF_jar_version }}
+          echo "Completed test stage"
 
-      - name: Build the application
+      - name: Prepare SQL Script
         run: |
-          mvn clean package
+          echo "Starting SQL Script rewrite"
+          sqlTemplate=$(cat register_cps_udf.sql)
+          updatedSql=${sqlTemplate//@@VERSION_NUMBER@@/${{ github.event.inputs.cpsUDF_jar_version }}}
+          updatedSql=${updatedSql//@@PATH@@/${{ github.workspace }}}
+          updatedSql=${updatedSql//@@ENVTYPE@@/${{ github.event.inputs.envType }}}
+
+          case "${{ github.event.inputs.envType }}" in
+            "US DEV/SI")
+              updatedSql=${updatedSql//@@DATABASE@@/'CPS_OD_REPORTING_DEV'}
+              updatedSql=${updatedSql//@@SCHEMA@@/'COMMON_DEV'}
+              ;;
+            "US UAT"|"EU UAT")
+              updatedSql=${updatedSql//@@DATABASE@@/'CPS_OD_REPORTING_UAT'}
+              updatedSql=${updatedSql//@@SCHEMA@@/'COMMON_UAT'}
+              ;;
+            "US PROD"|"EU PROD"|"CALATAM PROD"|"APAC PROD")
+              updatedSql=${updatedSql//@@DATABASE@@/'CPS_OD_REPORTING_PROD'}
+              updatedSql=${updatedSql//@@SCHEMA@@/'COMMON_PROD'}
+              ;;
+            *)
+              echo "Invalid envtype provided or envtype not configured!!!"
+              exit 1
+              ;;
+          esac
+
+          echo "$updatedSql" > updated_script.sql
+          echo "Completed SQL Script rewrite"
+
+      - name: Fetch Azure Credentials
+        run: |
+          echo "Starting fetching credentials"
+          SF_USER=''
+          SF_PWD=''
+          SF_ACCOUNT=''
+          SF_ROLE=''
+          SF_WAREHOUSE=''
+
+          case "${{ github.event.inputs.envType }}" in
+            "US DEV/SI"|"US UAT")
+              echo "Setting credentials for envtype: ${{ github.event.inputs.envType }}"
+              SF_USER=${{ secrets.POD_USNPROD_USER_ID }}
+              SF_PWD=${{ secrets.POD_USNPROD_USER_PSWD }}
+              SF_ACCOUNT='connect-nielseniq_eastus2'
+              SF_ROLE='POD_USNPROD_DEPLOYMENT_RL'
+              SF_WAREHOUSE='CPS_OD_FE_REPORTING_DEV'
+              ;;
+            "EU UAT")
+              echo "Setting credentials for envtype: ${{ github.event.inputs.envType }}"
+              SF_USER=${{ secrets.POD_EUNPROD_USER_ID }}
+              SF_PWD=${{ secrets.POD_EUNPROD_USER_PSWD }}
+              SF_ACCOUNT='connect-nielseniq_west_eu'
+              SF_ROLE='POD_EUNPROD_DEPLOYMENT_RL'
+              SF_WAREHOUSE='CS_OD_RPT_WH'
+              ;;
+            "US PROD")
+              echo "Setting credentials for envtype: ${{ github.event.inputs.envType }}"
+              SF_USER=${{ secrets.POD_USPROD_USER_ID }}
+              SF_PWD=${{ secrets.POD_USPROD_USER_PSWD }}
+              SF_ACCOUNT='connect-nielseniq_prod_eastus2'
+              SF_ROLE='POD_USPROD_DEPLOYMENT_RL'
+              SF_WAREHOUSE='CS_POD_FE_REPORTING_WH1'
+              ;;
+            "EU PROD")
+              echo "Setting credentials for envtype: ${{ github.event.inputs.envType }}"
+              SF_USER=${{ secrets.POD_EUPROD_USER_ID }}
+              SF_PWD=${{ secrets.POD_EUPROD_USER_PSWD }}
+              SF_ACCOUNT='connect-nielseniq_prod_west_eu'
+              SF_ROLE='POD_EUPROD_DEPLOYMENT_RL'
+              SF_WAREHOUSE='CS_POD_FE_REPORTING_WH1'
+              ;;
+            "CALATAM PROD")
+              echo "Setting credentials for envtype: ${{ github.event.inputs.envType }}"
+              SF_USER=${{ secrets.POD_CALATAMPROD_USER_ID }}
+              SF_PWD=${{ secrets.POD_CALATAMPROD_USER_PSWD }}
+              SF_ACCOUNT='connect-nielseniq_calatam_prod_eastus2'
+              SF_ROLE='POD_CALTAMPROD_DEPLOYMENT_RL'
+              SF_WAREHOUSE='CS_POD_FE_REPORTING_WH1'
+              ;;
+            "APAC PROD")
+              echo "Setting credentials for envtype: ${{ github.event.inputs.envType }}"
+              SF_USER=${{ secrets.POD_APACPROD_USER_ID }}
+              SF_PWD=${{ secrets.POD_APACPROD_USER_PSWD }}
+              SF_ACCOUNT='connect-nielseniq_prod_singapore'
+              SF_ROLE='POD_APACPROD_DEPLOYMENT_RL'
+              SF_WAREHOUSE='CS_POD_FE_REPORTING_WH1'
+              ;;
+          esac
+
+          configurations="[connections]\naccountname = '$SF_ACCOUNT'\nusername = '$SF_USER'\npassword = '$SF_PWD'\nrolename = '$SF_ROLE'\nwarehousename = '$SF_WAREHOUSE'"
+          echo "$configurations" > configurations.ini
+          echo "completed fetching credentials"
+
+      - name: Execute SnowSQL
+        run: |
+          echo "Starting SnowSQL execution"
+          snowsql --config configurations.ini -f updated_script.sql -o exit_on_error=True
+          echo "Completed SnowSQL execution"
+
+      - name: Clear Temp Files
+        run: |
+          echo "Clearing temporary files"
+          rm -f configurations.ini updated_script.sql
