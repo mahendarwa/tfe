@@ -37,8 +37,13 @@ jobs:
       - name: Set up Java 17
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin' # Install Temurin (formerly AdoptOpenJDK)
+          distribution: 'temurin'
           java-version: '17'
+
+      - name: Set up Maven
+        uses: uhg-actions/setup-maven@v4.4
+        with:
+          maven-version: 3.8.1
 
       - name: Build the application
         run: |
