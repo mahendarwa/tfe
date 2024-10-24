@@ -1,45 +1,17 @@
-name: Build and Push Docker Image to Azure
+- name: Build Docker Image
+  run: |
+    echo "Building Docker image"
+    docker build --tag crsnonprodbootstrapregseastuse0e5bf14.azurecr.io/crs/crs-api:api-${{ github.run_number }} .
+  
+- name: Login to Azure Container Registry (ACR)
+  run: |
+    echo "Logging into Azure Container Registry"
+    az acr login --name crsnonprodbootstrapregseastuse0e5bf14.azurecr.io
 
-on:
-  workflow_dispatch:
-    inputs:
-      containerRegistry:
-        description: 'Azure Container Registry'
-        required: true
-      imagePath:
-        description: 'Path for the Docker image'
-        required: true
+- name: Push Docker Image to ACR
+  run: |
+    echo "Pushing Docker image to ACR"
+    docker push crsnonprodbootstrapregseastuse0e5bf14.azurecr.io/crs/crs-api:api-${{ github.run_number }}
 
-jobs:
-  build-and-push:
-    runs-on: self-hosted # Or you can use GitHub-hosted runner like 'ubuntu-latest'
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-
-    - name: Azure Login
-      run: |
-        az login --service-principal \
-          --username ${{ secrets.CRS_AZURE_CLIENT_ID_NONPROD }} \
-          --password ${{ secrets.CRS_AZURE_CLIENT_SECRET_NONPROD }} \
-          --tenant ${{ secrets.CRS_AZURE_TENANT_ID_NONPROD }}
-        echo "Azure login successful"
-
-    - name: Build Docker Image
-      run: |
-        echo "Building Docker image"
-        docker build -t ${{ github.event.inputs.imagePath }}/crs/crs-api:api-${{ github.run_number }} .
-
-    - name: Login to Azure Container Registry (ACR)
-      run: |
-        echo "Logging into Azure Container Registry"
-        az acr login --name ${{ github.event.inputs.containerRegistry }}
-
-    - name: Push Docker Image to ACR
-      run: |
-        echo "Pushing Docker image to ACR"
-        docker push ${{ github.event.inputs.imagePath }}/crs/crs-api:api-${{ github.run_number }}
-
-    - name: Logout from Azure
-      run: az logout
+- name: Logout from Azure
+  run: az logout
