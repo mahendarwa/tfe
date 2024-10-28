@@ -25,67 +25,30 @@ jobs:
       - name: Get AKS credentials
         run: |
           az aks get-credentials --name crs-shared-aks-eastus-nonprod --resource-group crs-nonprod-shared-eastus-rg --admin --overwrite
-      - name: Set up Maven
-        run: |
-          retry_count=0
-          max_retries=3
-          delay=30
-          until [ $retry_count -ge $max_retries ]
-          do
-            uhg-actions/setup-maven@v4.4 maven-version=3.8.1 && break
-            retry_count=$((retry_count+1))
-            echo "Attempt $retry_count failed! Retrying in $delay seconds..."
-            sleep $delay
-          done
-          if [ $retry_count -ge $max_retries ]; then
-            echo "Failed to set up Maven after $max_retries attempts."
-            exit 1
-          fi
 
-      - name: Fetch secrets from Key Vault
-        run: |
-          vault_enabled=$(az keyvault secret show --name keyvault-enabled --vault-name crs-api-vault --query value -o tsv)
-          kayvault_tenantid=$(az keyvault secret show --name Kayvault-tenantid --vault-name crs-api-vault --query value -o tsv)
-          keyvault_client_id=$(az keyvault secret show --name Keyvault-client-id --vault-name crs-api-vault --query value -o tsv)
-          keyvault_clientkey=$(az keyvault secret show --name Keyvault-clientkey --vault-name crs-api-vault --query value -o tsv)
-          mssql_acct_key=$(az keyvault secret show --name mssql-acct-key --vault-name crs-api-vault --query value -o tsv)
-          sqlmi_db_password=$(az keyvault secret show --name sqlmi-db-password --vault-name crs-api-vault --query value -o tsv)
-          oauth_secret_prd=$(az keyvault secret show --name oauth-secret-prd --vault-name crs-api-vault --query value -o tsv)
-          splunk_token=$(az keyvault secret show --name splunk-token --vault-name crs-api-vault --query value -o tsv)
-          oauthKey=$(az keyvault secret show --name oauth-public-key --vault-name crs-api-vault --query value -o tsv)
-          oauthKeylink=$(az keyvault secret show --name oauth-publickey-link --vault-name crs-api-vault --query value -o tsv)
-          oauthlbmAcc=$(az keyvault secret show --name lbm-pricer-AccountKey --vault-name crs-api-vault --query value -o tsv)
-
-          echo "oauth-public-key $oauthKey"
-          echo "oauth-public-key-link $oauthKeylink"
-          echo "lbm-pricer-AccountKey $oauthlbmAcc"
-          echo "splunk_token $splunk_token"
-          echo "oauth_secret_prd $oauth_secret_prd"
-          echo "mssql_acct_key $mssql_acct_key"
-          echo "keyvault_clientkey $keyvault_clientkey"
-          echo "keyvault_client_id $keyvault_client_id"
-          echo "kayvault_tenantid $kayvault_tenantid"
-          echo "vault_enabled $vault_enabled"
-
-      - name: Change to Helm directory
+      - name: Helm Upgrade and Ingress
         run: |
           cd ${GITHUB_WORKSPACE}/helm
-
-      - name: Helm Upgrade CRS API
-        run: |
+      
+          echo "Running Helm upgrade for CRS API"
           helm upgrade -i "crs-azure-crs-api" crs-api/ \
             --values "value/nonprod/nonprod.yml" \
-            --set imageAPI="${{ github.event.inputs.imagePath }}/crs/crs-api:api-${{ github.run_number }}" \
+            --set imageAPI="${{ env.IMAGE_PATH }}/crs/crs-api:api-${{ github.run_number }}" \
             --set env="nonprod" \
-            --set spring.profiles.active="${{ github.event.inputs.AZURE_DEPLOY_ENVIRONMENT }}" \
-            --set vaultEnabled="${vault_enabled}" \
-            --set lbm_pricer_AccountKey="${oauthlbmAcc}" \
-            --set oauth_link_publickey="${oauthKeylink}" \
-            --set keyvault_clientkey="${keyvault_clientkey}" \
-            --set keyvault_client_id="${keyvault_client_id}" \
-            --set oauth_secret_prd="${oauth_secret_prd}" \
-            --set splunk_token="${splunk_token}" \
-            --set keyvault_tenantid="${kayvault_tenantid}" \
-            --set oauth_publickey="${oauthKey}" \
-            --set oauth_mssqlacckey="${mssql_acct_key}" \
-            --set oauth_sqlmidbpasswd="${sqlmi_db_password}"
+            --set spring.profiles.active="${{ env.AZURE_DEPLOY_ENVIRONMENT }}" \
+            --set vaultEnabled="${{ env.vault_enabled }}" \
+            --set lbm_pricer_AccountKey="${{ env.oauthlbmAcc }}" \
+            --set oauth_link_publickey="${{ env.oauthKeylink }}" \
+            --set keyvault_clientkey="${{ env.keyvault_clientkey }}" \
+            --set keyvault_client_id="${{ env.keyvault_client_id }}" \
+            --set oauth_secret_prd="${{ env.oauth_secret_prd }}" \
+            --set splunk_token="${{ env.splunk_token }}" \
+            --set keyvault_tenantid="${{ env.kayvault_tenantid }}" \
+            --set oauth_publickey="${{ env.oauthKey }}" \
+            --set oauth_mssqlacckey="${{ env.mssql_acct_key }}" \
+            --set oauth_sqlmidbpasswd="${{ env.sqlmi_db_password }}"
+      
+          echo "Running Helm upgrade for Ingress"
+          helm upgrade -i "crs-ingress" crs-ingress-api/ \
+            --values "value/nonprod/nonprod.yml" \
+            --set env="nonprod"
