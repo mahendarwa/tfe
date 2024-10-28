@@ -1,17 +1,75 @@
-- name: Build Docker Image
-  run: |
-    echo "Building Docker image"
-    docker build --tag crsnonprodbootstrapregseastuse0e5bf14.azurecr.io/crs/crs-api:api-${{ github.run_number }} .
-  
-- name: Login to Azure Container Registry (ACR)
-  run: |
-    echo "Logging into Azure Container Registry"
-    az acr login --name crsnonprodbootstrapregseastuse0e5bf14.azurecr.io
+name: Deploy to AKS
 
-- name: Push Docker Image to ACR
-  run: |
-    echo "Pushing Docker image to ACR"
-    docker push crsnonprodbootstrapregseastuse0e5bf14.azurecr.io/crs/crs-api:api-${{ github.run_number }}
+on:
+  workflow_dispatch:
+    inputs:
+      imagePath:
+        description: "Image Path"
+        required: true
+      AZURE_DEPLOY_ENVIRONMENT:
+        description: "Azure Environment"
+        required: true
 
-- name: Logout from Azure
-  run: az logout
+jobs:
+  deploy-aks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        run: |
+          az login --service-principal --username ${{ secrets.AZURE_CLIENT_ID }} --password ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials --name crs-shared-aks-eastus-nonprod --resource-group crs-nonprod-shared-eastus-rg --admin --overwrite
+
+      - name: Fetch secrets from Key Vault
+        run: |
+          vault_enabled=$(az keyvault secret show --name keyvault-enabled --vault-name crs-api-vault --query value -o tsv)
+          kayvault_tenantid=$(az keyvault secret show --name Kayvault-tenantid --vault-name crs-api-vault --query value -o tsv)
+          keyvault_client_id=$(az keyvault secret show --name Keyvault-client-id --vault-name crs-api-vault --query value -o tsv)
+          keyvault_clientkey=$(az keyvault secret show --name Keyvault-clientkey --vault-name crs-api-vault --query value -o tsv)
+          mssql_acct_key=$(az keyvault secret show --name mssql-acct-key --vault-name crs-api-vault --query value -o tsv)
+          sqlmi_db_password=$(az keyvault secret show --name sqlmi-db-password --vault-name crs-api-vault --query value -o tsv)
+          oauth_secret_prd=$(az keyvault secret show --name oauth-secret-prd --vault-name crs-api-vault --query value -o tsv)
+          splunk_token=$(az keyvault secret show --name splunk-token --vault-name crs-api-vault --query value -o tsv)
+          oauthKey=$(az keyvault secret show --name oauth-public-key --vault-name crs-api-vault --query value -o tsv)
+          oauthKeylink=$(az keyvault secret show --name oauth-publickey-link --vault-name crs-api-vault --query value -o tsv)
+          oauthlbmAcc=$(az keyvault secret show --name lbm-pricer-AccountKey --vault-name crs-api-vault --query value -o tsv)
+
+          echo "oauth-public-key $oauthKey"
+          echo "oauth-public-key-link $oauthKeylink"
+          echo "lbm-pricer-AccountKey $oauthlbmAcc"
+          echo "splunk_token $splunk_token"
+          echo "oauth_secret_prd $oauth_secret_prd"
+          echo "mssql_acct_key $mssql_acct_key"
+          echo "keyvault_clientkey $keyvault_clientkey"
+          echo "keyvault_client_id $keyvault_client_id"
+          echo "kayvault_tenantid $kayvault_tenantid"
+          echo "vault_enabled $vault_enabled"
+
+      - name: Change to Helm directory
+        run: |
+          cd ${GITHUB_WORKSPACE}/helm
+
+      - name: Helm Upgrade CRS API
+        run: |
+          helm upgrade -i "crs-azure-crs-api" crs-api/ \
+            --values "value/nonprod/nonprod.yml" \
+            --set imageAPI="${{ github.event.inputs.imagePath }}/crs/crs-api:api-${{ github.run_number }}" \
+            --set env="nonprod" \
+            --set spring.profiles.active="${{ github.event.inputs.AZURE_DEPLOY_ENVIRONMENT }}" \
+            --set vaultEnabled="${vault_enabled}" \
+            --set lbm_pricer_AccountKey="${oauthlbmAcc}" \
+            --set oauth_link_publickey="${oauthKeylink}" \
+            --set keyvault_clientkey="${keyvault_clientkey}" \
+            --set keyvault_client_id="${keyvault_client_id}" \
+            --set oauth_secret_prd="${oauth_secret_prd}" \
+            --set splunk_token="${splunk_token}" \
+            --set keyvault_tenantid="${kayvault_tenantid}" \
+            --set oauth_publickey="${oauthKey}" \
+            --set oauth_mssqlacckey="${mssql_acct_key}" \
+            --set oauth_sqlmidbpasswd="${sqlmi_db_password}"
