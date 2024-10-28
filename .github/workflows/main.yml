@@ -25,6 +25,22 @@ jobs:
       - name: Get AKS credentials
         run: |
           az aks get-credentials --name crs-shared-aks-eastus-nonprod --resource-group crs-nonprod-shared-eastus-rg --admin --overwrite
+      - name: Set up Maven
+        run: |
+          retry_count=0
+          max_retries=3
+          delay=30
+          until [ $retry_count -ge $max_retries ]
+          do
+            uhg-actions/setup-maven@v4.4 maven-version=3.8.1 && break
+            retry_count=$((retry_count+1))
+            echo "Attempt $retry_count failed! Retrying in $delay seconds..."
+            sleep $delay
+          done
+          if [ $retry_count -ge $max_retries ]; then
+            echo "Failed to set up Maven after $max_retries attempts."
+            exit 1
+          fi
 
       - name: Fetch secrets from Key Vault
         run: |
