@@ -1,54 +1,6 @@
-name: Deploy to AKS
-
-on:
-  workflow_dispatch:
-    inputs:
-      imagePath:
-        description: "Image Path"
-        required: true
-      AZURE_DEPLOY_ENVIRONMENT:
-        description: "Azure Environment"
-        required: true
-
-jobs:
-  deploy-aks:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Azure Login
-        run: |
-          az login --service-principal --username ${{ secrets.AZURE_CLIENT_ID }} --password ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
-
-      - name: Get AKS credentials
-        run: |
-          az aks get-credentials --name crs-shared-aks-eastus-nonprod --resource-group crs-nonprod-shared-eastus-rg --admin --overwrite
-
-      - name: Helm Upgrade and Ingress
-        run: |
-          cd ${GITHUB_WORKSPACE}/helm
-      
-          echo "Running Helm upgrade for CRS API"
-          helm upgrade -i "crs-azure-crs-api" crs-api/ \
-            --values "value/nonprod/nonprod.yml" \
-            --set imageAPI="${{ env.IMAGE_PATH }}/crs/crs-api:api-${{ github.run_number }}" \
-            --set env="nonprod" \
-            --set spring.profiles.active="${{ env.AZURE_DEPLOY_ENVIRONMENT }}" \
-            --set vaultEnabled="${{ env.vault_enabled }}" \
-            --set lbm_pricer_AccountKey="${{ env.oauthlbmAcc }}" \
-            --set oauth_link_publickey="${{ env.oauthKeylink }}" \
-            --set keyvault_clientkey="${{ env.keyvault_clientkey }}" \
-            --set keyvault_client_id="${{ env.keyvault_client_id }}" \
-            --set oauth_secret_prd="${{ env.oauth_secret_prd }}" \
-            --set splunk_token="${{ env.splunk_token }}" \
-            --set keyvault_tenantid="${{ env.kayvault_tenantid }}" \
-            --set oauth_publickey="${{ env.oauthKey }}" \
-            --set oauth_mssqlacckey="${{ env.mssql_acct_key }}" \
-            --set oauth_sqlmidbpasswd="${{ env.sqlmi_db_password }}"
-      
-          echo "Running Helm upgrade for Ingress"
-          helm upgrade -i "crs-ingress" crs-ingress-api/ \
-            --values "value/nonprod/nonprod.yml" \
-            --set env="nonprod"
+vault_enabled=$(az keyvault secret show --name keyvault-enabled --vault-name crs-api-vault --query value -o tsv)
+if [[ $? -ne 0 ]]; then
+  echo "Failed to fetch vault_enabled"
+else
+  echo "vault_enabled fetched successfully"
+fi
