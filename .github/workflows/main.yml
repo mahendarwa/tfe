@@ -77,31 +77,20 @@ jobs:
 
       - name: Fetch secrets from Key Vault
         run: |
-          export vault_enabled=$(az keyvault secret show --name keyvault-enabled --vault-name crs-api-vault --query value -o tsv)
-          export kayvault_tenantid=$(az keyvault secret show --name Kayvault-tenantid --vault-name crs-api-vault --query value -o tsv)
-          export keyvault_client_id=$(az keyvault secret show --name Keyvault-client-id --vault-name crs-api-vault --query value -o tsv)
-          export keyvault_clientkey=$(az keyvault secret show --name Keyvault-clientkey --vault-name crs-api-vault --query value -o tsv)
-          export mssql_acct_key=$(az keyvault secret show --name mssql-acct-key --vault-name crs-api-vault --query value -o tsv)
-          export sqlmi_db_password=$(az keyvault secret show --name sqlmi-db-password --vault-name crs-api-vault --query value -o tsv)
-          export oauth_secret_prd=$(az keyvault secret show --name oauth-secret-prd --vault-name crs-api-vault --query value -o tsv)
-          export splunk_token=$(az keyvault secret show --name splunk-token --vault-name crs-api-vault --query value -o tsv)
-          export oauthKey=$(az keyvault secret show --name oauth-public-key --vault-name crs-api-vault --query value -o tsv)
-          export oauthKeylink=$(az keyvault secret show --name oauth-publickey-link --vault-name crs-api-vault --query value -o tsv)
-          export oauthlbmAcc=$(az keyvault secret show --name lbm-pricer-AccountKey --vault-name crs-api-vault --query value -o tsv)
+          echo "Fetching secrets from Azure Key Vault"
+          echo "vault_enabled=$(az keyvault secret show --name keyvault-enabled --vault-name crs-api-vault --query value -o tsv)" >> $GITHUB_ENV
+          echo "kayvault_tenantid=$(az keyvault secret show --name Kayvault-tenantid --vault-name crs-api-vault --query value -o tsv)" >> $GITHUB_ENV
+          echo "keyvault_client_id=$(az keyvault secret show --name Keyvault-client-id --vault-name crs-api-vault --query value -o tsv)" >> $GITHUB_ENV
+          echo "keyvault_clientkey=$(az keyvault secret show --name Keyvault-clientkey --vault-name crs-api-vault --query value -o tsv)" >> $GITHUB_ENV
+          echo "mssql_acct_key=$(az keyvault secret show --name mssql-acct-key --vault-name crs-api-vault --query value -o tsv)" >> $GITHUB_ENV
+          echo "sqlmi_db_password=$(az keyvault secret show --name sqlmi-db-password --vault-name crs-api-vault --query value -o tsv)" >> $GITHUB_ENV
+          echo "oauth_secret_prd=$(az keyvault secret show --name oauth-secret-prd --vault-name crs-api-vault --query value -o tsv)" >> $GITHUB_ENV
+          echo "splunk_token=$(az keyvault secret show --name splunk-token --vault-name crs-api-vault --query value -o tsv)" >> $GITHUB_ENV
+          echo "oauthKey=$(az keyvault secret show --name oauth-public-key --vault-name crs-api-vault --query value -o tsv)" >> $GITHUB_ENV
+          echo "oauthKeylink=$(az keyvault secret show --name oauth-publickey-link --vault-name crs-api-vault --query value -o tsv)" >> $GITHUB_ENV
+          echo "oauthlbmAcc=$(az keyvault secret show --name lbm-pricer-AccountKey --vault-name crs-api-vault --query value -o tsv)" >> $GITHUB_ENV
 
       - name: Helm Upgrade and Ingress
-        env:
-          vault_enabled: ${{ env.vault_enabled }}
-          oauthKeylink: ${{ env.oauthKeylink }}
-          keyvault_clientkey: ${{ env.keyvault_clientkey }}
-          keyvault_client_id: ${{ env.keyvault_client_id }}
-          oauth_secret_prd: ${{ env.oauth_secret_prd }}
-          splunk_token: ${{ env.splunk_token }}
-          kayvault_tenantid: ${{ env.kayvault_tenantid }}
-          oauthKey: ${{ env.oauthKey }}
-          oauthlbmAcc: ${{ env.oauthlbmAcc }}
-          mssql_acct_key: ${{ env.mssql_acct_key }}
-          sqlmi_db_password: ${{ env.sqlmi_db_password }}
         run: |
           cd ${GITHUB_WORKSPACE}/helm
           echo "Running Helm upgrade for CRS API"
