@@ -1,122 +1,18 @@
-name: crs-api
+- name: Trigger Main Workflow in External Repository
+  uses: actions/github-script@v6
+  with:
+    script: |
+      const owner = "niq-enterprise";
+      const repo = "panel-pod-aks-deploy";
+      const workflow_id = "main.yml";
+      const ref = "feature/github"; // Specify the branch
+      const inputs = { releasename: "usqa-deploy" };
 
-on:
-  workflow_dispatch:
-    inputs:
-      subenv:
-        description: 'Subscription environment type'
-        required: true
-        type: choice
-        options:
-          - nonprod
-          - prod
-      location:
-        description: 'CRS instance location'
-        required: true
-        type: choice
-        options:
-          - eastus
-          - centralus
-
-jobs:
-  crs-api-deploy:
-    runs-on: [uhg-runner]
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set environment variables
-        run: |
-          echo "AZURE_SUBSCRIPTION=$(if [[ ${{ github.event.inputs.subenv }} == 'prod' ]]; then echo 'crs-azure-prod-sp'; else echo 'crs-azure-nonprod-sp'; fi)" >> $GITHUB_ENV
-          echo "IMAGE_PATH=$(if [[ ${{ github.event.inputs.subenv }} == 'prod' ]]; then echo 'crsprodbootstraprgeastus5b02df11.eastus.azurecr.io'; else echo 'crsnonprodbootstraprgeastuse0e5bf14.eastus.azurecr.io'; fi)" >> $GITHUB_ENV
-          echo "CONTAINER_REGISTRY=$(if [[ ${{ github.event.inputs.subenv }} == 'prod' ]]; then echo 'crs-prod-con-reg'; else echo 'crs-nonprod-con-reg'; fi)" >> $GITHUB_ENV
-          echo "SUBSCRIPTION_ID=$(if [[ ${{ github.event.inputs.subenv }} == 'prod' ]]; then echo '5b02df11'; else echo 'e0e5bf14'; fi)" >> $GITHUB_ENV
-          echo "RESOURCE_GROUP=crs-${{ github.event.inputs.subenv }}-shared-${{ github.event.inputs.location }}-rg" >> $GITHUB_ENV
-
-      - name: Set up Java 17
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-            
-      - name: Set up Maven
-        uses: uhg-actions/setup-maven@v4.4
-        with:
-          maven-version: 3.8.1
-
-      - name: Build the application
-        run: mvn clean package
-
-      - name: Azure Login
-        run: |
-          az login --service-principal \
-            --username ${{ secrets.CRS_AZURE_CLIENT_ID_NONPROD }} \
-            --password ${{ secrets.CRS_AZURE_CLIENT_SECRET_NONPROD }} \
-            --tenant ${{ secrets.CRS_AZURE_TENANT_ID_NONPROD }}
-          echo "Azure login successful"
-  
-      - name: Build Docker Image
-        run: |
-          echo "Building Docker image"
-          docker build -t crsnonprodbootstraprgeastuse0e5bf14.azurecr.io/crs/crs-api:api-${{ github.run_number }} .
-
-      - name: Login to Azure Container Registry (ACR)
-        run: |
-          echo "Logging into Azure Container Registry"
-          az acr login --name crsnonprodbootstraprgeastuse0e5bf14
-      
-      - name: Push Docker Image to ACR
-        run: |
-          echo "Pushing Docker image to ACR"
-          docker push crsnonprodbootstraprgeastuse0e5bf14.azurecr.io/crs/crs-api:api-${{ github.run_number }}
-          
-      - name: Get AKS credentials
-        run: |
-          az aks get-credentials --name crs-shared-aks-eastus-nonprod --resource-group crs-nonprod-shared-eastus-rg --admin --overwrite
-
-      - name: Fetch secrets from Key Vault
-        run: |
-          echo "Fetching secrets from Azure Key Vault"
-          echo "vault_enabled=$(az keyvault secret show --name keyvault-enabled --vault-name crs-api-vault --query value -o tsv)" >> $GITHUB_ENV
-          echo "kayvault_tenantid=$(az keyvault secret show --name Kayvault-tenantid --vault-name crs-api-vault --query value -o tsv)" >> $GITHUB_ENV
-          echo "keyvault_client_id=$(az keyvault secret show --name Keyvault-client-id --vault-name crs-api-vault --query value -o tsv)" >> $GITHUB_ENV
-          echo "keyvault_clientkey=$(az keyvault secret show --name Keyvault-clientkey --vault-name crs-api-vault --query value -o tsv)" >> $GITHUB_ENV
-          echo "mssql_acct_key=$(az keyvault secret show --name mssql-acct-key --vault-name crs-api-vault --query value -o tsv)" >> $GITHUB_ENV
-          echo "sqlmi_db_password=$(az keyvault secret show --name sqlmi-db-password --vault-name crs-api-vault --query value -o tsv)" >> $GITHUB_ENV
-          echo "oauth_secret_prd=$(az keyvault secret show --name oauth-secret-prd --vault-name crs-api-vault --query value -o tsv)" >> $GITHUB_ENV
-          echo "splunk_token=$(az keyvault secret show --name splunk-token --vault-name crs-api-vault --query value -o tsv)" >> $GITHUB_ENV
-          echo "oauthKey=$(az keyvault secret show --name oauth-public-key --vault-name crs-api-vault --query value -o tsv)" >> $GITHUB_ENV
-          echo "oauthKeylink=$(az keyvault secret show --name oauth-publickey-link --vault-name crs-api-vault --query value -o tsv)" >> $GITHUB_ENV
-          echo "oauthlbmAcc=$(az keyvault secret show --name lbm-pricer-AccountKey --vault-name crs-api-vault --query value -o tsv)" >> $GITHUB_ENV
-
-      - name: Helm Upgrade and Ingress
-        run: |
-          cd ${GITHUB_WORKSPACE}/helm
-          echo "Running Helm upgrade for CRS API"
-          helm upgrade -i "crs-azure-crs-api" crs-api/ \
-            --namespace crs-api \
-            --values "value/nonprod/nonprod.yml" \
-            --set imageAPI="${{ env.IMAGE_PATH }}/crs/crs-api:api-${{ github.run_number }}" \
-            --set env="nonprod" \
-            --set spring.profiles.active="${{ env.AZURE_DEPLOY_ENVIRONMENT }}" \
-            --set vaultEnabled="${{ env.vault_enabled }}" \
-            --set lbm_pricer_AccountKey="${{ env.oauthlbmAcc }}" \
-            --set oauth_link_publickey="${{ env.oauthKeylink }}" \
-            --set keyvault_clientkey="${{ env.keyvault_clientkey }}" \
-            --set keyvault_client_id="${{ env.keyvault_client_id }}" \
-            --set oauth_secret_prd="${{ env.oauth_secret_prd }}" \
-            --set splunk_token="${{ env.splunk_token }}" \
-            --set keyvault_tenantid="${{ env.kayvault_tenantid }}" \
-            --set oauth_publickey="${{ env.oauthKey }}" \
-            --set oauth_mssqlacckey="${{ env.mssql_acct_key }}" \
-            --set oauth_sqlmidbpasswd="${{ env.sqlmi_db_password }}"
-          
-          echo "Running Helm upgrade for Ingress"
-          helm upgrade -i "crs-ingress" crs-ingress-api/ \
-            --namespace crs-api \
-            --values "value/nonprod/nonprod.yml" \
-            --set env="nonprod"
-
-      - name: Logout from Azure
-        run: az logout
+      await github.actions.createWorkflowDispatch({
+        owner,
+        repo,
+        workflow_id,
+        ref,
+        inputs
+      });
+    github-token: ${{ secrets.GITHUB_TOKEN }}
