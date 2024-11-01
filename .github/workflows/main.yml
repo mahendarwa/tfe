@@ -18,7 +18,7 @@ jobs:
             const ref = "feature/github"; // Specify the branch
             const inputs = { releasename: "usqa-deploy" };
 
-            await github.actions.createWorkflowDispatch({
+            await github.rest.actions.createWorkflowDispatch({
               owner,
               repo,
               workflow_id,
