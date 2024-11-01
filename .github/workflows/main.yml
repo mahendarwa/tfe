@@ -1,18 +1,27 @@
-- name: Trigger Main Workflow in External Repository
-  uses: actions/github-script@v6
-  with:
-    script: |
-      const owner = "niq-enterprise";
-      const repo = "panel-pod-aks-deploy";
-      const workflow_id = "main.yml";
-      const ref = "feature/github"; // Specify the branch
-      const inputs = { releasename: "usqa-deploy" };
+name: Trigger Main Workflow in External Repository
 
-      await github.actions.createWorkflowDispatch({
-        owner,
-        repo,
-        workflow_id,
-        ref,
-        inputs
-      });
-    github-token: ${{ secrets.GITHUB_TOKEN }}
+on:
+  workflow_dispatch:
+
+jobs:
+  trigger-external-workflow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Main Workflow in External Repository
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const owner = "niq-enterprise";
+            const repo = "panel-pod-aks-deploy";
+            const workflow_id = "main.yml";
+            const ref = "feature/github"; // Specify the branch
+            const inputs = { releasename: "usqa-deploy" };
+
+            await github.actions.createWorkflowDispatch({
+              owner,
+              repo,
+              workflow_id,
+              ref,
+              inputs
+            });
