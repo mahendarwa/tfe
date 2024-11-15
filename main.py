@@ -34,7 +34,7 @@ def ensure_host_command_column():
         check_column_query = """
             SELECT column_name
             FROM information_schema.columns
-            WHERE table_schema = 'OPS'
+            WHERE table_schema = 'ARIP.OPS'
               AND table_name = 'DBT_HOSTS'
               AND column_name = 'HOST_COMMAND'
         """
@@ -43,13 +43,13 @@ def ensure_host_command_column():
 
         # Add the column if it doesn't exist
         if not column_exists:
-            log.info("HOST_COMMAND column does not exist. Adding it to DBT_HOSTS table.")
+            log.info("HOST_COMMAND column does not exist. Adding it to ARIP.OPS.DBT_HOSTS table.")
             add_column_query = """
-                ALTER TABLE OPS.DBT_HOSTS
+                ALTER TABLE ARIP.OPS.DBT_HOSTS
                 ADD COLUMN HOST_COMMAND STRING
             """
             sf_cursor.execute(add_column_query)
-            log.info("Successfully added HOST_COMMAND column to DBT_HOSTS table.")
+            log.info("Successfully added HOST_COMMAND column to ARIP.OPS.DBT_HOSTS table.")
     except Exception as e:
         log.exception("Error ensuring HOST_COMMAND column exists - Exception: %s", str(e))
         raise e
@@ -72,7 +72,7 @@ def issue_host_command(command, host_name):
 
         # Update the column with the specified command
         query = f"""
-            UPDATE OPS.DBT_HOSTS
+            UPDATE ARIP.OPS.DBT_HOSTS
             SET HOST_COMMAND = '{command}'
             WHERE HOST_NAME = '{host_name}'
         """
