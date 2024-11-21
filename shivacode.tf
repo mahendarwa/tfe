@@ -1,6 +1,7 @@
-- name: Azure Login
+- name: Delete Docker Image from ACR
   run: |
-    az login --service-principal \
-      --username "${{ secrets.AZURE_CLIENT_ID }}" \
-      --password "${{ secrets.AZURE_CLIENT_SECRET }}" \
-      --tenant "${{ secrets.AZURE_TENANT_ID }}"
+    echo "Deleting Docker image from ACR"
+    az acr repository delete \
+      --name crsnonprodbootstraprgastuse0e5bf14 \
+      --image crs-api-api:${{ github.run_number }} \
+      --yes
