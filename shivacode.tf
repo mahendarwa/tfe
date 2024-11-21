@@ -1,7 +1,3 @@
-- name: Delete Docker Image from ACR
+- name: Debug IMAGE_PATH
   run: |
-    echo "Deleting Docker image from ACR"
-    az acr repository delete \
-      --name crsnonprodbootstraprgastuse0e5bf14 \
-      --image ${env.IMAGE_PATH}/crs/crs-api:api-${{ github.run_number }} \
-      --yes
+    echo "IMAGE_PATH is: $IMAGE_PATH"
