@@ -1,27 +1,63 @@
-name: Trigger Main Workflow in External Repository
+name: AKS Deploy
 
 on:
   workflow_dispatch:
+    inputs:
+      releasename:
+        description: 'Select the Environment'
+        required: true
+        type: choice
+        options:
+          - usdev-deploy
+          - usqa-deploy
+          - usuat-deploy
+          - euuat-deploy
+          - usperf-deploy
+          - ushotfix-deploy
+          - euperf-deploy
+          - usprod-deploy
+          - euprod-deploy
+          - calatam-deploy
+          - apac-deploy
+      releaseversion:
+        description: 'Chart version' 
+        required: true
+        type: string
+      operation:
+        description: 'Operation to be carried out using deployment tool'
+        required: true
+        type: choice
+        options:
+          - deploy
+          - deployuninstall
 
 jobs:
-  trigger-external-workflow:
+  usuat:
+    if: ${{ inputs.releasename == 'usuat-deploy' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Main Workflow in External Repository
-        uses: actions/github-script@v6
+      - name: Check Actor Permissions
+        env:
+          USER1: ${{ secrets.USER1_TOKEN }}
+          USER2: ${{ secrets.USER2_TOKEN }}
+          USER3: ${{ secrets.USER3_TOKEN }}
+          USER4: ${{ secrets.USER4_TOKEN }}
+        run: |
+          if [[ "${{ github.actor }}" != "$USER1" && \
+                "${{ github.actor }}" != "$USER2" && \
+                "${{ github.actor }}" != "$USER3" && \
+                "${{ github.actor }}" != "$USER4" ]]; then
+            echo "Unauthorized actor: ${{ github.actor }}"
+            exit 1
+          fi
+          echo "Authorized actor: ${{ github.actor }}"
+      - name: Run Helm Workflow
+        uses: niq-actions/aks/.github/workflows/helm.yaml@main
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const owner = "niq-enterprise";
-            const repo = "panel-pod-aks-deploy";
-            const workflow_id = "main.yml";
-            const ref = "feature/github"; // Specify the branch
-            const inputs = { releasename: "usqa-deploy" };
-
-            await github.rest.actions.createWorkflowDispatch({
-              owner,
-              repo,
-              workflow_id,
-              ref,
-              inputs
-            });
+          cluster: SC-02-NONPROD-EASTUS2
+          namespace: omni2-uat-us-eastus2
+          releasename: ${{ inputs.releasename }}
+          releaseversion: ${{ inputs.releaseversion }}
+          tool: helm
+          operation: ${{ inputs.operation }}
+          serviceprincipal: OMNSHO-SP-NP
