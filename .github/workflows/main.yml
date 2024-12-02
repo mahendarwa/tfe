@@ -1,65 +1,49 @@
-name: AKS Deploy
+name: Azure Deploy
 
 on:
   workflow_dispatch:
     inputs:
-      releasename:
-        description: 'Select the Environment'
+      TF_VAR_namespace:
+        description: 'Subscription type for deployment'
         required: true
+        default: 'nonprod'
         type: choice
         options:
-          - usdev-deploy
-          - usqa-deploy
-          - usuat-deploy
-          - euuat-deploy
-          - usperf-deploy
-          - ushotfix-deploy
-          - euperf-deploy
-          - usprod-deploy
-          - euprod-deploy
-          - calatam-deploy
-          - apac-deploy
-      releaseversion:
-        description: 'Chart version' 
-        required: true
-        type: string
-      operation:
-        description: 'Operation to be carried out using deployment tool'
-        required: true
-        type: choice
-        options:
-          - deploy
-          - deployuninstall
+          - nonprod
+          - stage
+          - prod
 
 jobs:
-  validate-actor:
+  terraform-deploy:
     runs-on: ubuntu-latest
-    steps:
-      - name: Validate Actor
-        env:
-          USER1: ${{ secrets.USER1_TOKEN }}
-          USER2: ${{ secrets.USER2_TOKEN }}
-          USER3: ${{ secrets.USER3_TOKEN }}
-          USER4: ${{ secrets.USER4_TOKEN }}
-        run: |
-          if [[ "${{ github.actor }}" != "$USER1" && \
-                "${{ github.actor }}" != "$USER2" && \
-                "${{ github.actor }}" != "$USER3" && \
-                "${{ github.actor }}" != "$USER4" ]]; then
-            echo "Unauthorized actor: ${{ github.actor }}"
-            exit 1
-          fi
-          echo "Authorized actor: ${{ github.actor }}"
 
-  usuat:
-    needs: validate-actor
-    uses: niq-actions/aks/.github/workflows/helm.yaml@main
-    secrets: inherit
-    with:
-      cluster: SC-02-NONPROD-EASTUS2
-      namespace: omni2-uat-us-eastus2
-      releasename: ${{ inputs.releasename }}
-      releaseversion: ${{ inputs.releaseversion }}
-      tool: helm
-      operation: ${{ inputs.operation }}
-      serviceprincipal: OMNSHO-SP-NP
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Move and Rename Files
+      run: |
+        echo "Moving ./CRS-Azure-Bootstrap-Infrastructure/* to root directory..."
+        mv -f ./CRS-Azure-Bootstrap-Infrastructure/* ./
+
+        echo "Copying and renaming optumfiles/Optumfile-${{ github.event.inputs.TF_VAR_namespace }}.yml to ./Optumfile.yml..."
+        cp optumfiles/Optumfile-${{ github.event.inputs.TF_VAR_namespace }}.yml ./Optumfile.yml
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.5.6 # Specify the Terraform version
+
+    - name: Terraform Init
+      run: terraform init
+
+    - name: Terraform Plan
+      run: terraform plan -var="TF_VAR_namespace=${{ github.event.inputs.TF_VAR_namespace }}"
+
+    - name: Terraform Apply
+      if: github.event.inputs.TF_VAR_namespace == 'prod'
+      run: terraform apply -var="TF_VAR_namespace=${{ github.event.inputs.TF_VAR_namespace }}" -auto-approve
+
+    - name: Cleanup Workspace
+      if: always()
+      run: rm -rf CRS-Azure-Bootstrap-Infrastructure Optumfile.yml
