@@ -1,0 +1,24 @@
+#!/usr/bin/groovy
+@Library(['com.optum.jenkins.pipelines.templates.terraform@master']) _
+
+properties([
+        parameters([
+                choice(
+                    name: 'TF_VAR_namespace',
+                    description: 'Subscription type for deployment',
+                    choices: ['nonprod', 'stage', 'prod']
+                )
+        ]),
+        buildDiscarder(logRotator(daysToKeepStr: '3'))
+])
+
+TerraformPipeline('azure-deploy', [
+    postScmCheckout: { ->
+        sh """
+            mv -f ./CRS-Azure-Bootstrap-Infrastructure/* ./
+        """
+        echo "Moving and renaming ./optumfiles/Optumfile-${params.TF_VAR_namespace}.yml to ./Optumfile.yml..."
+        fileOperations([fileCopyOperation(excludes: '', flattenFiles: true, includes: "optumfiles/Optumfile-${params.TF_VAR_namespace}.yml", targetLocation: '')])
+        fileOperations([fileRenameOperation(destination: 'Optumfile.yml', source: "Optumfile-${params.TF_VAR_namespace}.yml")])
+    }
+])
