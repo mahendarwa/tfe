@@ -1,6 +1,22 @@
-After discussing this with Craig, he suggested the following approach:
+Develop a Feed Check Monitor for Snowflake feeds to verify that all expected feeds arrive on time and contain valid data.
+Validate that feeds are arriving within their expected timeframes.
+Check the slice timestamp (SLC TM) of the data to ensure it's within the specified thresholds (e.g., 120 minutes)
+Verify feeds based on criteria such as:
+     business date matches the expected date.
+     data falls within specific start-of-day (SOD) and end-of-day (EOD) ranges.
 
-Create a virtual environment to isolate the testing process.
-Take the existing (current) versions of the libraries and attempt to upgrade them to the fixed versions.
-Verify if the libraries function as expected without breaking any dependencies.
-I will proceed with this approach and provide updates based on my findings. Let me know if there are any additional checks or steps you’d like me to include.
+The system will reference configuration files (e.g., in the API feature config folder) containing:
+Feed names.
+Expected arrival times.
+Associated Snowflake tables (e.g., "AIR IP" database).
+
+Reference and adapt the existing S3 Feed Check Monitor (written by Craig) to handle Snowflake credentials and queries.
+If any issues are detected (e.g., missing feeds or data outside thresholds), generate alerts.
+Send notifications via email based on the configuration.
+
+
+Next Steps:
+Raise the necessary access requests.
+Review the existing S3 monitor's structure and configuration for understanding.
+collaborate with Craig (or others) for specific details on the Snowflake feeds and table mappings.
+Begin implementation once access is granted and requirements are clarified.
