@@ -1,40 +1,48 @@
-jobs:
-  deploy:
-    runs-on: zilverton-private-x64-ubuntu
-    permissions:
-      id-token: write
-      contents: read
-      packages: write
-    environment: ${{ github.event.inputs.ENVIRONMENT_TYPE }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v1
-        with:
-          token: ${{ secrets.MY_GITHUB_TOKEN }}
+steps:
+  - name: Checkout Code
+    uses: actions/checkout@v3
+    with:
+      ref: feature/test_pipeline # Ensure the correct branch is checked out
 
-      - name: Push to release
-        env:
-          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
-        run: |
-          git branch
-          DATE=$(date +%Y%m%d)
-          Branch="release-${DATE}-python"
+  - name: Push to release
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    run: |
+      ls
+      pwd
 
-          git config --global user.email "balaji.seetharman@cignahealthcare.com"
-          git config --global user.name "C8X6K9_Zilver"
+      echo "Checking current branch..."
+      git branch
 
-          # Create or switch to the branch
-          if git rev-parse --verify $Branch >/dev/null 2>&1; then
-            git checkout $Branch
-          else
-            git checkout -b $Branch
-          fi
+      # Get the current date and construct the branch name
+      DATE=$(date +%Y%m%d)
+      Branch=release-${DATE}-python
 
-          # Add and commit changes if there are any
-          if [ -n "$(git status --porcelain)" ]; then
-            git add .
-            git commit -m "new release"
-            git push origin $Branch --force
-          else
-            echo "No changes to commit."
-          fi
+      # Configure Git user
+      git config --global user.email "balaji.seetharman@cignahealthcare.com"
+      git config --global user.name "C8X6K9_Zilver"
+
+      # Create and switch to a new branch if it doesn't exist
+      if git rev-parse --verify $Branch >/dev/null 2>&1; then
+        echo "Branch $Branch already exists. Switching to it."
+        git checkout $Branch
+      else
+        echo "Creating and switching to branch $Branch."
+        git checkout -b $Branch
+      fi
+
+      pwd
+      ls
+
+      echo "Creating a test file for demonstration..."
+      touch t.text
+
+      echo "Adding and committing changes..."
+      if [ -n "$(git status --porcelain)" ]; then
+        git add .
+        git commit -m "new release"
+        echo "Pushing changes to the remote branch $Branch."
+        git push origin $Branch --force
+      else
+        echo "No changes to commit."
+      fi
