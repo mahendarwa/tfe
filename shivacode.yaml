@@ -1,3 +1,14 @@
+variable "github_token" {
+  description = "GitHub token for authentication"
+  type        = string
+  sensitive   = true
+}
+
+module "optum_ips" {
+  source = "git::https://github.com/dojo360/optum-ips.git"
+}
+
+
 name: Azure Deploy
 
 on:
@@ -11,11 +22,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.5.6
-
       - name: Configure Git Authentication
         run: |
           echo "echo ${{ secrets.ICP_GH_TOKEN }}" > git-askpass.sh
@@ -23,6 +29,11 @@ jobs:
           export GIT_ASKPASS="$(pwd)/git-askpass.sh"
         env:
           GITHUB_TOKEN: ${{ secrets.ICP_GH_TOKEN }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.6
 
       - name: Terraform Init
         run: terraform init -backend=false -no-color
