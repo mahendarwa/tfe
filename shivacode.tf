@@ -1,12 +1,14 @@
-Replace S3-based monitoring with database queries to check if expected data is present at the correct time.
-Monitor must check Start-of-Day (SOD), Intraday, and End-of-Day (EOD) slices separately.
-If data for a given slice is missing at the expected time, raise an alert.
-Implement a sliding window mechanism to avoid rechecking confirmed data.
-If today is a business day after a holiday, check the last available business day’s data.
-Initially, check only data presence; later, introduce data validation checks (e.g., expected record counts).
+variable "github_token" {
+  description = "GitHub token for authentication"
+  type        = string
+  sensitive   = true
+}
 
-Final Outcome
-A monitoring script running on a schedule.
-A configuration file defining expected data.
-Logs and alerts notifying about missing data.
-Documentation explaining how it works.
+module "optum_ips" {
+  source = "git::https://${var.github_token}@github.com/dojo360/optum-ips.git"
+}
+
+ - name: Terraform Plan
+        run: terraform plan -var="TF_VAR_namespace=${{ github.event.inputs.TF_VAR_namespace }}"
+        env:
+          TF_VAR_github_token: ${{ secrets.ICP_GH_TOKEN }}
