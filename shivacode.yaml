@@ -1,3 +1,9 @@
-- name: Authenticate with GitHub
+- name: Check Available Secrets
   run: |
-    git clone https://${{ secrets.ICP_GH_TOKEN }}@github.com/dojo360/optum-ips.git
+    echo "Checking if ICP_GH_TOKEN is available..."
+    if [[ -z "${{ secrets.ICP_GH_TOKEN }}" ]]; then
+      echo "❌ Secret ICP_GH_TOKEN is NOT set!"
+      exit 1
+    else
+      echo "✅ Secret ICP_GH_TOKEN exists!"
+    fi
