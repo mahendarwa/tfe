@@ -1,47 +1,31 @@
-name: Azure Deploy
+name: GitHub Authentication Test
 
 on:
   workflow_dispatch:
 
 jobs:
-  terraform-deploy:
-    runs-on: [uhg-runner]
+  test-git-auth:
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Configure Git Authentication
+      - name: Authenticate with GitHub
         run: |
-          echo "#!/bin/sh" > git-askpass.sh
-          echo "echo ${{ secrets.ICP_GH_TOKEN }}" >> git-askpass.sh
-          chmod +x git-askpass.sh
-          echo "GIT_ASKPASS script created."
-        env:
-          GITHUB_TOKEN: ${{ secrets.ICP_GH_TOKEN }}
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git config --global credential.helper store
+          echo "https://${{ secrets.ICP_GH_TOKEN }}@github.com" > ~/.git-credentials
+          chmod 600 ~/.git-credentials
+          git credential approve <<EOF
+          protocol=https
+          host=github.com
+          username=git
+          password=${{ secrets.ICP_GH_TOKEN }}
+          EOF
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.5.6
-
-      - name: Terraform Init
+      - name: Test Git Access
         run: |
-          export GIT_ASKPASS="$(pwd)/git-askpass.sh"
-          terraform init -backend=false -no-color
-        env:
-          GIT_ASKPASS: "$(pwd)/git-askpass.sh"
-
-      - name: Terraform Plan
-        run: |
-          export GIT_ASKPASS="$(pwd)/git-askpass.sh"
-          terraform plan -var="TF_VAR_namespace=${{ github.event.inputs.TF_VAR_namespace }}"
-        env:
-          GIT_ASKPASS: "$(pwd)/git-askpass.sh"
-
-      - name: Terraform Apply
-        run: |
-          export GIT_ASKPASS="$(pwd)/git-askpass.sh"
-          terraform apply -auto-approve
-        env:
-          GIT_ASKPASS: "$(pwd)/git-askpass.sh"
+          git clone https://github.com/dojo360/optum-ips.git test-repo
+          ls -lah test-repo
