@@ -1,31 +1,3 @@
-name: GitHub Authentication Test
-
-on:
-  workflow_dispatch:
-
-jobs:
-  test-git-auth:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Authenticate with GitHub
-        run: |
-          git config --global user.email "github-actions@github.com"
-          git config --global user.name "GitHub Actions"
-          git config --global credential.helper store
-          echo "https://${{ secrets.ICP_GH_TOKEN }}@github.com" > ~/.git-credentials
-          chmod 600 ~/.git-credentials
-          git credential approve <<EOF
-          protocol=https
-          host=github.com
-          username=git
-          password=${{ secrets.ICP_GH_TOKEN }}
-          EOF
-
-      - name: Test Git Access
-        run: |
-          git clone https://github.com/dojo360/optum-ips.git test-repo
-          ls -lah test-repo
+- name: Authenticate with GitHub
+  run: |
+    git clone https://${{ secrets.ICP_GH_TOKEN }}@github.com/dojo360/optum-ips.git
