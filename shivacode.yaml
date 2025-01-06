@@ -1,9 +1,13 @@
-- name: Check Available Secrets
-  run: |
-    echo "Checking if ICP_GH_TOKEN is available..."
-    if [[ -z "${{ secrets.ICP_GH_TOKEN }}" ]]; then
-      echo "❌ Secret ICP_GH_TOKEN is NOT set!"
-      exit 1
-    else
-      echo "✅ Secret ICP_GH_TOKEN exists!"
-    fi
+Can you provid an oveview of how the BSD moitor curntly works for S3 feeeds
+any specific logic or confiurations in BSD that we should replicate for Snowflake
+Where can I find the existng BSD monitor code for reference...
+reusable compnents or functional tions in the BSD monitor that we can directly use for Snowflak
+
+how does the BSD montor curntly raise alerts for isssing or delayed feeeds
+Should we follow the same alerting approach for Snowflake feed 
+
+How does the BSD monitor vaidate that S3 feeds are arriving as expected.. 
+How does BSD handle busness days, holidays, and weeknds in data verifiation---
+Do we need to impement any additional logic for Snowflake---
+Where does the BSD monitor currently run----
+how do we integate the new Snowflake feed monitor into the existing
