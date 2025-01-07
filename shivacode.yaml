@@ -1,13 +1,62 @@
-Can you provid an oveview of how the BSD moitor curntly works for S3 feeeds
-any specific logic or confiurations in BSD that we should replicate for Snowflake
-Where can I find the existng BSD monitor code for reference...
-reusable compnents or functional tions in the BSD monitor that we can directly use for Snowflak
+name: Azure Deploy
 
-how does the BSD montor curntly raise alerts for isssing or delayed feeeds
-Should we follow the same alerting approach for Snowflake feed 
+on:
+  workflow_dispatch:
+    inputs:
+      subenv:
+        description: "Subscription environment type for deployment"
+        required: true
+        type: choice
+        options:
+          - nonprod
+          - prod
+      env:
+        description: "Subscription type for deployment"
+        required: true
+        type: choice
+        options:
+          - nonprod
+          - perf
+          - stage
+          - prod
+      location:
+        description: "ICP instance location"
+        required: true
+        type: choice
+        options:
+          - eastus
+          - centralus
+      cluster:
+        description: "Name of cluster (example: icp-shared-aks-eastus-prod1)"
+        required: true
+        type: string
+      installKeda:
+        description: "Pull and Push ACE Patient Estimator image to ACR?"
+        required: false
+        type: boolean
+        default: false
 
-How does the BSD monitor vaidate that S3 feeds are arriving as expected.. 
-How does BSD handle busness days, holidays, and weeknds in data verifiation---
-Do we need to impement any additional logic for Snowflake---
-Where does the BSD monitor currently run----
-how do we integate the new Snowflake feed monitor into the existing
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set Environment Variables
+        run: |
+          echo "AZURE_SUBSCRIPTION=${{ github.event.inputs.subenv == 'nonprod' && 'ddr-azure-nonprod-sp' || 'ddr-azure-prod-sp' }}" >> $GITHUB_ENV
+
+      - name: Install Keda (If Enabled)
+        if: github.event.inputs.installKeda == 'true'
+        run: |
+          echo "Installing Keda in Azure Kubernetes Service..."
+          source /etc/profile.d/jenkins.sh
+          az aks get-credentials --name ${{ github.event.inputs.cluster }} \
+            --resource-group icp-${{ github.event.inputs.env }}-shared-${{ github.event.inputs.location }}-rg \
+            --admin --overwrite
+          
+          helm repo add kedacore https://kedacore.github.io/charts
+          helm repo update
+          helm install keda kedacore/keda --namespace keda --create-namespace
