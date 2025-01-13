@@ -2,17 +2,10 @@
   run: |
     git config --global user.email "github-actions@github.com"
     git config --global user.name "GitHub Actions"
-    git config --global credential.helper store
     echo "https://${{ secrets.ICP_GH_TOKEN }}@github.com" > ~/.git-credentials
-    chmod 600 ~/.git-credentials
+    git config --global credential.helper store
 
 - name: Verify Git Authentication
-  run: git ls-remote https://github.com/dojo360/optum-ips.git
-
-- name: Setup Terraform
-  uses: hashicorp/setup-terraform@v2
-  with:
-    terraform_version: 1.5.6
-
-- name: Terraform Init
-  run: terraform init -backend=false -no-color
+  run: |
+    export GIT_ASKPASS="echo ${{ secrets.ICP_GH_TOKEN }}"
+    git ls-remote https://github.com/dojo360/optum-ips.git
