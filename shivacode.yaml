@@ -1,8 +1,18 @@
-Connected with Willy and gathered all inputs regarding BSD Monitoring.
-Received a suggestion to leverage the existing BSD Monitoring and add the required enhancements.
-Development server was completely down for the last two days, delaying the start of the script.
-Worked with the Cloud Ops team to resolve the issue while reviewing the BSD Monitoring code and preparing documentation.
-Now able to access the development server but cannot switch to the apadmin user.
-Do not seem to have the necessary permissions for apadmin.
-Identified the required AD groups and am in the process of raising a request for access.
-Once access is granted, will proceed with implementing the enhancements.
+- name: Authenticate with GitHub
+  run: |
+    git config --global user.email "github-actions@github.com"
+    git config --global user.name "GitHub Actions"
+    git config --global credential.helper store
+    echo "https://${{ secrets.ICP_GH_TOKEN }}@github.com" > ~/.git-credentials
+    chmod 600 ~/.git-credentials
+
+- name: Verify Git Authentication
+  run: git ls-remote https://github.com/dojo360/optum-ips.git
+
+- name: Setup Terraform
+  uses: hashicorp/setup-terraform@v2
+  with:
+    terraform_version: 1.5.6
+
+- name: Terraform Init
+  run: terraform init -backend=false -no-color
