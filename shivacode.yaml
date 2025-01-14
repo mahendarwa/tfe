@@ -1,1 +1,4 @@
-print(f"Configured warehouse: {get_conf_val('sf_config', 'SF_WAREHOUSE')}")
+warehouse_name = get_conf_val("sf_config", "SF_WAREHOUSE")
+cur = ctx.cursor()
+cur.execute(f"USE WAREHOUSE {warehouse_name};")
+cur.close()
