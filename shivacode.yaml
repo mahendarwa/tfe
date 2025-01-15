@@ -1,4 +1,46 @@
-warehouse_name = get_conf_val("sf_config", "SF_WAREHOUSE")
-cur = ctx.cursor()
-cur.execute(f"USE WAREHOUSE {warehouse_name};")
-cur.close()
+def sf_create_ctx(oauth_token=None):
+    """
+    Creates the Snowflake connector based on the values defined in the config files
+    """
+    try:
+        env = get_env()
+        client_id = "snowflake_" + env
+        sf_acc_nm = get_conf_val("sf_config", "SF_USER")
+        
+        if oauth_token is None:
+            oauth_token = sf_get_oauth_token(client_id, sf_acc_nm)
+
+        warehouse_name = get_conf_val("sf_config", "SF_WAREHOUSE")
+        database_name = get_conf_val("sf_config", "SF_DATABASE")
+        schema_name = get_conf_val("sf_config", "SF_SCHEMA")
+
+        print(f"Configured warehouse: {warehouse_name}")
+        print(f"Configured database: {database_name}")
+        print(f"Configured schema: {schema_name}")
+
+        if not warehouse_name or not database_name or not schema_name:
+            raise ValueError("Missing required Snowflake configuration values!")
+
+        ctx = sfc.connect(
+            user=get_conf_val("sf_config", "SF_USER").lower(),
+            host=get_conf_val("sf_config", "SF_URL"),
+            account=get_conf_val("sf_config", "SF_ACCOUNT_ID"),
+            authenticator="oauth",
+            token=oauth_token,
+            warehouse=warehouse_name,
+            database=database_name,
+            schema=schema_name
+        )
+
+        if not ctx:
+            raise ConnectionError("Snowflake connection failed!")
+
+        cur = ctx.cursor()
+        cur.execute(f"USE WAREHOUSE {warehouse_name};")
+        cur.close()
+
+        app_log.debug("bsd_monitor.sf_create_ctx - Snowflake connector object was successfully created")
+        return ctx
+    except Exception as e:
+        app_log.error(f"bsd_monitor.sf_create_ctx has encountered an error: {str(e)}")
+        return None
