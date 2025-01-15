@@ -35,8 +35,12 @@ def sf_create_ctx(oauth_token=None):
             cur.execute(f"USE WAREHOUSE {warehouse_name};")
             cur.execute("SELECT CURRENT_WAREHOUSE(), CURRENT_DATABASE(), CURRENT_SCHEMA();")
             result = cur.fetchall()
-            print(f"✅ Active Warehouse: {result[0][0]}, Database: {result[0][1]}, Schema: {result[0][2]}")
-            app_log.debug(f"✅ Snowflake connection successful with Warehouse: {result[0][0]}")
+            if result:
+                print(f"✅ Active Warehouse: {result[0][0]}, Database: {result[0][1]}, Schema: {result[0][2]}")
+                app_log.debug(f"✅ Snowflake connection successful with Warehouse: {result[0][0]}")
+            else:
+                print("❌ Warehouse not active. Verify warehouse permissions.")
+                return None
         except Exception as e:
             print(f"❌ Error: {str(e)}")
             app_log.error(f"❌ Error setting warehouse: {str(e)}")
@@ -48,6 +52,8 @@ def sf_create_ctx(oauth_token=None):
     except Exception as e:
         app_log.error(f"Error in sf_create_ctx: {str(e)}")
         return None
+
+
 
 
 
