@@ -1,4 +1,4 @@
-name: Azure Login
+name: Azure Login Without Subscription
 
 on:
   workflow_dispatch:
@@ -8,15 +8,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Login to Azure
+    - name: Login to Azure (No Subscription Context)
       uses: azure/login@v1
       with:
         client-id: ${{ secrets.CRS_AZURE_CLIENT_ID_NONPROD }}
         client-secret: ${{ secrets.CRS_AZURE_CLIENT_SECRET_NONPROD }}
         tenant-id: ${{ secrets.CRS_AZURE_TENANT_ID_NONPROD }}
+        allow-no-subscriptions: true
 
-    - name: Verify Azure login
-      run: az account show
+    - name: Run Azure CLI Command
+      run: az ad user list
