@@ -1,54 +1,17 @@
-name: Check Azure Backend Configuration
+provider "azurerm" {
+  features {}
+}
+- name: Set Azure Environment Variables
+  run: |
+    echo "ARM_CLIENT_ID=${{ secrets.CRS_AZURE_CLIENT_ID_NONPROD }}" >> $GITHUB_ENV
+    echo "ARM_CLIENT_SECRET=${{ secrets.CRS_AZURE_CLIENT_SECRET_NONPROD }}" >> $GITHUB_ENV
+    echo "ARM_TENANT_ID=${{ secrets.CRS_AZURE_TENANT_ID_NONPROD }}" >> $GITHUB_ENV
+    echo "ARM_SUBSCRIPTION_ID=e0e5bf14-0e68-4675-a9c1-84e450ab6f89" >> $GITHUB_ENV
 
-on:
-  workflow_dispatch:
-
-jobs:
-  check-backend-access:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Login to Azure using Service Principal
-      run: |
-        az login --service-principal \
-          -u ${{ secrets.CRS_AZURE_CLIENT_ID_NONPROD }} \
-          -p ${{ secrets.CRS_AZURE_CLIENT_SECRET_NONPROD }} \
-          --tenant ${{ secrets.CRS_AZURE_TENANT_ID_NONPROD }}
-
-    - name: Verify Resource Group
-      id: check_rg
-      run: |
-        az group show --name crs-nonprod-tfstate-rg || echo "Resource group does not exist or you lack permissions."
-      continue-on-error: true
-
-    - name: Verify Storage Account
-      id: check_storage_account
-      run: |
-        az storage account show --name crsnonprodstorageacct --resource-group crs-nonprod-tfstate-rg || echo "Storage account does not exist or you lack permissions."
-      continue-on-error: true
-
-    - name: Verify Storage Container
-      id: check_storage_container
-      run: |
-        az storage container list --account-name crsnonprodstorageacct --auth-mode login || echo "Unable to list storage containers. Check storage account or permissions."
-      continue-on-error: true
-
-    - name: Verify Specific Container
-      id: check_specific_container
-      run: |
-        az storage container show --name crs-nonprod-tfstate-container --account-name crsnonprodstorageacct --auth-mode login || echo "Container does not exist or you lack permissions."
-      continue-on-error: true
-
-    - name: Log Results
-      run: |
-        echo "Resource Group Check Output:"
-        az group show --name crs-nonprod-tfstate-rg || echo "Resource group does not exist or you lack permissions."
-
-        echo "Storage Account Check Output:"
-        az storage account show --name crsnonprodstorageacct --resource-group crs-nonprod-tfstate-rg || echo "Storage account does not exist or you lack permissions."
-
-        echo "Storage Container Check Output:"
-        az storage container list --account-name crsnonprodstorageacct --auth-mode login || echo "Unable to list storage containers. Check storage account or permissions."
-
-        echo "Specific Container Check Output:"
-        az storage container show --name crs-nonprod-tfstate-container --account-name crsnonprodstorageacct --auth-mode login || echo "Container does not exist or you lack permissions."
+- name: Terraform Init
+  run: terraform init \
+    -reconfigure \
+    -backend-config="resource_group_name=crs-nonprod-tfstate-rg" \
+    -backend-config="storage_account_name=crsnonprodstorageacct" \
+    -backend-config="container_name=crs-nonprod-tfstate-container" \
+    -backend-config="key=app-base-nonprod.tfstate"
