@@ -1,16 +1,13 @@
-name: Azure CLI Operations
+name: Check Azure Backend Configuration
 
 on:
   workflow_dispatch:
 
 jobs:
-  azure-cli:
+  check-backend-access:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
-
     - name: Login to Azure using Service Principal
       run: |
         az login --service-principal \
@@ -18,24 +15,29 @@ jobs:
           -p ${{ secrets.CRS_AZURE_CLIENT_SECRET_NONPROD }} \
           --tenant ${{ secrets.CRS_AZURE_TENANT_ID_NONPROD }}
 
-    - name: Set Azure Account Subscription
-      run: |
-        az account set --subscription "e0e5bf14-0e68-4675-a9c1-84e450ab6f89"
-
-    - name: Check if Resource Group Exists
+    - name: Verify Resource Group
       id: check_rg
       run: |
-        az group exists --name crs-prod-tfstate-rg
-
-    - name: Log Resource Group Existence
+        az group show --name crs-nonprod-tfstate-rg || echo "Resource group does not exist or you lack permissions."
+    
+    - name: Verify Storage Account
+      id: check_storage_account
       run: |
-        echo "Resource group exists: ${{ steps.check_rg.outputs.stdout }}"
+        az storage account show --name crsnonprodstorageacct --resource-group crs-nonprod-tfstate-rg || echo "Storage account does not exist or you lack permissions."
 
-    - name: Check Storage Account Availability
-      id: check_storage
+    - name: Verify Storage Container
+      id: check_storage_container
       run: |
-        az storage account check-name --name crsprodstorageacct
+        az storage container list --account-name crsnonprodstorageacct --auth-mode login || echo "Unable to list storage containers. Check storage account or permissions."
+    
+    - name: Verify Specific Container
+      id: check_specific_container
+      run: |
+        az storage container show --name crs-nonprod-tfstate-container --account-name crsnonprodstorageacct --auth-mode login || echo "Container does not exist or you lack permissions."
 
-    - name: Log Storage Account Check
+    - name: Log Results
       run: |
-        echo "Storage account availability: ${{ steps.check_storage.outputs.stdout }}"
+        echo "Resource Group Check Output: ${{ steps.check_rg.outputs }}"
+        echo "Storage Account Check Output: ${{ steps.check_storage_account.outputs }}"
+        echo "Storage Container Check Output: ${{ steps.check_storage_container.outputs }}"
+        echo "Specific Container Check Output: ${{ steps.check_specific_container.outputs }}"
