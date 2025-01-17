@@ -1,17 +1,7 @@
-provider "azurerm" {
-  features {}
-}
-- name: Set Azure Environment Variables
-  run: |
-    echo "ARM_CLIENT_ID=${{ secrets.CRS_AZURE_CLIENT_ID_NONPROD }}" >> $GITHUB_ENV
-    echo "ARM_CLIENT_SECRET=${{ secrets.CRS_AZURE_CLIENT_SECRET_NONPROD }}" >> $GITHUB_ENV
-    echo "ARM_TENANT_ID=${{ secrets.CRS_AZURE_TENANT_ID_NONPROD }}" >> $GITHUB_ENV
-    echo "ARM_SUBSCRIPTION_ID=e0e5bf14-0e68-4675-a9c1-84e450ab6f89" >> $GITHUB_ENV
-
 - name: Terraform Init
-  run: terraform init \
-    -reconfigure \
-    -backend-config="resource_group_name=crs-nonprod-tfstate-rg" \
-    -backend-config="storage_account_name=crsnonprodstorageacct" \
-    -backend-config="container_name=crs-nonprod-tfstate-container" \
-    -backend-config="key=app-base-nonprod.tfstate"
+  run: |
+    terraform init -reconfigure \
+      -backend-config="resource_group_name=crs-nonprod-tfstate-rg" \
+      -backend-config="storage_account_name=crsnonprodstorageacct" \
+      -backend-config="container_name=crs-nonprod-tfstate-container" \
+      -backend-config="key=app-base-nonprod.tfstate"
