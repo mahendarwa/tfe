@@ -29,4 +29,4 @@ jobs:
           export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
           cd caseservice
           chmod 755 gradlew
-          ./gradlew clean build -x test
+          ./gradlew clean build -x test --no-daemon --stacktrace -Dorg.gradle.jvmargs="--add-opens jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
