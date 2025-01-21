@@ -1,0 +1,38 @@
+"afrs_credit_rating_intraday": {
+  "start": "09:00",
+  "end": "18:00",
+  "frequency": {"minutes": 60},
+  "offset": {"minutes": 30},
+  "snowflake_query": {
+    "database": "ARIP",
+    "schema": "AFRS",
+    "table": "CREDIT_RATING",
+    "date_column": "BUS_DT",
+    "slice_column": "SLC_TM",
+    "conditions": {
+      "BUS_DT": "{{GEN_ymd}}",
+      "SLC_TM": "{{SLICEID}}"
+    }
+  },
+  "email_dist": ["DATA_MONITORING_TEAM"]
+}
+
+
+"afrs_credit_rating_intraday": {
+  "start": "09:00",
+  "end": "18:00",
+  "frequency": {"minutes": 60},
+  "offset": {"minutes": 30},
+  "snowflake_query": {
+    "database": "ARIP",
+    "schema": "AFRS",
+    "table": "CREDIT_RATING",
+    "date_column": "BUS_DT",
+    "slice_column": "SLC_TM",
+    "conditions": {
+      "BUS_DT": "{{GEN_ymd}}",
+      "SLC_TM": "{{SLICEID}}"
+    }
+  },
+  "email_dist": ["DATA_MONITORING_TEAM"]
+}
