@@ -1,28 +1,63 @@
-###############################
-### Jenkins Deploy Config ###
-###############################
+name: Azure Login and Configuration
 
-deploy:
-  ## REQUIRED: Helm release name uses below value
-  releaseName: usdev-deploy
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment for deployment (nonprod or prod)'
+        required: true
+        default: 'nonprod'
+        type: choice
+        options:
+          - nonprod
+          - prod
 
-  ## REQUIRED: k8s namespace the release will be deployed to
-  namespace: omni2-dev-us-eastus2
+jobs:
+  azure-deploy:
+    runs-on: ubuntu-latest
 
-  ## REQUIRED: environment you are deploying to: one of [dev, qa, uat, prod]
-  environment: dev
+    steps:
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.9.0
 
-  ## REQUIRED: helm chart to be installed can be a chart from a repo (e.g. ingress-nginx/ingress-nginx) or a directory (e.g. ./cloudops)
-  helmChart: .
+    - name: Set Azure Environment Variables
+      id: set_env
+      run: |
+        if [ "${{ github.event.inputs.environment }}" == "prod" ]; then
+          echo "ARM_CLIENT_ID=${{ secrets.CRS_AZURE_CLIENT_ID_PROD }}" >> $GITHUB_ENV
+          echo "ARM_CLIENT_SECRET=${{ secrets.CRS_AZURE_CLIENT_SECRET_PROD }}" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=${{ secrets.CRS_AZURE_TENANT_ID_PROD }}" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=${{ secrets.CRS_AZURE_SUBSCRIPTION_ID_PROD }}" >> $GITHUB_ENV
+        else
+          echo "ARM_CLIENT_ID=${{ secrets.CRS_AZURE_CLIENT_ID_NONPROD }}" >> $GITHUB_ENV
+          echo "ARM_CLIENT_SECRET=${{ secrets.CRS_AZURE_CLIENT_SECRET_NONPROD }}" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=${{ secrets.CRS_AZURE_TENANT_ID_NONPROD }}" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=${{ secrets.CRS_AZURE_SUBSCRIPTION_ID_NONPROD }}" >> $GITHUB_ENV
+        fi
 
-  ## REQUIRED: RG of AKS cluster residing
-  aksClusterRG: SC-02-NONPROD-EASTUS2-RG
+    - name: Login to Azure using CLI
+      run: |
+        az login --service-principal \
+          -u $ARM_CLIENT_ID \
+          -p $ARM_CLIENT_SECRET \
+          --tenant $ARM_TENANT_ID
 
-  ## REQUIRED: AKS Cluster Name
-  aksClusterName: SC-02-NONPROD-EASTUS2
+    - name: Run Azure CLI Command
+      run: az account show
 
-  ## REQUIRED: AKS cluster subscription ID
-  aksSubscriptionID: 5d90e8a4-b18c-48fd-a5ef-a2aac499a156
+    - name: Set Azure Account Subscription
+      run: |
+        az account set --subscription $ARM_SUBSCRIPTION_ID
 
-  ## REQUIRED: Service Principal ID used by AKS to access
-  aksServicePrincipal: OMNSHO-SP-NP
+    - name: Check if Resource Group Exists
+      id: check_rg
+      run: |
+        az group exists --name crs-${{ github.event.inputs.environment }}-tfstate-rg
+
+    - name: Check Storage Account Availability
+      id: check_storage
+      run: |
+        az storage account check-name --name crs${{ github.event.inputs.environment }}prodstorageacct
+        az storage container exists --account-name crs${{ github.event.inputs.environment }}prodstorageacct --name crs-${{ github.event.inputs.environment }}-tfstate-container
