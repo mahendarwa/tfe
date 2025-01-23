@@ -1,63 +1,101 @@
-name: Azure Login and Configuration
+name: Azure Deploy
 
 on:
   workflow_dispatch:
     inputs:
-      environment:
-        description: 'Environment for deployment (nonprod or prod)'
+      TF_VAR_namespace:
+        description: 'Subscription type for deployment'
         required: true
         default: 'nonprod'
         type: choice
         options:
           - nonprod
+          - stage
           - prod
+      deployment_type:
+        description: 'Deployment type (Bootstrap, Compute, Database, Network)'
+        required: true
+        default: 'bootstrap'
+        type: choice
+        options:
+          - bootstrap
+          - compute
+          - database
+          - network
 
 jobs:
-  azure-deploy:
+  terraform-deploy:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Set Terraform Version
+      run: |
+        if [ "${{ github.event.inputs.deployment_type }}" == "network" ]; then
+          echo "Using Terraform version 1.60 for Network deployment..."
+          echo "TERRAFORM_VERSION=1.60" >> $GITHUB_ENV
+        else
+          echo "Using Terraform version 1.9.0 for other deployments..."
+          echo "TERRAFORM_VERSION=1.9.0" >> $GITHUB_ENV
+        fi
+
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
       with:
-        terraform_version: 1.9.0
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
 
-    - name: Set Azure Environment Variables
-      id: set_env
+    - name: Move and Rename Files
       run: |
-        if [ "${{ github.event.inputs.environment }}" == "prod" ]; then
-          echo "ARM_CLIENT_ID=${{ secrets.CRS_AZURE_CLIENT_ID_PROD }}" >> $GITHUB_ENV
-          echo "ARM_CLIENT_SECRET=${{ secrets.CRS_AZURE_CLIENT_SECRET_PROD }}" >> $GITHUB_ENV
-          echo "ARM_TENANT_ID=${{ secrets.CRS_AZURE_TENANT_ID_PROD }}" >> $GITHUB_ENV
-          echo "ARM_SUBSCRIPTION_ID=${{ secrets.CRS_AZURE_SUBSCRIPTION_ID_PROD }}" >> $GITHUB_ENV
-        else
-          echo "ARM_CLIENT_ID=${{ secrets.CRS_AZURE_CLIENT_ID_NONPROD }}" >> $GITHUB_ENV
-          echo "ARM_CLIENT_SECRET=${{ secrets.CRS_AZURE_CLIENT_SECRET_NONPROD }}" >> $GITHUB_ENV
-          echo "ARM_TENANT_ID=${{ secrets.CRS_AZURE_TENANT_ID_NONPROD }}" >> $GITHUB_ENV
-          echo "ARM_SUBSCRIPTION_ID=${{ secrets.CRS_AZURE_SUBSCRIPTION_ID_NONPROD }}" >> $GITHUB_ENV
-        fi
+        echo "Selected Deployment Type: ${{ github.event.inputs.deployment_type }}"
+        case "${{ github.event.inputs.deployment_type }}" in
+          bootstrap)
+            echo "Moving files for Bootstrap..."
+            mv -f ./CRS-Azure-Bootstrap-Infrastructure/* ./
+            echo "Copying and renaming Optumfile for Bootstrap..."
+            cp optumfiles/Optumfile-${{ github.event.inputs.TF_VAR_namespace }}.yml ./Optumfile.yml
+            ;;
+          compute)
+            echo "Moving files for Compute..."
+            mv -f ./CRS-Azure-Compute-Infrastructure/* ./
+            echo "Copying and renaming Optumfile for Compute..."
+            cp optumfiles/Optumfile-${{ github.event.inputs.TF_VAR_namespace }}.yml ./Optumfile.yml
+            ;;
+          database)
+            echo "Moving files for Database..."
+            mv -f ./CRS-Azure-Database-Infrastructure/* ./
+            echo "Copying and renaming Optumfile for Database..."
+            cp optumfiles/Optumfile-${{ github.event.inputs.TF_VAR_namespace }}.yml ./Optumfile.yml
+            ;;
+          network)
+            echo "Moving files for Network..."
+            mv -f ./CRS-Azure-Network-Infrastructure/* ./
+            echo "Copying and renaming Optumfile for Network..."
+            cp optumfiles/Optumfile-${{ github.event.inputs.TF_VAR_namespace }}.yml ./Optumfile.yml
+            ;;
+          *)
+            echo "Invalid deployment type selected."
+            exit 1
+            ;;
+        esac
 
-    - name: Login to Azure using CLI
+    - name: Configure Git Authentication
       run: |
-        az login --service-principal \
-          -u $ARM_CLIENT_ID \
-          -p $ARM_CLIENT_SECRET \
-          --tenant $ARM_TENANT_ID
+        git config --global url."https://oauth2:${{ secrets.ICP_GH_TOKEN }}@github.com".insteadOf "https://github.com"
 
-    - name: Run Azure CLI Command
-      run: az account show
-
-    - name: Set Azure Account Subscription
+    - name: Terraform Init
       run: |
-        az account set --subscription $ARM_SUBSCRIPTION_ID
+        terraform init -reconfigure \
+          -backend-config="resource_group_name=crs-${{ github.event.inputs.TF_VAR_namespace }}-tfstate-rg" \
+          -backend-config="storage_account_name=crs${{ github.event.inputs.TF_VAR_namespace }}prodstorageacct" \
+          -backend-config="container_name=crs-${{ github.event.inputs.TF_VAR_namespace }}-tfstate-container" \
+          -backend-config="key=${{ github.event.inputs.deployment_type }}.tfstate"
 
-    - name: Check if Resource Group Exists
-      id: check_rg
-      run: |
-        az group exists --name crs-${{ github.event.inputs.environment }}-tfstate-rg
+    - name: Terraform Plan (Optional for Debugging)
+      if: ${{ github.event.inputs.deployment_type == 'network' }}
+      run: terraform plan
 
-    - name: Check Storage Account Availability
-      id: check_storage
+    - name: Terraform Apply
       run: |
-        az storage account check-name --name crs${{ github.event.inputs.environment }}prodstorageacct
-        az storage container exists --account-name crs${{ github.event.inputs.environment }}prodstorageacct --name crs-${{ github.event.inputs.environment }}-tfstate-container
+        terraform apply -auto-approve
