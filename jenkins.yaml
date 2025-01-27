@@ -1,4 +1,36 @@
-which server, i need to use for preparing a script —
-which snowflake databse and which table i need to check these scenarios 
- if BSD monitoring script authentication can be reused.
-ensure proper READ access to required Snowflake tables/views.
+- name: Check Required Secrets
+  run: |
+    if [ "${{ github.event.inputs.TF_VAR_namespace }}" == "nonprod" ]; then
+      echo "Checking if nonprod secrets exist..."
+      if [ -z "${{ secrets.CRS_AZURE_CLIENT_ID_NONPROD }}" ] || [ -z "${{ secrets.CRS_AZURE_CLIENT_SECRET_NONPROD }}" ] || [ -z "${{ secrets.CRS_AZURE_TENANT_ID_NONPROD }}" ]; then
+        echo "Error: One or more nonprod secrets are missing."
+        exit 1
+      fi
+      echo "All required nonprod secrets are present."
+    elif [ "${{ github.event.inputs.TF_VAR_namespace }}" == "prod" ]; then
+      echo "Checking if prod secrets exist..."
+      if [ -z "${{ secrets.CRS_AZURE_CLIENT_ID_PROD }}" ] || [ -z "${{ secrets.CRS_AZURE_CLIENT_SECRET_PROD }}" ] || [ -z "${{ secrets.CRS_AZURE_TENANT_ID_PROD }}" ]; then
+        echo "Error: One or more prod secrets are missing."
+        exit 1
+      fi
+      echo "All required prod secrets are present."
+    else
+      echo "Error: Invalid environment selected (${github.event.inputs.TF_VAR_namespace})."
+      exit 1
+    fi
+
+- name: Login to Azure using CLI
+  run: |
+    if [ "${{ github.event.inputs.TF_VAR_namespace }}" == "nonprod" ]; then
+      echo "Logging into Azure for nonprod..."
+      az login --service-principal \
+        -u ${{ secrets.CRS_AZURE_CLIENT_ID_NONPROD }} \
+        -p ${{ secrets.CRS_AZURE_CLIENT_SECRET_NONPROD }} \
+        --tenant ${{ secrets.CRS_AZURE_TENANT_ID_NONPROD }}
+    elif [ "${{ github.event.inputs.TF_VAR_namespace }}" == "prod" ]; then
+      echo "Logging into Azure for prod..."
+      az login --service-principal \
+        -u ${{ secrets.CRS_AZURE_CLIENT_ID_PROD }} \
+        -p ${{ secrets.CRS_AZURE_CLIENT_SECRET_PROD }} \
+        --tenant ${{ secrets.CRS_AZURE_TENANT_ID_PROD }}
+    fi
