@@ -1,3 +1,1 @@
-- name: Set Environment Variables
-  run: |
-    echo 'ORG_PATH="/home/bambscm1/actions-runner-2/_work/bcc-pat/bcc-pat/"' >> $GITHUB_ENV
+ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chmod -R 750 /${{ github.event.inputs.Environment }}/bin/* || true"
