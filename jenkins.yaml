@@ -62,11 +62,9 @@ jobs:
       - name: Print current directory
         run: pwd
 
-      - name: Debug Variables
+      - name: Debug File Permissions
         run: |
-          echo "Environment: ${{ github.event.inputs.Environment }}"
-          echo "Admin User: $ADMIN_USR"
-          echo "SSH Command: ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode ${ADMIN_USR}@daylnxcpsq014.enterprisenet.org 'ls'"
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "ls -l /${{ github.event.inputs.Environment }}/bin"
 
       - name: Execute SSH Commands for PAT
         run: |
@@ -75,4 +73,4 @@ jobs:
             exit 1
           fi
 
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chmod -R 750 /${{ github.event.inputs.Environment }}/bin/*"
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "sudo chown -R ${ADMIN_USR} /${{ github.event.inputs.Environment }}/bin && sudo chmod -R 750 /${{ github.event.inputs.Environment }}/bin/*"
