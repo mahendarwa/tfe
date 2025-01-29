@@ -63,11 +63,11 @@ jobs:
         run: |
           echo "Admin User: ${{ env.ADMIN_USR }}"
           echo "Environment: ${{ github.event.inputs.Environment }}"
-          echo "SSH Command: ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode $ADMIN_USR@daylnxcpsq014.enterprisenet.org 'ls'"
+          echo "SSH Command: ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode ${{ env.ADMIN_USR }}@daylnxcpsq014.enterprisenet.org 'ls'"
 
       - name: Execute SSH Commands for PAT
         env:
           ADMIN_USR: ${{ env.ADMIN_USR }}
         run: |
           echo "Running as: $ADMIN_USR"
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "$ADMIN_USR@daylnxcpsq014.enterprisenet.org" "chmod -R 750 /${{ github.event.inputs.Environment }}/bin/*"
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chmod -R 750 /${{ github.event.inputs.Environment }}/bin/*"
