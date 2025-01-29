@@ -14,63 +14,28 @@ on:
           - pflqa36
 
 jobs:
-  setup:
-    runs-on: qa-runner
-    outputs:
-      ADMIN_USR: ${{ steps.set_vars.outputs.ADMIN_USR }}
-    steps:
-      - name: Set Admin User and Path
-        id: set_vars
-        run: |
-          case "${{ github.event.inputs.Environment }}" in
-            pflqa12)
-              echo "ADMIN_USR=pfmgr2" >> $GITHUB_ENV
-              echo "ADMIN_USR=pfmgr2" >> $GITHUB_OUTPUT
-              ;;
-            pflqa22)
-              echo "ADMIN_USR=pfmgr3" >> $GITHUB_ENV
-              echo "ADMIN_USR=pfmgr3" >> $GITHUB_OUTPUT
-              ;;
-            pflqa36)
-              echo "ADMIN_USR=pfmgr4" >> $GITHUB_ENV
-              echo "ADMIN_USR=pfmgr4" >> $GITHUB_OUTPUT
-              ;;
-            pflqa00)
-              echo "ADMIN_USR=pfmgr" >> $GITHUB_ENV
-              echo "ADMIN_USR=pfmgr" >> $GITHUB_OUTPUT
-              ;;
-            *)
-              echo "Invalid Environment choice."
-              exit 1
-              ;;
-          esac
-
-      - name: Debug Variables
-        run: |
-          echo "Environment: ${{ github.event.inputs.Environment }}"
-          echo "Admin User: ${{ env.ADMIN_USR }}"
-
   pat:
-    needs: setup
     runs-on: qa-runner
-    env:
-      ADMIN_USR: ${{ needs.setup.outputs.ADMIN_USR }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Print current directory
-        run: pwd
-
-      - name: Debug File Permissions
+      - name: Set Environment Variables
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "ls -l /${{ github.event.inputs.Environment }}/bin"
+          echo "ORG_PATH=/home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/PAT_QA/patrepo/" >> $GITHUB_ENV
+          echo "TMP_PATH=/tmp/pat/" >> $GITHUB_ENV
 
-      - name: Execute SSH Commands for PAT
+      - name: Set Permissions for Temporary Path
+        run: chmod -R 755 $TMP_PATH
+
+      - name: Execute SSH Commands
+        env:
+          ADMIN_USR: ${{ env.ADMIN_USR }}
         run: |
-          if [ -z "$ADMIN_USR" ]; then
-            echo "ADMIN_USR is not set!"
-            exit 1
-          fi
-
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "sudo chown -R ${ADMIN_USR} /${{ github.event.inputs.Environment }}/bin && sudo chmod -R 750 /${{ github.event.inputs.Environment }}/bin/*"
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chmod 750 /${{ github.event.inputs.Environment }}/bin"
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chmod -R 750 /${{ github.event.inputs.Environment }}/bin/*"
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "cp -rf ${ORG_PATH}ETL/config/SQA/${path_env}* /${{ github.event.inputs.Environment }}/bin/etl/config/"
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "cp -rf ${ORG_PATH}ETL/scripts/* /${{ github.event.inputs.Environment }}/bin/etl/scripts/"
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "cp -rf ${ORG_PATH}ETL/sql/* /${{ github.event.inputs.Environment }}/bin/etl/sql/"
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "cp -rf ${ORG_PATH}ETL/ref/* /${{ github.event.inputs.Environment }}/bin/etl/ref/"
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "cp -rf ${ORG_PATH}unix/PFW_UNIX/shellscripts/* /${{ github.event.inputs.Environment }}/bin/"
