@@ -1,3 +1,19 @@
-7:00 PM Friday: The job begins validating data with a lookback to 7:00 PM, ensuring all slices from 7:00 PM to 10:00 PM are checked.
-10:00 PM Friday: The primary validation occurs, ensuring all expected data for BDF_prev_ymd has been received by the end of the day.
-1:00 AM Saturday: Final checks are performed for any delayed or late-arriving data from BDF_prev_ymd.
+"high_frequency_checks": {
+  "start": "08:00",
+  "end": "16:00",
+  "frequency": {"minutes": 15},
+  "lookback_period": {"minutes": 30},
+  "business_calendar": "FICC",
+  "snowflake_table": "ARIP.AFRS.HIGH_FREQ_CHECK",
+  "columns": {
+    "business_date": "BUS_DT",
+    "trade_id": "TRADE_ID",
+    "slice_id": "SLC_TM"
+  },
+  "conditions": {
+    "BUS_DT": "{{BDF_offset}}",
+    "SLC_TM": "{{SLICE_ID}}",
+    "TRADE_ID": "{{TRADEID}}"
+  },
+  "email_dist": ["TRADE_MONITOR"]
+}
