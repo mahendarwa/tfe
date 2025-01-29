@@ -16,6 +16,8 @@ on:
 jobs:
   setup:
     runs-on: qa-runner
+    outputs:
+      ADMIN_USR: ${{ steps.set_vars.outputs.ADMIN_USR }}
     steps:
       - name: Set Admin User and Path
         id: set_vars
@@ -23,19 +25,19 @@ jobs:
           case "${{ github.event.inputs.Environment }}" in
             pflqa12)
               echo "ADMIN_USR=pfmgr2" >> $GITHUB_ENV
-              echo "PATH_ENV=pflqa12/" >> $GITHUB_ENV
+              echo "ADMIN_USR=pfmgr2" >> $GITHUB_OUTPUT
               ;;
             pflqa22)
               echo "ADMIN_USR=pfmgr3" >> $GITHUB_ENV
-              echo "PATH_ENV=pflqa22/" >> $GITHUB_ENV
+              echo "ADMIN_USR=pfmgr3" >> $GITHUB_OUTPUT
               ;;
             pflqa36)
               echo "ADMIN_USR=pfmgr4" >> $GITHUB_ENV
-              echo "PATH_ENV=pflqa36/" >> $GITHUB_ENV
+              echo "ADMIN_USR=pfmgr4" >> $GITHUB_OUTPUT
               ;;
             pflqa00)
               echo "ADMIN_USR=pfmgr" >> $GITHUB_ENV
-              echo "PATH_ENV=pflqa00/" >> $GITHUB_ENV
+              echo "ADMIN_USR=pfmgr" >> $GITHUB_OUTPUT
               ;;
             *)
               echo "Invalid Environment choice."
@@ -43,31 +45,34 @@ jobs:
               ;;
           esac
 
-      - name: Display Parameters
+      - name: Debug Variables
         run: |
           echo "Environment: ${{ github.event.inputs.Environment }}"
           echo "Admin User: ${{ env.ADMIN_USR }}"
-          echo "Path: ${{ env.PATH_ENV }}"
 
   pat:
     needs: setup
     runs-on: qa-runner
+    env:
+      ADMIN_USR: ${{ needs.setup.outputs.ADMIN_USR }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-        
+
       - name: Print current directory
         run: pwd
 
       - name: Debug Variables
         run: |
-          echo "Admin User: ${{ env.ADMIN_USR }}"
           echo "Environment: ${{ github.event.inputs.Environment }}"
-          echo "SSH Command: ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode ${{ env.ADMIN_USR }}@daylnxcpsq014.enterprisenet.org 'ls'"
+          echo "Admin User: $ADMIN_USR"
+          echo "SSH Command: ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode ${ADMIN_USR}@daylnxcpsq014.enterprisenet.org 'ls'"
 
       - name: Execute SSH Commands for PAT
-        env:
-          ADMIN_USR: ${{ env.ADMIN_USR }}
         run: |
-          echo "Running as: $ADMIN_USR"
+          if [ -z "$ADMIN_USR" ]; then
+            echo "ADMIN_USR is not set!"
+            exit 1
+          fi
+
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chmod -R 750 /${{ github.event.inputs.Environment }}/bin/*"
