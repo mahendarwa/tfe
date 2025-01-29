@@ -1,54 +1,73 @@
-name: Azure Deploy
+name: QA PAT
 
 on:
   workflow_dispatch:
     inputs:
-      TF_VAR_namespace:
-        description: 'Subscription type for deployment'
+      Environment:
+        description: 'Select the Environment'
         required: true
-        default: 'nonprod'
         type: choice
         options:
-          - nonprod
-          - stage
-          - prod
+          - pflqa00
+          - pflqa12
+          - pflqa22
+          - pflqa36
 
 jobs:
-  terraform-deploy:
-    runs-on: ubuntu-latest
-
+  setup:
+    runs-on: qa-runner
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
+      - name: Set Admin User and Path
+        id: set_vars
+        run: |
+          case "${{ github.event.inputs.Environment }}" in
+            pflqa12)
+              echo "ADMIN_USR=pfmgr2" >> $GITHUB_ENV
+              echo "PATH_ENV=pflqa12/" >> $GITHUB_ENV
+              ;;
+            pflqa22)
+              echo "ADMIN_USR=pfmgr3" >> $GITHUB_ENV
+              echo "PATH_ENV=pflqa22/" >> $GITHUB_ENV
+              ;;
+            pflqa36)
+              echo "ADMIN_USR=pfmgr4" >> $GITHUB_ENV
+              echo "PATH_ENV=pflqa36/" >> $GITHUB_ENV
+              ;;
+            pflqa00)
+              echo "ADMIN_USR=pfmgr" >> $GITHUB_ENV
+              echo "PATH_ENV=pflqa00/" >> $GITHUB_ENV
+              ;;
+            *)
+              echo "Invalid Environment choice."
+              exit 1
+              ;;
+          esac
 
-    - name: Set Dynamic Values Based on Environment
-      run: |
-        echo "Setting environment-specific values..."
-        echo "RESOURCE_ENV=${{ github.event.inputs.TF_VAR_namespace }}" >> $GITHUB_ENV
+      - name: Display Parameters
+        run: |
+          echo "Environment: ${{ github.event.inputs.Environment }}"
+          echo "Admin User: ${{ env.ADMIN_USR }}"
+          echo "Path: ${{ env.PATH_ENV }}"
 
-    - name: Set Azure Account Subscription
-      run: |
-        echo "Setting subscription for $RESOURCE_ENV"
-        if [ "$RESOURCE_ENV" == "prod" ]; then
-          az account set --subscription "PROD_SUBSCRIPTION_ID"
-        elif [ "$RESOURCE_ENV" == "nonprod" ]; then
-          az account set --subscription "NONPROD_SUBSCRIPTION_ID"
-        elif [ "$RESOURCE_ENV" == "stage" ]; then
-          az account set --subscription "STAGE_SUBSCRIPTION_ID"
-        else
-          echo "Invalid environment selected!"
-          exit 1
-        fi
+  pat:
+    needs: setup
+    runs-on: qa-runner
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        
+      - name: Print current directory
+        run: pwd
 
-    - name: Check if Resource Group Exists
-      id: check_rg
-      run: |
-        echo "Checking if Resource Group exists for $RESOURCE_ENV..."
-        az group exists --name crs-${RESOURCE_ENV}-tfstate-rg
+      - name: Debug Variables
+        run: |
+          echo "Admin User: ${{ env.ADMIN_USR }}"
+          echo "Environment: ${{ github.event.inputs.Environment }}"
+          echo "SSH Command: ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode $ADMIN_USR@daylnxcpsq014.enterprisenet.org 'ls'"
 
-    - name: Check Storage Account Availability
-      id: check_storage
-      run: |
-        echo "Checking storage account availability for $RESOURCE_ENV..."
-        az storage account check-name --name crs${RESOURCE_ENV}prodstorageacct
-        az storage container exists --account-name crs${RESOURCE_ENV}prodstorageacct --name crs-${RESOURCE_ENV}-tfstate-container
+      - name: Execute SSH Commands for PAT
+        env:
+          ADMIN_USR: ${{ env.ADMIN_USR }}
+        run: |
+          echo "Running as: $ADMIN_USR"
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "$ADMIN_USR@daylnxcpsq014.enterprisenet.org" "chmod -R 750 /${{ github.event.inputs.Environment }}/bin/*"
