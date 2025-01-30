@@ -1,19 +1,73 @@
-"high_frequency_checks": {
-  "start": "08:00",
-  "end": "16:00",
-  "frequency": {"minutes": 15},
-  "lookback_period": {"minutes": 30},
-  "business_calendar": "FICC",
-  "snowflake_table": "ARIP.AFRS.HIGH_FREQ_CHECK",
-  "columns": {
-    "business_date": "BUS_DT",
-    "trade_id": "TRADE_ID",
-    "slice_id": "SLC_TM"
-  },
-  "conditions": {
-    "BUS_DT": "{{BDF_offset}}",
-    "SLC_TM": "{{SLICE_ID}}",
-    "TRADE_ID": "{{TRADEID}}"
-  },
-  "email_dist": ["TRADE_MONITOR"]
-}
+Pseudocode for Monitoring System
+# Step 1: Read Configuration File
+configurations = read_config("feed_config.json")
+# Step 2: Get Current Execution Time and Business Day
+current_time = get_current_time()
+current_business_day = get_business_day(current_time)  # Adjust based on FICC Calendar
+# Step 3: Iterate through Each Feed Configuration
+for feed in configurations:
+# Extract Feed Parameters
+    start_time = feed["start"]
+    end_time = feed["end"]
+    frequency = feed["frequency"]  # Can be -1 (one-time) or periodic
+    offset = feed["offset"]["hours"] if "hours" in feed["offset"] else feed["offset"]["minutes"]
+    table_name = feed["snowflake_table"]
+    business_date_column = feed["columns"]["business_date"]
+    slice_column = feed["columns"].get("slice_id", None)
+    business_calendar = feed["conditions"].get("BUS_DT_calendar", None)
+# Step 4: Determine Applicable Time for Checking Feeds
+    check_time = start_time + offset  # Expected feed availability time
+# Step 5: Verify if Current Execution Time Falls Within Monitoring Window
+    if current_time >= check_time and current_time <= end_time:
+        
+        # Determine Business Day for Query
+        business_day_offset = feed["conditions"]["BUS_DT"]
+        target_business_day = calculate_business_day_offset(current_business_day, business_day_offset, business_calendar)
+        
+        # Step 6: Construct Query to Check Feed in Snowflake
+        query = f"""
+            SELECT COUNT(*) 
+            FROM {table_name} 
+            WHERE {business_date_column} = '{target_business_day}'
+        """
+        
+        # If a slice ID exists, check specific slice
+        if slice_column:  
+            slice_id = calculate_slice_id(current_time)  # Compute expected slice ID
+            query += f" AND {slice_column} = '{slice_id}'"
+# Step 7: Execute Query in Snowflake
+        feed_count = execute_snowflake_query(query)
+        
+        if feed_count == 0:
+            # Step 8: If Feed is Missing, Trigger Alert
+            send_alert(feed["email_dist"], f"Missing feed in {table_name} for {target_business_day} at {current_time}")
+# Step 9: Log Execution Completion
+log_event("Feed Monitoring Execution Completed")
+
+Key Features of This Pseudocode
+	1. Configuration-Driven Execution
+		○ Reads configurations dynamically to support multiple feeds.
+		○ Supports different business calendars (e.g., FICC) and offset handling.
+	2. Time-Based Evaluation
+		○ Determines the expected feed arrival time based on start + offset.
+		○ Ensures it only checks feeds after the delay period has passed.
+	3. Business Day Handling
+		○ Automatically adjusts the business date based on offset logic.
+		○ Uses calculate_business_day_offset() to determine the correct business day based on FICC Calendar.
+	4. Intraday & End-of-Day Handling
+		○ If slice ID exists, it checks individual time-sliced feeds.
+		○ If end-of-day monitoring, it only looks at final EOD records.
+	5. Alerting Mechanism
+		○ If feed is missing, it triggers an alert only once per missing entry.
+
+Example Scenarios & How the System Handles Them
+Scenario	Config Start	Offset	Check Time	Business Date Handling	Outcome
+End of Day Check	14:00	3 hours	17:00	Business Day -1	If feed is missing at 17:00, send alert
+Intraday Check	08:00	30 min	08:30	Business Day 0	If 08:30 feed is missing, send alert
+High-Frequency Check	09:00	15 min	09:15	Business Day 0	If 09:15 feed is missing, send alert
+Weekend Handling	Friday 10 PM	3 hours	Saturday 1 AM	Business Day -1	Final EOD check runs for Friday on Saturday
+
+Next Steps
+	1. Convert this pseudocode into a Python script.
+	2. Integrate Snowflake database queries for execution.
+3 . Implement logging and alerting mechanisms.
