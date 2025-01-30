@@ -1,1 +1,29 @@
-ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chmod -R 750 /${{ github.event.inputs.Environment }}/bin/* || true"
+jobs:
+  jar-build:
+    runs-on: qa-runner
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set Variables
+        run: |
+          echo "REMOTE_PATH=/home/bambdev1/adlm_jenkins/daylnxcpsd002/workspace/Consumer_Panel_Services_Home/Github/PAT/JAR_Build/ddrgenerator/build/libs/ddrgenerator.war" >> $GITHUB_ENV
+          echo "REMOTE_PATH1=/home/bambdev1/adlm_jenkins/daylnxcpsd002/workspace/Consumer_Panel_Services_Home/Github/PAT/JAR_Build/caseservice/build/libs/caseservice-PAT.jar" >> $GITHUB_ENV
+          echo "LOCAL_PATH=/tmp/pat/" >> $GITHUB_ENV
+
+      - name: Copy JAR Files from Remote to Local
+        run: |
+          scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH $LOCAL_PATH
+          scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH1 $LOCAL_PATH
+
+      - name: Deploy JAR Files
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${{ env.ADMIN_USR }}@daylnxcpsq014.enterprisenet.org" "cp /tmp/pat/ddrgenerator.war /${{ github.event.inputs.Environment }}/bin/"
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${{ env.ADMIN_USR }}@daylnxcpsq014.enterprisenet.org" "cp /tmp/pat/caseservice-PAT.jar /${{ github.event.inputs.Environment }}/bin/"
+
+      - name: Set Permissions
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${{ env.ADMIN_USR }}@daylnxcpsq014.enterprisenet.org" "chmod -R 750 /${{ github.event.inputs.Environment }}/bin/*" || true
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${{ env.ADMIN_USR }}@daylnxcpsq014.enterprisenet.org" "chmod -R 550 /${{ github.event.inputs.Environment }}/bin/*" || true
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${{ env.ADMIN_USR }}@daylnxcpsq014.enterprisenet.org" "chgrp -R ${{ github.event.inputs.Environment }} /${{ github.event.inputs.Environment }}/bin/*" || true
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${{ env.ADMIN_USR }}@daylnxcpsq014.enterprisenet.org" "chmod -R 550 /${{ github.event.inputs.Environment }}/bin" || true
