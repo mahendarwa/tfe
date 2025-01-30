@@ -1,29 +1,37 @@
-jobs:
-  jar-build:
-    runs-on: qa-runner
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
+- name: Make directory for python-etl code in /opt/pythonetl folder
+  ansible.builtin.shell: sudo mkdir -p /python{{ env }}/python
+  retries: 3
+  delay: 3
+  register: result_3
+  until: result_3 is succeeded
 
-      - name: Set Variables
-        run: |
-          echo "REMOTE_PATH=/home/bambdev1/adlm_jenkins/daylnxcpsd002/workspace/Consumer_Panel_Services_Home/Github/PAT/JAR_Build/ddrgenerator/build/libs/ddrgenerator.war" >> $GITHUB_ENV
-          echo "REMOTE_PATH1=/home/bambdev1/adlm_jenkins/daylnxcpsd002/workspace/Consumer_Panel_Services_Home/Github/PAT/JAR_Build/caseservice/build/libs/caseservice-PAT.jar" >> $GITHUB_ENV
-          echo "LOCAL_PATH=/tmp/pat/" >> $GITHUB_ENV
+- name: Print working directory
+  ansible.builtin.shell: pwd
+  register: result_pwd
+  changed_when: false
+  retries: 3
+  delay: 3
+  until: result_pwd is succeeded
 
-      - name: Copy JAR Files from Remote to Local
-        run: |
-          scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH $LOCAL_PATH
-          scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH1 $LOCAL_PATH
+- name: List files in the directory
+  ansible.builtin.shell: ls -la
+  register: result_ls
+  changed_when: false
+  retries: 3
+  delay: 3
+  until: result_ls is succeeded
 
-      - name: Deploy JAR Files
-        run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${{ env.ADMIN_USR }}@daylnxcpsq014.enterprisenet.org" "cp /tmp/pat/ddrgenerator.war /${{ github.event.inputs.Environment }}/bin/"
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${{ env.ADMIN_USR }}@daylnxcpsq014.enterprisenet.org" "cp /tmp/pat/caseservice-PAT.jar /${{ github.event.inputs.Environment }}/bin/"
+- name: Get the hostname
+  ansible.builtin.shell: hostname
+  register: result_hostname
+  changed_when: false
+  retries: 3
+  delay: 3
+  until: result_hostname is succeeded
 
-      - name: Set Permissions
-        run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${{ env.ADMIN_USR }}@daylnxcpsq014.enterprisenet.org" "chmod -R 750 /${{ github.event.inputs.Environment }}/bin/*" || true
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${{ env.ADMIN_USR }}@daylnxcpsq014.enterprisenet.org" "chmod -R 550 /${{ github.event.inputs.Environment }}/bin/*" || true
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${{ env.ADMIN_USR }}@daylnxcpsq014.enterprisenet.org" "chgrp -R ${{ github.event.inputs.Environment }} /${{ github.event.inputs.Environment }}/bin/*" || true
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${{ env.ADMIN_USR }}@daylnxcpsq014.enterprisenet.org" "chmod -R 550 /${{ github.event.inputs.Environment }}/bin" || true
+- name: Create a test file
+  ansible.builtin.shell: touch /python{{ env }}/python/test.txt
+  register: result_touch
+  retries: 3
+  delay: 3
+  until: result_touch is succeeded
