@@ -1,37 +1,9 @@
-- name: Make directory for python-etl code in /opt/pythonetl folder
-  ansible.builtin.shell: sudo mkdir -p /python{{ env }}/python
-  retries: 3
-  delay: 3
-  register: result_3
-  until: result_3 is succeeded
-
-- name: Print working directory
-  ansible.builtin.shell: pwd
-  register: result_pwd
-  changed_when: false
-  retries: 3
-  delay: 3
-  until: result_pwd is succeeded
-
-- name: List files in the directory
-  ansible.builtin.shell: ls -la
-  register: result_ls
-  changed_when: false
-  retries: 3
-  delay: 3
-  until: result_ls is succeeded
-
-- name: Get the hostname
-  ansible.builtin.shell: hostname
-  register: result_hostname
-  changed_when: false
-  retries: 3
-  delay: 3
-  until: result_hostname is succeeded
-
-- name: Create a test file
-  ansible.builtin.shell: touch /python{{ env }}/python/test.txt
-  register: result_touch
-  retries: 3
-  delay: 3
-  until: result_touch is succeeded
+ansible-playbook ./ansible/python_deploy.yml -i ./ansible/host/hosts --timeout 90 --extra-vars '{
+  "ansible_command_timeout": 90,
+  "ansible_connection": "ssh",
+  "ansible_user": "${{ secrets.ansible_user_dev }}",
+  "ansible_ssh_pass": "${{ secrets.ansible_ssh_pass_dev }}",
+  "env": "DEV",
+  "ENV_SMALL": "dev",
+  "app_version": "${{ env.VERSION }}"
+}'
