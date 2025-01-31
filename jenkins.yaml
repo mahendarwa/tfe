@@ -16,7 +16,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Check Java version
+      - name: Verify Java version
         run: java -version
 
       - name: Print current directory
@@ -29,9 +29,11 @@ jobs:
         run: |
           cd caseservice
           chmod +x gradlew
-          ./gradlew clean build -x test --no-daemon --stacktrace -Dorg.gradle.jvmargs="--add-opens jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
+          ./gradlew clean build -x test --no-daemon --stacktrace \
+            -Dorg.gradle.jvmargs="--add-opens jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
           cd ..
 
           cd ddrgenerator
           chmod +x gradlew
-          ./gradlew clean build -x test --no-daemon --stacktrace -Dorg.gradle.jvmargs="--add-opens jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
+          ./gradlew clean build -x test --no-daemon --stacktrace \
+            -Dorg.gradle.jvmargs="--add-opens jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
