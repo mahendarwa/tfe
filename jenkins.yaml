@@ -1,9 +1,37 @@
-ansible-playbook ./ansible/python_deploy.yml -i ./ansible/host/hosts --timeout 90 --extra-vars '{
-  "ansible_command_timeout": 90,
-  "ansible_connection": "ssh",
-  "ansible_user": "${{ secrets.ansible_user_dev }}",
-  "ansible_ssh_pass": "${{ secrets.ansible_ssh_pass_dev }}",
-  "env": "DEV",
-  "ENV_SMALL": "dev",
-  "app_version": "${{ env.VERSION }}"
-}'
+name: "Jar Build"
+
+on:
+  workflow_dispatch: # Manually trigger the workflow
+
+jobs:
+  Jar-Build:
+    runs-on: dev004-runner
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Check Java version
+        run: java -version
+
+      - name: Print current directory
+        run: pwd
+
+      - name: List files
+        run: ls -al
+
+      - name: Jar Build
+        run: |
+          cd caseservice
+          chmod +x gradlew
+          ./gradlew clean build -x test --no-daemon --stacktrace -Dorg.gradle.jvmargs="--add-opens jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
+          cd ..
+
+          cd ddrgenerator
+          chmod +x gradlew
+          ./gradlew clean build -x test --no-daemon --stacktrace -Dorg.gradle.jvmargs="--add-opens jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
