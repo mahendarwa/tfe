@@ -1,53 +1,15 @@
-name: "Jar Build"
+package wiz
 
-on:
-  workflow_dispatch:
+default result = "pass"
 
-jobs:
-  Jar-Build:
-    runs-on: dev004-runner
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+paths := ["containers", "initContainers"]
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v2
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+# Fail if `securityContext.capabilities.add` is present and not empty
+result = "fail" {
+    some i, j
+    input.object.spec[paths[i]][j].securityContext.capabilities.add
+    count(input.object.spec[paths[i]][j].securityContext.capabilities.add) > 0
+}
 
-      - name: Verify Java version
-        run: |
-          echo "Checking Java version..."
-          java -version
-          javac -version
-
-      - name: Print current directory
-        run: pwd
-
-      - name: List files
-        run: ls -al
-
-      - name: Jar Build
-        env:
-          JAVA_HOME: /home/bambscm1/actions-runner/_work/_tool/Java_Temurin-Hotspot_jdk/17.0.14-7/x64
-          GRADLE_OPTS: "-Dorg.gradle.java.home=/home/bambscm1/actions-runner/_work/_tool/Java_Temurin-Hotspot_jdk/17.0.14-7/x64"
-        run: |
-          export JAVA_HOME=${JAVA_HOME}
-          export PATH="${JAVA_HOME}/bin:$PATH"
-          echo "JAVA_HOME is set to $JAVA_HOME"
-
-          cd caseservice
-          chmod +x gradlew
-          ./gradlew clean build -x test --no-daemon --stacktrace \
-            --gradle-user-home /home/gradle \
-            -Dorg.gradle.java.home="${JAVA_HOME}" \
-            -Dorg.gradle.jvmargs="--add-opens jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
-          cd ..
-
-          cd ddrgenerator
-          chmod +x gradlew
-          ./gradlew clean build -x test --no-daemon --stacktrace \
-            --gradle-user-home /home/gradle \
-            -Dorg.gradle.java.home="${JAVA_HOME}" \
-            -Dorg.gradle.jvmargs="--add-opens jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
+currentConfiguration := "'securityContext.capabilities.add' includes values beyond the allowed values"
+expectedConfiguration := "'securityContext.capabilities.add' should be empty (`[]`) or absent"
