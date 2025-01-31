@@ -1,49 +1,44 @@
-name: Azure Deploy
+name: "Jar Build"
 
 on:
   workflow_dispatch:
-    inputs:
-      TF_VAR_namespace:
-        description: 'Subscription type for deployment'
-        required: true
-        default: 'nonprod'
-        type: choice
-        options:
-          - nonprod
-          - stage
-          - prod
 
 jobs:
-  terraform-deploy:
-    runs-on: ubuntu-latest
-
+  Jar-Build:
+    runs-on: dev004-runner
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Move and Rename Files
-      run: |
-        echo "Moving ./CRS-Azure-Bootstrap-Infrastructure/* to root directory..."
-        mv -f ./CRS-Azure-Bootstrap-Infrastructure/* ./
+      - name: Set up JDK 17
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-        echo "Copying and renaming optumfiles/Optumfile-${{ github.event.inputs.TF_VAR_namespace }}.yml to ./Optumfile.yml..."
-        cp optumfiles/Optumfile-${{ github.event.inputs.TF_VAR_namespace }}.yml ./Optumfile.yml
+      - name: Verify Java version
+        run: |
+          echo "Checking Java version..."
+          java -version
+          javac -version
+          echo "JAVA_HOME is set to: $JAVA_HOME"
 
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
-      with:
-        terraform_version: 1.5.6 # Specify the Terraform version
+      - name: Print current directory
+        run: pwd
 
-    - name: Terraform Init
-      run: terraform init
+      - name: List files
+        run: ls -al
 
-    - name: Terraform Plan
-      run: terraform plan -var="TF_VAR_namespace=${{ github.event.inputs.TF_VAR_namespace }}"
+      - name: Jar Build
+        run: |
+          echo "Using JAVA_HOME: $JAVA_HOME"
+          cd caseservice
+          chmod +x gradlew
+          ./gradlew clean build -x test --no-daemon --stacktrace \
+            -Dorg.gradle.jvmargs="--add-opens jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
+          cd ..
 
-    - name: Terraform Apply
-      if: github.event.inputs.TF_VAR_namespace == 'prod'
-      run: terraform apply -var="TF_VAR_namespace=${{ github.event.inputs.TF_VAR_namespace }}" -auto-approve
-
-    - name: Cleanup Workspace
-      if: always()
-      run: rm -rf CRS-Azure-Bootstrap-Infrastructure Optumfile.yml
+          cd ddrgenerator
+          chmod +x gradlew
+          ./gradlew clean build -x test --no-daemon --stacktrace \
+            -Dorg.gradle.jvmargs="--add-opens jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
