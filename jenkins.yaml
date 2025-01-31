@@ -17,7 +17,9 @@ jobs:
           java-version: '17'
 
       - name: Verify Java version
-        run: java -version
+        run: |
+          java -version
+          javac -version
 
       - name: Print current directory
         run: pwd
@@ -27,6 +29,9 @@ jobs:
 
       - name: Jar Build
         run: |
+          export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
+          echo "JAVA_HOME is set to $JAVA_HOME"
+
           cd caseservice
           chmod +x gradlew
           ./gradlew clean build -x test --no-daemon --stacktrace \
