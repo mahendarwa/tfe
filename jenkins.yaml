@@ -1,7 +1,7 @@
 name: "Jar Build"
 
 on:
-  workflow_dispatch: # Manually trigger the workflow
+  workflow_dispatch:
 
 jobs:
   Jar-Build:
@@ -28,8 +28,12 @@ jobs:
         run: ls -al
 
       - name: Jar Build
+        env:
+          JAVA_HOME: /home/bambscm1/actions-runner/_work/_tool/Java_Temurin-Hotspot_jdk/17.0.14-7/x64
+          GRADLE_OPTS: "-Dorg.gradle.java.home=/home/bambscm1/actions-runner/_work/_tool/Java_Temurin-Hotspot_jdk/17.0.14-7/x64"
         run: |
-          export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
+          export JAVA_HOME=${JAVA_HOME}
+          export PATH="${JAVA_HOME}/bin:$PATH"
           echo "JAVA_HOME is set to $JAVA_HOME"
 
           cd caseservice
