@@ -1,15 +1,18 @@
-package wiz
+- name: Set Variables
+        run: |
+          echo "ORG_PATH=/home/bambscm1/actions-runner-2/_work/bcc-pat/bcc-pat/" >> $GITHUB_ENV
+          echo "REMOTE_PATH=${ORG_PATH}unix/PFW_UNIX/pjlcheck_pat/opt/pjlcheck_pat" >> $GITHUB_ENV
+          echo "REMOTE_PATH1=${ORG_PATH}unix/PFW_UNIX/plsegfix_pat/opt/plsegfix_pat" >> $GITHUB_ENV
+          echo "REMOTE_PATH2=${ORG_PATH}unix/PFW_UNIX/plsegchk_pat/opt/plsegchk_pat" >> $GITHUB_ENV
+          echo "REMOTE_PATH3=${ORG_PATH}unix/PFW_UNIX/plstatus_pat/opt/plstatus_pat" >> $GITHUB_ENV
+          echo "LOCAL_PATH=/tmp/pat/" >> $GITHUB_ENV
 
-default result = "pass"
+- name: Create Local Directory
+run: mkdir -p $LOCAL_PATH
 
-paths := ["containers", "initContainers"]
-
-# Fail if `securityContext.capabilities.add` is present and not empty
-result = "fail" {
-    some i, j
-    input.object.spec[paths[i]][j].securityContext.capabilities.add
-    count(input.object.spec[paths[i]][j].securityContext.capabilities.add) > 0
-}
-
-currentConfiguration := "'securityContext.capabilities.add' includes values beyond the allowed values"
-expectedConfiguration := "'securityContext.capabilities.add' should be empty (`[]`) or absent"
+- name: Copy Binary Files from Remote to Local
+run: |
+  scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH $LOCAL_PATH || true
+  scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH1 $LOCAL_PATH || true
+  scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH2 $LOCAL_PATH || true
+  scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH3 $LOCAL_PATH || true
