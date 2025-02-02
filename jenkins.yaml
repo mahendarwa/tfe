@@ -1,4 +1,4 @@
-name: Release Build Workflow
+name: Create Release Branch
 
 on:
   workflow_dispatch:
@@ -13,7 +13,6 @@ on:
           - "2024"
           - "2025"
           - "2026"
-
       ReleaseMonth:
         description: "Select Release Month"
         required: true
@@ -32,7 +31,6 @@ on:
           - "10"
           - "11"
           - "12"
-
       ReleaseDate:
         description: "Select Release Date"
         required: true
@@ -70,49 +68,28 @@ on:
           - "29"
           - "30"
           - "31"
-
       ReleaseReference:
         description: "Release Reference (Optional: CM/WorkItem Number)"
         required: false
         type: string
 
 jobs:
-  build_release:
+  create_release_branch:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check Selected Release Parameters
-        run: |
-          echo "⚠️ WARNING! HAVE YOU SYNCED THE LATEST DEPLOYED RELEASE BRANCH TO MASTER?"
-          echo "⚠️ CAUTION! DO NOT CREATE MORE THAN ONE RELEASE BRANCH FOR FUTURE RELEASES"
-          echo "⚠️ CAUTION! ALWAYS PROMOTE ONE RELEASE BRANCH PER RELEASE"
-          echo "⚠️ CAUTION! DO NOT PROMOTE OLD/PAST DATE RELEASE BRANCHES"
-          echo "Release Year: ${{ github.event.inputs.ReleaseYear }}"
-          echo "Release Month: ${{ github.event.inputs.ReleaseMonth }}"
-          echo "Release Date: ${{ github.event.inputs.ReleaseDate }}"
-          echo "Release Reference: ${{ github.event.inputs.ReleaseReference }}"
+      - name: Checkout Master Branch
+        uses: actions/checkout@v3
+        with:
+          ref: master
+          fetch-depth: 0
 
-      - name: Set Environment Variables
+      - name: Set Release Branch Name
         run: |
           RELEASE_BRANCH="release-${{ github.event.inputs.ReleaseYear }}-${{ github.event.inputs.ReleaseMonth }}-${{ github.event.inputs.ReleaseDate }}"
           echo "RELEASE_BRANCH=${RELEASE_BRANCH}" >> $GITHUB_ENV
-          echo "Release Branch set to: ${RELEASE_BRANCH}"
 
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Create Release Branch
+      - name: Create and Push Release Branch
         run: |
           git checkout -b $RELEASE_BRANCH
           git push origin $RELEASE_BRANCH
           echo "✅ Successfully created and pushed release branch: $RELEASE_BRANCH"
-
-      - name: Build & Deploy Release
-        run: |
-          echo "🚀 Initiating Build & Deployment for Release: ${RELEASE_BRANCH}"
-          echo "🔗 Reference ID: ${{ github.event.inputs.ReleaseReference }}"
-          # Add deployment commands (e.g., Maven, Docker, etc.)
-
-      - name: Success Message
-        run: |
-          echo "✅ Release Build Completed Successfully for ${RELEASE_BRANCH}"
