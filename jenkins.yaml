@@ -76,6 +76,9 @@ on:
 jobs:
   create_release_branch:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout Master Branch
         uses: actions/checkout@v3
@@ -88,8 +91,18 @@ jobs:
           RELEASE_BRANCH="release-${{ github.event.inputs.ReleaseYear }}-${{ github.event.inputs.ReleaseMonth }}-${{ github.event.inputs.ReleaseDate }}"
           echo "RELEASE_BRANCH=${RELEASE_BRANCH}" >> $GITHUB_ENV
 
+      - name: Configure Git
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+
       - name: Create and Push Release Branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
         run: |
           git checkout -b $RELEASE_BRANCH
+          echo "Release branch created on $(date)" > release_info.txt
+          git add release_info.txt
+          git commit -m "Created release branch: $RELEASE_BRANCH"
           git push origin $RELEASE_BRANCH
           echo "✅ Successfully created and pushed release branch: $RELEASE_BRANCH"
