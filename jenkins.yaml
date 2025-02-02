@@ -1,40 +1,118 @@
+name: Release Build Workflow
 
 on:
   workflow_dispatch:
     inputs:
-      Environment:
-        description: "Select Environment"
+      ReleaseYear:
+        description: "Select Release Year"
         required: true
-        default: "pflqa00"
+        default: "2025"
         type: choice
         options:
-          - pflqa00
-          - pflqa12
-          - pflqa22
-          - pflqa36
-          - pflqa42
+          - "2023"
+          - "2024"
+          - "2025"
+          - "2026"
+
+      ReleaseMonth:
+        description: "Select Release Month"
+        required: true
+        default: "01"
+        type: choice
+        options:
+          - "01"
+          - "02"
+          - "03"
+          - "04"
+          - "05"
+          - "06"
+          - "07"
+          - "08"
+          - "09"
+          - "10"
+          - "11"
+          - "12"
+
+      ReleaseDate:
+        description: "Select Release Date"
+        required: true
+        default: "01"
+        type: choice
+        options:
+          - "01"
+          - "02"
+          - "03"
+          - "04"
+          - "05"
+          - "06"
+          - "07"
+          - "08"
+          - "09"
+          - "10"
+          - "11"
+          - "12"
+          - "13"
+          - "14"
+          - "15"
+          - "16"
+          - "17"
+          - "18"
+          - "19"
+          - "20"
+          - "21"
+          - "22"
+          - "23"
+          - "24"
+          - "25"
+          - "26"
+          - "27"
+          - "28"
+          - "29"
+          - "30"
+          - "31"
+
+      ReleaseReference:
+        description: "Release Reference (Optional: CM/WorkItem Number)"
+        required: false
+        type: string
 
 jobs:
-  deploy:
-    runs-on: test
+  build_release:
+    runs-on: ubuntu-latest
+
     steps:
+      - name: Check Selected Release Parameters
+        run: |
+          echo "⚠️ WARNING! HAVE YOU SYNCED THE LATEST DEPLOYED RELEASE BRANCH TO MASTER?"
+          echo "⚠️ CAUTION! DO NOT CREATE MORE THAN ONE RELEASE BRANCH FOR FUTURE RELEASES"
+          echo "⚠️ CAUTION! ALWAYS PROMOTE ONE RELEASE BRANCH PER RELEASE"
+          echo "⚠️ CAUTION! DO NOT PROMOTE OLD/PAST DATE RELEASE BRANCHES"
+          echo "Release Year: ${{ github.event.inputs.ReleaseYear }}"
+          echo "Release Month: ${{ github.event.inputs.ReleaseMonth }}"
+          echo "Release Date: ${{ github.event.inputs.ReleaseDate }}"
+          echo "Release Reference: ${{ github.event.inputs.ReleaseReference }}"
+
       - name: Set Environment Variables
         run: |
-          if [[ "${{ github.event.inputs.Environment }}" == "pflqa36" ]]; then
-            echo "ADMIN_USR=pfmgr4" >> $GITHUB_ENV
-            echo "PATH_ENV=pflqa36/" >> $GITHUB_ENV
-          elif [[ "${{ github.event.inputs.Environment }}" == "pflqa42" ]]; then
-            echo "ADMIN_USR=pfmgr4" >> $GITHUB_ENV
-            echo "PATH_ENV=pflqa42/" >> $GITHUB_ENV
-          elif [[ "${{ github.event.inputs.Environment }}" == "pflqa00" ]]; then
-            echo "ADMIN_USR=pfmgr" >> $GITHUB_ENV
-            echo "PATH_ENV=pflqa00/" >> $GITHUB_ENV
-          else
-            echo "Invalid environment choice: ${{ github.event.inputs.Environment }}"
-            exit 1
-          fi
+          RELEASE_BRANCH="release-${{ github.event.inputs.ReleaseYear }}-${{ github.event.inputs.ReleaseMonth }}-${{ github.event.inputs.ReleaseDate }}"
+          echo "RELEASE_BRANCH=${RELEASE_BRANCH}" >> $GITHUB_ENV
+          echo "Release Branch set to: ${RELEASE_BRANCH}"
 
-      - name: Print Selected Variables
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Create Release Branch
         run: |
-          echo "Selected Admin User: $ADMIN_USR"
-          echo "Selected Path: $PATH_ENV"
+          git checkout -b $RELEASE_BRANCH
+          git push origin $RELEASE_BRANCH
+          echo "✅ Successfully created and pushed release branch: $RELEASE_BRANCH"
+
+      - name: Build & Deploy Release
+        run: |
+          echo "🚀 Initiating Build & Deployment for Release: ${RELEASE_BRANCH}"
+          echo "🔗 Reference ID: ${{ github.event.inputs.ReleaseReference }}"
+          # Add deployment commands (e.g., Maven, Docker, etc.)
+
+      - name: Success Message
+        run: |
+          echo "✅ Release Build Completed Successfully for ${RELEASE_BRANCH}"
