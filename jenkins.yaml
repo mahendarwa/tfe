@@ -1,18 +1,24 @@
-- name: Set Variables
+      - name: Set Environment Variables
         run: |
-          echo "ORG_PATH=/home/bambscm1/actions-runner-2/_work/bcc-pat/bcc-pat/" >> $GITHUB_ENV
+          echo 'ORG_PATH="/home/bambscm1/actions-runner-2/_work/bcc-pat/bcc-pat/"' >> $GITHUB_ENV
+          echo "TMP_PATH=/tmp/pat/" >> $GITHUB_ENV
+
+      - name: Set Permissions for Temporary Path
+        run: |
+          mkdir -p $TMP_PATH
+          chmod -R 755 $TMP_PATH
+
+      - name: Set Variables
+        run: |
           echo "REMOTE_PATH=${ORG_PATH}unix/PFW_UNIX/pjlcheck_pat/opt/pjlcheck_pat" >> $GITHUB_ENV
           echo "REMOTE_PATH1=${ORG_PATH}unix/PFW_UNIX/plsegfix_pat/opt/plsegfix_pat" >> $GITHUB_ENV
           echo "REMOTE_PATH2=${ORG_PATH}unix/PFW_UNIX/plsegchk_pat/opt/plsegchk_pat" >> $GITHUB_ENV
           echo "REMOTE_PATH3=${ORG_PATH}unix/PFW_UNIX/plstatus_pat/opt/plstatus_pat" >> $GITHUB_ENV
           echo "LOCAL_PATH=/tmp/pat/" >> $GITHUB_ENV
 
-- name: Create Local Directory
-run: mkdir -p $LOCAL_PATH
-
-- name: Copy Binary Files from Remote to Local
-run: |
-  scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH $LOCAL_PATH || true
-  scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH1 $LOCAL_PATH || true
-  scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH2 $LOCAL_PATH || true
-  scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH3 $LOCAL_PATH || true
+      - name: Copy Binary Files from Remote to Local
+        run: |
+          scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH $LOCAL_PATH || echo "Skipping $REMOTE_PATH due to permission error"
+          scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH1 $LOCAL_PATH || echo "Skipping $REMOTE_PATH1 due to permission error"
+          scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH2 $LOCAL_PATH || echo "Skipping $REMOTE_PATH2 due to permission error"
+          scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH3 $LOCAL_PATH || echo "Skipping $REMOTE_PATH3 due to permission error"
