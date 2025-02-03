@@ -1,12 +1,5 @@
-request to Update KMS Key Application ID to Match S3 Bucket
+Update Application ID for S3 Bucket
 Description:
-The S3 bucket rql-tfstate-prod is currently using a KMS key (ARN: arn:aws:kms:us-west-2:043956502342:key/e18ee1e3-6953-4633-be55-15c05802f73a) that has an Application ID of "RQL", while the S3 bucket has an Application ID of "ARI".
+Please update the Application ID of the following resources to RQL to align with compliance requirements:
 
-As per the compliance findings, the Application ID of the KMS key should match the Application ID of the S3 bucket to align with security policies.
-
-Remediation Steps Requested:
-Update the KMS key’s Application ID tag from "RQL" to "ARI".
-
-KMS Key ARN: arn:aws:kms:us-west-2:043956502342:key/e18ee1e3-6953-4633-be55-15c05802f73a
-Current Application ID: RQL
-Expected Application ID: ARI
+S3 Bucket: rql-tfstate-prod-us-west-2
