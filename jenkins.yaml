@@ -1,108 +1,12 @@
-name: Create Release Branch
+request to Update KMS Key Application ID to Match S3 Bucket
+Description:
+The S3 bucket rql-tfstate-prod is currently using a KMS key (ARN: arn:aws:kms:us-west-2:043956502342:key/e18ee1e3-6953-4633-be55-15c05802f73a) that has an Application ID of "RQL", while the S3 bucket has an Application ID of "ARI".
 
-on:
-  workflow_dispatch:
-    inputs:
-      ReleaseYear:
-        description: "Select Release Year"
-        required: true
-        default: "2025"
-        type: choice
-        options:
-          - "2023"
-          - "2024"
-          - "2025"
-          - "2026"
-      ReleaseMonth:
-        description: "Select Release Month"
-        required: true
-        default: "01"
-        type: choice
-        options:
-          - "01"
-          - "02"
-          - "03"
-          - "04"
-          - "05"
-          - "06"
-          - "07"
-          - "08"
-          - "09"
-          - "10"
-          - "11"
-          - "12"
-      ReleaseDate:
-        description: "Select Release Date"
-        required: true
-        default: "01"
-        type: choice
-        options:
-          - "01"
-          - "02"
-          - "03"
-          - "04"
-          - "05"
-          - "06"
-          - "07"
-          - "08"
-          - "09"
-          - "10"
-          - "11"
-          - "12"
-          - "13"
-          - "14"
-          - "15"
-          - "16"
-          - "17"
-          - "18"
-          - "19"
-          - "20"
-          - "21"
-          - "22"
-          - "23"
-          - "24"
-          - "25"
-          - "26"
-          - "27"
-          - "28"
-          - "29"
-          - "30"
-          - "31"
-      ReleaseReference:
-        description: "Release Reference (Optional: CM/WorkItem Number)"
-        required: false
-        type: string
+As per the compliance findings, the Application ID of the KMS key should match the Application ID of the S3 bucket to align with security policies.
 
-jobs:
-  create_release_branch:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
+Remediation Steps Requested:
+Update the KMS key’s Application ID tag from "RQL" to "ARI".
 
-    steps:
-      - name: Checkout Master Branch
-        uses: actions/checkout@v3
-        with:
-          ref: master
-          fetch-depth: 0
-
-      - name: Set Release Branch Name
-        run: |
-          RELEASE_BRANCH="release-${{ github.event.inputs.ReleaseYear }}-${{ github.event.inputs.ReleaseMonth }}-${{ github.event.inputs.ReleaseDate }}"
-          echo "RELEASE_BRANCH=${RELEASE_BRANCH}" >> $GITHUB_ENV
-
-      - name: Configure Git
-        run: |
-          git config --global user.email "github-actions@github.com"
-          git config --global user.name "GitHub Actions"
-
-      - name: Create and Push Release Branch
-        env:
-          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
-        run: |
-          git checkout -b $RELEASE_BRANCH
-          echo "Release branch created on $(date)" > release_info.txt
-          git add release_info.txt
-          git commit -m "Created release branch: $RELEASE_BRANCH"
-          git push origin $RELEASE_BRANCH
-          echo "✅ Successfully created and pushed release branch: $RELEASE_BRANCH"
+KMS Key ARN: arn:aws:kms:us-west-2:043956502342:key/e18ee1e3-6953-4633-be55-15c05802f73a
+Current Application ID: RQL
+Expected Application ID: ARI
