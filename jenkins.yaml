@@ -1,5 +1,19 @@
-Update Application ID for S3 Bucket
-Description:
-Please update the Application ID of the following resources to RQL to align with compliance requirements:
+- name: Merge Feature to Develop Branch
+  run: |
+    Branch='feature/test_pipeline'
+    
+    git clone -b ${Branch} --single-branch https://x-access-token:${{ secrets.MY_GITHUB_TOKEN }}@github.com/zilvertonz/GBS_DAE_Python_ETL.git
+    
+    cd GBS_DAE_Python_ETL
 
-S3 Bucket: rql-tfstate-prod-us-west-2
+    git fetch origin
+    
+    git checkout develop
+    git pull origin develop
+
+    git merge --no-ff origin/${Branch} --strategy-option theirs
+
+    git add --all
+    git commit -m "Merged ${Branch} into develop"
+
+    git push origin develop
