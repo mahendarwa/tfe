@@ -1,14 +1,74 @@
-- name: Merge Feature to Develop Branch
-  run: |
-    Branch='feature/test_pipeline'
-    git clone -b ${Branch} --single-branch https://x-access-token:${{ secrets.MY_GITHUB_TOKEN }}@github.com/zilvertonz/GBS_DAE_Python_ETL.git
-    cd GBS_DAE_Python_ETL
-    git fetch origin
-    git checkout ${Branch}
-    git merge --squash origin/develop
-    git add --all
-    git commit -m "Squashed changes from develop into ${Branch}"
-    git push origin ${Branch}
-    git checkout develop
-    git merge origin/${Branch} --no-ff --strategy-option ours
-    git push origin develop
+name: "PAT QA Deployment"
+
+on:
+  workflow_dispatch: # Manually trigger the workflow
+
+jobs:
+  deploy:
+    runs-on: consumer-panel-services-agent_qa_daylnxcpsq014
+    strategy:
+      matrix:
+        server: ["daylnxcpsq014", "daylnxcpsq015", "daylnxcpsq016"]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set Environment Variables
+        run: |
+          echo "JAVA_HOME=/usr/local/jdk11" >> $GITHUB_ENV
+          echo "ARTIFACTORY_USER=${{ secrets.ARTIFACTORY_USER }}" >> $GITHUB_ENV
+          echo "ARTIFACTORY_PASS=${{ secrets.ARTIFACTORY_PASS }}" >> $GITHUB_ENV
+
+      - name: Build DDR Generator
+        run: |
+          cd ddrgenerator
+          chmod 755 gradlew
+          ./gradlew clean build -x test
+        env:
+          JAVA_HOME: /usr/local/jdk11
+
+      - name: Clean and Rebuild Docker Container
+        run: |
+          docker kill ddrgenerator || true
+          docker rm ddrgenerator || true
+          docker image rm -f ddrgenerator || true
+
+          cd /home/bambscm1/adlm_jenkins/${{ matrix.server }}/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/ddrgenerator/
+          docker build -t ddrgenerator --file Dockerfile .
+
+      - name: Deploy to Docker Compose
+        run: |
+          cd /home/bambscm1/adlm_jenkins/${{ matrix.server }}/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/cicd/docker-compose/qa/
+          docker-compose -f docker-compose.primary.yml up -d
+
+  deploy-to-server-013:
+    runs-on: consumer-panel-services-agent_qa_daylnxcpsq014
+    needs: deploy
+    steps:
+      - name: Copy Artifacts to Server 013
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambscm1@daylnxcpsq013.enterprisenet.org "mkdir -p /home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/"
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/vscode -r /home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/* bambscm1@daylnxcpsq013.enterprisenet.org:/home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/
+
+      - name: Deploy to Server 013
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambscm1@daylnxcpsq013.enterprisenet.org "
+            cd /home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/ddrgenerator;
+            export JAVA_HOME=/usr/local/jdk11;
+            chmod 755 gradlew;
+            ./gradlew clean build -x test;
+
+            docker kill ddrgenerator || true;
+            docker rm ddrgenerator || true;
+            docker image rm -f ddrgenerator || true;
+
+            cd /home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/ddrgenerator/;
+            docker build -t ddrgenerator --file Dockerfile .;
+
+            cd /home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/cicd/docker-compose/qa/;
+            docker-compose -f docker-compose.primary.yml up -d;
+          "
+
+      - name: Cleanup
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambscm1@daylnxcpsq013.enterprisenet.org "rm -rf /home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/ddrgenerator/build"
