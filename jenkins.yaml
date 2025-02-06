@@ -1,26 +1,30 @@
-
-
   server-014:
     runs-on: consumer-panel-services-agent_qa_daylnxcpsq014
     needs: checkout-014
     steps:
-      - name: Set JAVA_HOME
+      - name: Set Up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Clear Gradle Cache
         run: |
-          export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
-          echo "JAVA_HOME is set to $JAVA_HOME"
-          echo "JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
+          rm -rf ~/.gradle/caches
+
+      - name: Upgrade Gradle Wrapper
+        run: |
+          cd /home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice
+          ./gradlew wrapper --gradle-version 8.2.1
 
       - name: Build and Deploy on Server 014
         env:
           ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
           ARTIFACTORY_PASS: ${{ secrets.ARTIFACTORY_PASS }}
         run: |
-          export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
           chmod +x /home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/ddrgenerator/gradlew
           cd /home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/ddrgenerator
-
-          ./gradlew clean build -x test --no-daemon --stacktrace \
-            -Dorg.gradle.jvmargs="--add-opens jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
+          ./gradlew clean build -x test --no-daemon --stacktrace
 
           docker kill ddrgenerator || true
           docker rm ddrgenerator || true
