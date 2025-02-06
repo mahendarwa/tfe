@@ -1,5 +1,22 @@
+name: "PAT QA Docker"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  checkout-014:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          repository: "niq-enterprise/bcc-patservice"
+          ref: "trn/feature/jan31"
+
+ 
+
   server-014:
-    runs-on: consumer-panel-services-agent_qa_daylnxcpsq014
+    runs-on: self-hosted
     needs: checkout-014
     steps:
       - name: Set Up Java
@@ -15,6 +32,7 @@
       - name: Upgrade Gradle Wrapper
         run: |
           cd /home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice
+          chmod +x gradlew
           ./gradlew wrapper --gradle-version 8.2.1
 
       - name: Build and Deploy on Server 014
