@@ -1,152 +1,33 @@
-name: "PAT QA Docker"
-
-on:
-  workflow_dispatch:
-
-jobs:
-  checkout-014:
-    runs-on: self-hosted
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-        with:
-          ref: "trn/1.0/controlled"
-
-  server-014:
-    runs-on: self-hosted
-    needs: checkout-014
-    steps:
-      - name: Set Up Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '11'
-
-      - name: Configure Artifactory Credentials
+      - name: Sync Workspace
         run: |
-          echo "ARTIFACTORY_USER=${{ secrets.ARTIFACTORY_USER }}" >> $GITHUB_ENV
-          echo "ARTIFACTORY_PASS=${{ secrets.ARTIFACTORY_PASS }}" >> $GITHUB_ENV
+          rsync -av -q --exclude '.git' --exclude 'ansible' --exclude 'jenkins' --exclude 'ANSIBLE' $GITHUB_WORKSPACE/ $GITHUB_WORKSPACE/RELEASEPYTHONPACKAGE
 
-      - name: Build and Deploy on Server 014
+      - name: Get Git Revision Details
+        id: git_info
         run: |
-          cd ddrgenerator
-          export JAVA_HOME=/usr/local/jdk11
-          chmod 755 gradlew
-          ./gradlew clean build -x test
+          gitRev=$(git rev-parse HEAD)
+          commitCount=$(git rev-list --count HEAD)
+          revNum=${gitRev:0:8}
+          echo "GIT_REV=$gitRev" >> $GITHUB_ENV
+          echo "COMMIT_COUNT=$commitCount" >> $GITHUB_ENV
+          echo "REV_NUM=$revNum" >> $GITHUB_ENV
 
-          docker kill ddrgenerator || true
-          docker rm ddrgenerator || true
-          docker image rm -f ddrgenerator || true
-
-          cd /home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/ddrgenerator/
-          docker build -t ddrgenerator --file Dockerfile .
-
-          cd /home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/cicd/docker-compose/qa/
-          docker-compose -f docker-compose.primary.yml up -d
-
-  checkout-015:
-    runs-on: self-hosted
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-        with:
-          ref: "trn/1.0/controlled"
-
-  server-015:
-    runs-on: self-hosted
-    needs: checkout-015
-    steps:
-      - name: Set Up Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '11'
-
-      - name: Configure Artifactory Credentials
+      - name: Generate Release Version
         run: |
-          echo "ARTIFACTORY_USER=${{ secrets.ARTIFACTORY_USER }}" >> $GITHUB_ENV
-          echo "ARTIFACTORY_PASS=${{ secrets.ARTIFACTORY_PASS }}" >> $GITHUB_ENV
+          RELEASE_VERSION="${{ github.event.inputs.release_branch }}.${{ github.run_number }}.${{ env.COMMIT_COUNT }}.${{ env.REV_NUM }}"
+          echo "RELEASE_VERSION=$RELEASE_VERSION" >> $GITHUB_ENV
+          echo "Release Version: $RELEASE_VERSION"
 
-      - name: Build and Deploy on Server 015
+      - name: Archive Build as TAR
         run: |
-          cd ddrgenerator
-          export JAVA_HOME=/usr/local/jdk11
-          chmod 755 gradlew
-          ./gradlew clean build -x test
+          tar --exclude=".git" --exclude "jenkins" --exclude "ansible" --exclude "ANSIBLE" -czf ${{ env.RELEASE_VERSION }}.tgz -C $GITHUB_WORKSPACE/RELEASEPYTHONPACKAGE .
 
-          docker kill ddrgenerator || true
-          docker rm ddrgenerator || true
-          docker image rm -f ddrgenerator || true
-
-          cd /home/bambscm1/adlm_jenkins/daylnxcpsq015/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/ddrgenerator/
-          docker build -t ddrgenerator --file Dockerfile .
-
-          cd /home/bambscm1/adlm_jenkins/daylnxcpsq015/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/cicd/docker-compose/qa/
-          docker-compose -f docker-compose.primary.yml up -d
-
-  checkout-016:
-    runs-on: self-hosted
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-        with:
-          ref: "trn/1.0/controlled"
-
-  server-016:
-    runs-on: self-hosted
-    needs: checkout-016
-    steps:
-      - name: Set Up Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '11'
-
-      - name: Configure Artifactory Credentials
+      - name: Build and Upload to Artifactory
         run: |
-          echo "ARTIFACTORY_USER=${{ secrets.ARTIFACTORY_USER }}" >> $GITHUB_ENV
-          echo "ARTIFACTORY_PASS=${{ secrets.ARTIFACTORY_PASS }}" >> $GITHUB_ENV
+          MAVEN_CMD="/opt/jenkins/tools/apache-maven-3.3.9/bin/mvn -s /opt/jenkins/tools/apache-maven-3.3.9/conf/settings_pipeline.xml -Durl=https://repo.sys.cigna.com/artifactory/maven-release-repos/com/cigna/healthspring/python/oss-python-etl-release"
+          MAVEN_CMD="${MAVEN_CMD//\#version/${{ env.RELEASE_VERSION }}}"
+          eval $MAVEN_CMD
+          echo "Build Success: https://repo.sys.cigna.com/artifactory/maven-release-repos/com/cigna/healthspring/python/oss-python-etl-release/${{ env.RELEASE_VERSION }}"
 
-      - name: Build and Deploy on Server 016
-        run: |
-          cd ddrgenerator
-          export JAVA_HOME=/usr/local/jdk11
-          chmod 755 gradlew
-          ./gradlew clean build -x test
-
-          docker kill ddrgenerator || true
-          docker rm ddrgenerator || true
-          docker image rm -f ddrgenerator || true
-
-          cd /home/bambscm1/adlm_jenkins/daylnxcpsq016/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/ddrgenerator/
-          docker build -t ddrgenerator --file Dockerfile .
-
-          cd /home/bambscm1/adlm_jenkins/daylnxcpsq016/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/cicd/docker-compose/qa/
-          docker-compose -f docker-compose.primary.yml up -d
-
-  server-013:
-    runs-on: self-hosted
-    needs: server-014
-    steps:
-      - name: Copy Files to Server 013
-        run: |
-          ssh-agent bash -c 'ssh-add ~/.ssh/vscode; scp -o StrictHostKeyChecking=no -i ~/.ssh/vscode -r /home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/* bambscm1@daylnxcpsq013.enterprisenet.org:/home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/'
-
-      - name: Build and Deploy on Server 013
-        run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambscm1@daylnxcpsq013.enterprisenet.org '
-          cd /home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/ddrgenerator
-          export JAVA_HOME=/usr/local/jdk11
-          chmod 755 gradlew
-          ./gradlew clean build -x test
-
-          docker kill ddrgenerator
-          docker rm ddrgenerator
-          docker image rm -f ddrgenerator
-
-          cd /home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/ddrgenerator
-          docker build -t ddrgenerator --file Dockerfile .
-
-          cd /home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/cicd/docker-compose/qa
-          docker-compose -f docker-compose.primary.yml up -d
-          '
+      - name: Completion
+        run: echo "End Build Stage."
