@@ -16,26 +16,22 @@ jobs:
     runs-on: self-hosted
     needs: checkout-014
     steps:
-      - name: Set Up Java 17
+      - name: Set Up Java
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set JAVA_HOME
+      - name: Verify Java Version
         run: |
-          export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
-          echo "JAVA_HOME is set to $JAVA_HOME"
           java -version
+          echo "JAVA_HOME is set to: $JAVA_HOME"
 
       - name: Clear Gradle Cache
-        run: |
-          rm -rf ~/.gradle/caches
+        run: rm -rf ~/.gradle/caches
 
-      - name: Set Gradlew Permissions
-        run: |
-          chmod +x /home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/gradlew
-          chmod +x /home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/ddrgenerator/gradlew
+      - name: Ensure Gradle Wrapper Permissions
+        run: chmod +x /home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/gradlew
 
       - name: Upgrade Gradle Wrapper
         run: |
@@ -47,6 +43,7 @@ jobs:
           ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
           ARTIFACTORY_PASS: ${{ secrets.ARTIFACTORY_PASS }}
         run: |
+          chmod +x /home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/ddrgenerator/gradlew
           cd /home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/ddrgenerator
           ./gradlew clean build -x test --no-daemon --stacktrace
 
