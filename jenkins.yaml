@@ -1,18 +1,29 @@
-- name: Build Docker Image
-  run: |
-    echo "Building Docker image..."
-    docker build -t crsprodbootstraprgeastus5b02df11.azurecr.io/crs/crs-api:${{ github.run_number }} .
+name: Build and Deploy
 
-- name: Login to Azure Container Registry (ACR)
-  run: |
-    echo "Logging into Azure Container Registry..."
-    az acr login --name crsprodbootstraprgeastus5b02df11
-    docker login crsprodbootstraprgeastus5b02df11.azurecr.io
+on:
+  push:
+    branches:
+      - main
+  pull_request:
 
-- name: List Docker Images (Debugging)
-  run: docker images
+jobs:
+  build:
+    runs-on: consumer-panel-services-agent_qa_daylnxcpsq014
 
-- name: Push Docker Image to ACR
-  run: |
-    echo "Pushing Docker image to ACR..."
-    docker push crsprodbootstraprgeastus5b02df11.azurecr.io/crs/crs-api:${{ github.run_number }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Build with Gradle
+        env:
+          ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
+          ARTIFACTORY_PASS: ${{ secrets.ARTIFACTORY_PASS }}
+        run: |
+          chmod +x gradlew
+          ./gradlew clean build -x test
