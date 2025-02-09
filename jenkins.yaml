@@ -1,14 +1,11 @@
-jobs:
-  server-014:
-    runs-on: self-hosted
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Set up environment variables
-        env:
-          ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
-          ARTIFACTORY_PASS: ${{ secrets.ARTIFACTORY_PASS }}
-        run: |
-          echo "ARTIFACTORY_USER is set"
-          echo "ARTIFACTORY_PASS is set"
+- name: Verify Secrets
+  env:
+    ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
+    ARTIFACTORY_PASS: ${{ secrets.ARTIFACTORY_PASS }}
+  run: |
+    if [[ -z "$ARTIFACTORY_USER" || -z "$ARTIFACTORY_PASS" ]]; then
+      echo "One or more secrets are not set!"
+      exit 1
+    else
+      echo "Secrets are successfully loaded."
+    fi
