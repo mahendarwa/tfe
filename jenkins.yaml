@@ -19,4 +19,4 @@
     docker-compose -f docker-compose.primary.yml up -d
 
     exit 0
-    EOF
+    EOF || true
