@@ -1,33 +1,14 @@
-      - name: Sync Workspace
-        run: |
-          rsync -av -q --exclude '.git' --exclude 'ansible' --exclude 'jenkins' --exclude 'ANSIBLE' $GITHUB_WORKSPACE/ $GITHUB_WORKSPACE/RELEASEPYTHONPACKAGE
+jobs:
+  server-014:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-      - name: Get Git Revision Details
-        id: git_info
+      - name: Set up environment variables
+        env:
+          ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
+          ARTIFACTORY_PASS: ${{ secrets.ARTIFACTORY_PASS }}
         run: |
-          gitRev=$(git rev-parse HEAD)
-          commitCount=$(git rev-list --count HEAD)
-          revNum=${gitRev:0:8}
-          echo "GIT_REV=$gitRev" >> $GITHUB_ENV
-          echo "COMMIT_COUNT=$commitCount" >> $GITHUB_ENV
-          echo "REV_NUM=$revNum" >> $GITHUB_ENV
-
-      - name: Generate Release Version
-        run: |
-          RELEASE_VERSION="${{ github.event.inputs.release_branch }}.${{ github.run_number }}.${{ env.COMMIT_COUNT }}.${{ env.REV_NUM }}"
-          echo "RELEASE_VERSION=$RELEASE_VERSION" >> $GITHUB_ENV
-          echo "Release Version: $RELEASE_VERSION"
-
-      - name: Archive Build as TAR
-        run: |
-          tar --exclude=".git" --exclude "jenkins" --exclude "ansible" --exclude "ANSIBLE" -czf ${{ env.RELEASE_VERSION }}.tgz -C $GITHUB_WORKSPACE/RELEASEPYTHONPACKAGE .
-
-      - name: Build and Upload to Artifactory
-        run: |
-          MAVEN_CMD="/opt/jenkins/tools/apache-maven-3.3.9/bin/mvn -s /opt/jenkins/tools/apache-maven-3.3.9/conf/settings_pipeline.xml -Durl=https://repo.sys.cigna.com/artifactory/maven-release-repos/com/cigna/healthspring/python/oss-python-etl-release"
-          MAVEN_CMD="${MAVEN_CMD//\#version/${{ env.RELEASE_VERSION }}}"
-          eval $MAVEN_CMD
-          echo "Build Success: https://repo.sys.cigna.com/artifactory/maven-release-repos/com/cigna/healthspring/python/oss-python-etl-release/${{ env.RELEASE_VERSION }}"
-
-      - name: Completion
-        run: echo "End Build Stage."
+          echo "ARTIFACTORY_USER is set"
+          echo "ARTIFACTORY_PASS is set"
