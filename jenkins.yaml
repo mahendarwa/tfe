@@ -1,26 +1,31 @@
-- name: Verify Secrets
-  env:
-    ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
-    ARTIFACTORY_PASS: ${{ secrets.ARTIFACTORY_PASS }}
-  run: |
-    if [[ -z "$ARTIFACTORY_USER" || -z "$ARTIFACTORY_PASS" ]]; then
-      echo "One or more secrets are not set!"
-      exit 1
-    else
-      echo "Secrets are successfully loaded."
-    fi
+name: "Server 013 Deployment"
 
-    cd ddrgenerator
-    export JAVA_HOME=/usr/local/jdk11
-    chmod 755 gradlew
-    ./gradlew clean build -x test
+on:
+  workflow_dispatch:
 
-    docker kill ddrgenerator || true
-    docker rm ddrgenerator || true
-    docker image rm -f ddrgenerator || true
+jobs:
+  server-013:
+    runs-on: self-hosted
+    steps:
+      - name: Setup SSH Access
+        run: |
+          ssh-agent bash -c 'ssh-add ~/.ssh/vscode; scp -o StrictHostKeyChecking=no -i ~/.ssh/vscode -r /home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/* bambscm1@daylnxcpsq013.enterprisenet.org:/home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/'
 
-    cd /home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/ddrgenerator
-    docker build -t ddrgenerator --file Dockerfile .
+      - name: Execute Remote Commands
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambscm1@daylnxcpsq013.enterprisenet.org << 'EOF'
+          cd /home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/ddrgenerator
+          export JAVA_HOME=/usr/local/jdk11
+          chmod 755 gradlew
+          ./gradlew clean build -x test
 
-    cd /home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/cicd/docker-compose/qa/
-    docker-compose -f docker-compose.primary.yml up -d
+          docker kill ddrgenerator || true
+          docker rm ddrgenerator || true
+          docker image rm -f ddrgenerator || true
+
+          cd /home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/ddrgenerator
+          docker build -t ddrgenerator --file Dockerfile .
+
+          cd /home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/cicd/docker-compose/qa
+          docker-compose -f docker-compose.primary.yml up -d
+          EOF
