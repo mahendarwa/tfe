@@ -1,22 +1,16 @@
 - name: Execute Remote Commands
   run: |
     ssh -tt -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambscm1@daylnxcpsq013.enterprisenet.org << 'EOF'
-    set -e  
+    set -xe  # Enable command tracing and exit on error
 
-    cd /home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/ddrgenerator/
+    echo "Starting remote execution..."
+
+    cd /home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/ddrgenerator/ || exit 1
     export JAVA_HOME=/usr/local/jdk11
     chmod +x gradlew
-    ./gradlew clean build -x test --no-daemon --console=plain --stacktrace
-
-    docker kill ddrgenerator || true
-    docker rm ddrgenerator || true
-    docker image rm -f ddrgenerator || true
-
-    cd /home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/ddrgenerator/
-    docker build -t ddrgenerator --file Dockerfile .
-
-    cd /home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/cicd/docker-compose/qa
-    docker-compose -f docker-compose.primary.yml up -d
+    echo "Running Gradle build..."
+    timeout 300 ./gradlew clean build -x test --no-daemon --console=plain --stacktrace || exit 1
+    echo "Gradle build completed."
 
     exit 0
     EOF || true
