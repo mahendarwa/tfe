@@ -13,7 +13,7 @@ jobs:
 
       - name: Execute Remote Commands
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambscm1@daylnxcpsq013.enterprisenet.org << 'EOF'
+          ssh -tt -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambscm1@daylnxcpsq013.enterprisenet.org << 'EOF'
           cd /home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-qa/ddrgenerator
           export JAVA_HOME=/usr/local/jdk11
           chmod 755 gradlew
