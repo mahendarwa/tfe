@@ -27,8 +27,10 @@ jobs:
           git checkout develop
           git pull origin develop
           git merge --no-ff feature/test-develop -m "Auto-merging feature/test-develop into develop" --allow-unrelated-histories || {
-            git merge --strategy-option ours feature/test-develop
-            git commit -am "Auto-resolved merge conflicts using 'ours' strategy"
+            git merge --strategy-option ours feature/test-develop || {
+              git add .
+              git commit -m "Auto-resolving merge conflicts by keeping our branch"
+            }
           }
           git push origin develop
         env:
