@@ -1,16 +1,10 @@
-- name: Execute Remote Commands
-  run: |
-    ssh -tt -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambscm1@daylnxcpsq013.enterprisenet.org << 'EOF'
-    set -xe  # Enable command tracing and exit on error
-
-    echo "Starting remote execution..."
-
-    cd /home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/ddrgenerator/ || exit 1
-    export JAVA_HOME=/usr/local/jdk11
-    chmod +x gradlew
-    echo "Running Gradle build..."
-    timeout 300 ./gradlew clean build -x test --no-daemon --console=plain --stacktrace || exit 1
-    echo "Gradle build completed."
-
-    exit 0
-    EOF || true
+git fetch origin
+git checkout develop
+git pull origin develop
+git checkout -b temp_merge_branch feature/test_develop
+git merge --squash develop
+git commit -m "Merged latest changes from feature/test_develop into develop"
+git checkout develop
+git merge temp_merge_branch --no-ff --strategy-option ours
+git push origin develop
+git branch -d temp_merge_branch
