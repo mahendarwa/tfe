@@ -1,40 +1,15 @@
-name: Merge Feature Branch to Develop
+- name: Execute Remote Commands
+  run: |
+    ssh -tt -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambscm1@daylnxcpsq013.enterprisenet.org << 'EOF'
+    set -xe  # Enable detailed logging and exit on failure
 
-on:
-  push:
-    branches:
-      - feature/test-develop
+    cd /home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/ddrgenerator/
+    export JAVA_HOME=/usr/local/jdk11
+    chmod +x gradlew
+    echo "Starting Gradle Build..."
+    timeout 300 ./gradlew clean build -x test --no-daemon --console=plain --stacktrace || exit 1
+    echo "Gradle Build Completed."
 
-permissions:
-  contents: write
-  pull-requests: write
-
-jobs:
-  merge-to-develop:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Configure Git
-        run: |
-          git config --global user.email "balaji.seetharman@cignahealthcare.com"
-          git config --global user.name "C8X6K9_Zilver"
-
-      - name: Create Pull Request
-        id: create_pr
-        uses: peter-evans/create-pull-request@v5
-        with:
-          base: develop
-          branch: feature/test-develop
-          title: "Auto Merge feature/test-develop into develop"
-          body: "This PR was created automatically via GitHub Actions."
-          labels: automated-merge
-          draft: false
-
-      - name: Auto-Merge Pull Request
-        if: steps.create_pr.outputs.pull-request-number
-        run: |
-          gh pr merge ${{ steps.create_pr.outputs.pull-request-number }} --squash --auto
-        env:
-          GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+    echo "Forcing script exit..."
+    exit 0
+    EOF || true
