@@ -3,10 +3,10 @@ git config --global user.email "balaji.seetharman@cignahealthcare.com"
 
           git fetch origin
           git checkout develop
-          git reset --hard origin/develop
-          
+          git pull --rebase origin develop || git rebase --skip 
+
           git checkout feature/test-develop
-          git rebase develop || git rebase --skip 
+          git pull --rebase origin feature/test-develop || git rebase --skip 
 
           git checkout develop
           git merge --squash feature/test-develop --strategy-option theirs || true
