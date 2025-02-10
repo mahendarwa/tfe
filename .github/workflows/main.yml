@@ -26,7 +26,7 @@ jobs:
           git fetch origin develop
           git checkout develop
           git pull origin develop
-          git merge --no-ff feature/test-develop -m "Auto-merging feature/test-develop into develop"
+          git merge --no-ff feature/test-develop -m "Auto-merging feature/test-develop into develop" --allow-unrelated-histories
           git push origin develop
         env:
           GIT_AUTHOR_NAME: "C8X6K9_Zilver"
