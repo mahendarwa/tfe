@@ -1,44 +1,36 @@
-name: "Jar Build"
+name: Merge Feature Branch to Develop
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - feature/test-develop
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
-  Jar-Build:
-    runs-on: dev004-runner
+  merge-to-develop:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v2
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Verify Java version
+      - name: Configure Git
         run: |
-          echo "Checking Java version..."
-          java -version
-          javac -version
-          echo "JAVA_HOME is set to: $JAVA_HOME"
+          git config --global user.email "balaji.seetharman@cignahealthcare.com"
+          git config --global user.name "C8X6K9_Zilver"
 
-      - name: Print current directory
-        run: pwd
-
-      - name: List files
-        run: ls -al
-
-      - name: Jar Build
+      - name: Create Pull Request with GitHub CLI
         run: |
-          echo "Using JAVA_HOME: $JAVA_HOME"
-          cd caseservice
-          chmod +x gradlew
-          ./gradlew clean build -x test --no-daemon --stacktrace \
-            -Dorg.gradle.jvmargs="--add-opens jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
-          cd ..
+          gh pr create --base develop --head feature/test-develop \
+            --title "Auto Merge feature/test-develop into develop" \
+            --body "This PR was created automatically via GitHub Actions."
+        env:
+          GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
 
-          cd ddrgenerator
-          chmod +x gradlew
-          ./gradlew clean build -x test --no-daemon --stacktrace \
-            -Dorg.gradle.jvmargs="--add-opens jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
+      - name: Auto-Merge Pull Request
+        run: |
+          gh pr merge feature/test-develop --squash --auto
+        env:
+          GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
