@@ -1,22 +1,33 @@
-- name: Execute Remote Commands
-  run: |
-    ssh -tt -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambscm1@daylnxcpsq013.enterprisenet.org << 'EOF'
-    set -xe
+steps:
+  - name: Execute Remote Commands
+    run: |
+      ssh -tt -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambscm1@daylnxcpsq013.enterprisenet.org << 'EOF'
+      set -xe
 
-    cd /home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/ddrgenerator/
-    export JAVA_HOME=/usr/local/jdk11
-    chmod +x gradlew
-    echo "Starting Gradle Build..."
+      cd /home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/ddrgenerator/
+      export JAVA_HOME=/usr/local/jdk11
+      chmod +x gradlew
+      echo "Starting Gradle Build..."
 
-    nohup ./gradlew clean build -x test --no-daemon --console=plain --stacktrace > gradle_output.log 2>&1 &
+      nohup ./gradlew clean build -x test --no-daemon --console=plain --stacktrace > gradle_output.log 2>&1 &
 
-    echo "Gradle build started in the background. Waiting for it to finish..."
-    
-    while pgrep -f gradlew > /dev/null; do
-      echo "Gradle still running..."
-      sleep 10
-    done
+      echo "Gradle build started in the background. Waiting for it to finish..."
 
-    echo "Gradle Build Completed."
-    exit 0
-    EOF || true
+      while pgrep -f gradlew > /dev/null; do
+        echo "Gradle still running..."
+        sleep 10
+      done
+
+      echo "Gradle Build Completed."
+
+      docker kill ddrgenerator || true
+      docker rm ddrgenerator || true
+      docker image rm -f ddrgenerator || true
+
+      docker build -t ddrgenerator --file Dockerfile .
+
+      cd ../cicd/docker-compose/qa
+      docker-compose -f docker-compose.primary.yml up -d
+
+      exit 0
+      EOF || true
