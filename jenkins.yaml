@@ -1,37 +1,17 @@
-name: Merge Feature to Develop Branch
+git config --global user.email "balaji.seetharman@cignahealthcare.com"
+git config --global user.name "C8X6K9_Zilver"
 
-on:
-  workflow_dispatch:
+git fetch origin
+git checkout develop
+git pull origin develop --rebase
 
-permissions:
-  contents: write
+git checkout -b temp_merge_branch feature/test_develop
+git merge --squash develop --strategy-option theirs || true
 
-jobs:
-  merge_feature_to_develop:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-        with:
-          ref: 'feature/test_develop'
-          fetch-depth: 0
+git add .
+git commit -m "Merged latest changes from feature/test_develop into develop (Auto-resolved)"
 
-      - name: Merge Feature to Develop Branch
-        run: |
-          git config --global user.email "balaji.seetharman@cignahealthcare.com"
-          git config --global user.name "C8X6K9_Zilver"
+git checkout develop
+git merge temp_merge_branch --no-ff --strategy-option theirs || true
 
-          git fetch origin
-          git checkout develop
-          git pull origin develop
-
-          git checkout -b temp_merge_branch feature/test_develop
-          git merge --squash develop --strategy-option theirs || true
-
-          git add .
-          git commit -m "Merged latest changes from feature/test_develop into develop (Auto-resolved)"
-
-          git checkout develop
-          git merge temp_merge_branch --no-ff --strategy-option theirs || true
-
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/zilvertonz/GBS_DAE_Python_ETL.git HEAD:develop --force-with-lease
+git push origin develop --force-with-lease
