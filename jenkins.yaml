@@ -1,17 +1,35 @@
-git config --global user.email "balaji.seetharman@cignahealthcare.com"
-          git config --global user.name "C8X6K9_Zilver"
+name: Merge Feature Branch to Develop
 
-          git fetch origin
-          git checkout develop
-          git pull --rebase origin develop || git rebase --skip 
+on:
+  push:
+    branches:
+      - feature/test-develop
 
-          git checkout feature/test-develop
-          git pull --rebase origin feature/test-develop || git rebase --skip 
+permissions:
+  contents: write
+  pull-requests: write
 
-          git checkout develop
-          git merge --squash feature/test-develop --strategy-option theirs || true
+jobs:
+  merge-to-develop:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-          git add .
-          git commit -m "Merged latest changes from feature/test-develop into develop (Auto-resolved)" || true
+      - name: Create Pull Request
+        id: create_pr
+        uses: peter-evans/create-pull-request@v5
+        with:
+          base: develop
+          branch: feature/test-develop
+          title: "Auto Merge feature/test-develop into develop"
+          body: "This PR was created automatically via GitHub Actions."
+          labels: automated-merge
+          draft: false
 
-          git pull --rebase origin develop
+      - name: Auto-Merge Pull Request
+        if: steps.create_pr.outputs.pull-request-number
+        run: |
+          gh pr merge ${{ steps.create_pr.outputs.pull-request-number }} --squash --auto
+        env:
+          GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
