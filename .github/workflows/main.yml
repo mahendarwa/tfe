@@ -21,16 +21,15 @@ jobs:
           git config --global user.email "balaji.seetharman@cignahealthcare.com"
           git config --global user.name "C8X6K9_Zilver"
 
-      - name: Create Pull Request with GitHub CLI
+      - name: Fetch and Merge Branch
         run: |
-          gh pr create --base develop --head feature/test-develop \
-            --title "Auto Merge feature/test-develop into develop" \
-            --body "This PR was created automatically via GitHub Actions."
+          git fetch origin develop
+          git checkout develop
+          git pull origin develop
+          git merge --no-ff feature/test-develop -m "Auto-merging feature/test-develop into develop"
+          git push origin develop
         env:
-          GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
-
-      - name: Auto-Merge Pull Request
-        run: |
-          gh pr merge feature/test-develop --squash --auto
-        env:
-          GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+          GIT_AUTHOR_NAME: "C8X6K9_Zilver"
+          GIT_AUTHOR_EMAIL: "balaji.seetharman@cignahealthcare.com"
+          GIT_COMMITTER_NAME: "C8X6K9_Zilver"
+          GIT_COMMITTER_EMAIL: "balaji.seetharman@cignahealthcare.com"
