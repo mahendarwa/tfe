@@ -1,6 +1,6 @@
 git fetch origin
 git checkout develop
 git pull origin develop
-git merge --squash feature/test_develop
+git merge --squash feature/test_develop --allow-unrelated-histories
 git commit -m "Merged latest changes from feature/test_develop into develop"
 git push origin develop
