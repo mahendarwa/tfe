@@ -1,21 +1,37 @@
+name: Merge Feature to Develop Branch
 
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  merge_feature_to_develop:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          ref: 'feature/test_develop'
+          fetch-depth: 0
 
       - name: Merge Feature to Develop Branch
         run: |
           git config --global user.email "balaji.seetharman@cignahealthcare.com"
           git config --global user.name "C8X6K9_Zilver"
-          
+
           git fetch origin
           git checkout develop
           git pull origin develop
-          
+
           git checkout -b temp_merge_branch feature/test_develop
           git merge --squash develop --strategy-option theirs || true
-          
+
           git add .
           git commit -m "Merged latest changes from feature/test_develop into develop (Auto-resolved)"
-          
+
           git checkout develop
           git merge temp_merge_branch --no-ff --strategy-option theirs || true
-          
-          git push https://x-access-token:${{ secrets.MY_GITHUB_TOKEN }}@github.com/zilvertonz/GBS_DAE_Python_ETL.git HEAD:develop --force
+
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/zilvertonz/GBS_DAE_Python_ETL.git HEAD:develop --force-with-lease
