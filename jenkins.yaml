@@ -1,35 +1,26 @@
-name: "PAT QA Docker"
 
-on:
-  workflow_dispatch:
+git clone https://github.com/your-org/your-repo.git
+cd your-repo
 
-jobs:
-  checkout-013:
-    runs-on: self-hosted
-    steps:
-      - name: Execute Remote Commands
-        run: |
-          ssh -tt -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambscm1@daylnxcpsq013.enterprisenet.org << 'EOF'
-          set -xe
-          
-          cd /home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/ddrgenerator/
-          export JAVA_HOME=/usr/local/jdk11
-          chmod +x gradlew
-          
-          nohup ./gradlew clean build -x test --no-daemon --console=plain --stacktrace > gradle_output.log 2>&1 &
-          
-          while pgrep -f gradlew > /dev/null; do
-              sleep 10
-          done
-          
-          docker kill ddrgenerator || true
-          docker rm ddrgenerator || true
-          docker image rm -f ddrgenerator || true
-          
-          docker build -t ddrgenerator --file Dockerfile .
-          
-          cd ../cicd/docker-compose/qa
-          docker-compose -f docker-compose.primary.yml up -d
-          
-          exit 0
-          EOF || true
+
+git fetch origin
+
+
+git checkout -B develop origin/develop
+git pull origin develop
+
+
+git checkout -B feature/test-develop origin/feature/test-develop
+git pull origin feature/test-develop
+
+
+git checkout develop
+
+
+git merge -X theirs feature/test-develop --no-ff --allow-unrelated-histories || {
+    git add .
+    git commit -m "Auto-resolving merge conflicts and merging feature/test-develop into develop"
+}
+
+
+git push origin develop
