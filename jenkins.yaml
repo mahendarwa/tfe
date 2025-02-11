@@ -1,26 +1,8 @@
-
-git clone https://github.com/your-org/your-repo.git
-cd your-repo
-
-
-git fetch origin
-
-
-git checkout -B develop origin/develop
-git pull origin develop
+inputs:
+  feature_branch:
+    description: 'Feature branch to merge into develop'
+    required: true
+    default: 'feature/test-develop'
 
 
-git checkout -B feature/test-develop origin/feature/test-develop
-git pull origin feature/test-develop
-
-
-git checkout develop
-
-
-git merge -X theirs feature/test-develop --no-ff --allow-unrelated-histories || {
-    git add .
-    git commit -m "Auto-resolving merge conflicts and merging feature/test-develop into develop"
-}
-
-
-git push origin develop
+${{ github.event.inputs.feature_branch }}
