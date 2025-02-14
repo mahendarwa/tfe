@@ -1,15 +1,43 @@
-steps:
-  - name: Checkout code
-    uses: actions/checkout@v2
-    with:
-      token: ${{ secrets.MY_GITHUB_TOKEN }}
+package wiz
 
-  - name: Debug Network Connectivity
-    run: |
-      set -x
-      hostname
-      pwd
-      whoami
-      ping -c 2 HDCLAPPXD027.HealthSpring.Inside
-      traceroute HDCLAPPXD027.HealthSpring.Inside || echo "Traceroute failed"
-      nc -zv HDCLAPPXD027.HealthSpring.Inside 22 || echo "Port 22 is closed"
+default result = "pass"
+
+# Fail if allowPrivilegeEscalation is explicitly true or missing for initContainers
+result = "fail" {
+    some i
+    not input.object.spec.initContainers[i].securityContext.allowPrivilegeEscalation
+}
+
+# Fail if allowPrivilegeEscalation is explicitly true or missing for containers
+result = "fail" {
+    some i
+    not input.object.spec.containers[i].securityContext.allowPrivilegeEscalation
+}
+
+# Fail if allowPrivilegeEscalation is explicitly set to true in initContainers
+result = "fail" {
+    some i
+    input.object.spec.initContainers[i].securityContext.allowPrivilegeEscalation == true
+}
+
+# Fail if allowPrivilegeEscalation is explicitly set to true in containers
+result = "fail" {
+    some i
+    input.object.spec.containers[i].securityContext.allowPrivilegeEscalation == true
+}
+
+# Fail if allowPrivilegeEscalation is null in initContainers
+result = "fail" {
+    some i
+    input.object.spec.initContainers[i].securityContext.allowPrivilegeEscalation == null
+}
+
+# Fail if allowPrivilegeEscalation is null in containers
+result = "fail" {
+    some i
+    input.object.spec.containers[i].securityContext.allowPrivilegeEscalation == null
+}
+
+# Error messages for better debugging
+currentConfiguration := "At least one container is missing 'securityContext.allowPrivilegeEscalation' or has it set to 'true' or 'null'"
+expectedConfiguration := "All containers should have 'securityContext.allowPrivilegeEscalation' explicitly set to 'false'"
