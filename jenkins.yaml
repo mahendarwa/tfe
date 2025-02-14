@@ -1,39 +1,30 @@
-elif [[ "${{ github.event.inputs.envType }}}" == "EU UAT" ]]; then
+- name: Deploy to Dev Environment
+  run: |
+    set -x  # Enable debug mode to print all commands being executed
 
-    set -x
+    echo "==> Pinging the server to check network connectivity"
+    ping -c 2 HDCLAPPXD027.HealthSpring.Inside
 
-    echo "Attempting to log in to Azure..."
-    az login --service-principal \
-        --username "${{ secrets.CSASECD-SP-NP_APPID }}" \
-        --password "${{ secrets.CSASECD-SP-NP_PASSWORD }}" \
-        --tenant "${{ secrets.CSASECD-SP-NP_TENANT }}" \
-        --output none
+    echo "==> Setting up SSH key"
+    mkdir -p ~/.ssh
+    echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+    chmod 600 ~/.ssh/id_rsa  # Ensure correct permissions
 
-    if [[ $? -ne 0 ]]; then
-        echo "ERROR: Azure login failed!" >&2
-        exit 1
-    fi
+    echo "==> Adding SSH key to agent"
+    eval "$(ssh-agent -s)"
+    ssh-add ~/.ssh/id_rsa
 
-    echo "Fetching secrets from Azure Key Vault..."
-    export USERNAME=$(az keyvault secret show --name pod-eunprod-user-id --vault-name csasecdkvuaeu --query value -o tsv 2>&1)
-    
-    if [[ $? -ne 0 || -z "$USERNAME" ]]; then
-        echo "ERROR: Failed to fetch USERNAME from Key Vault!" >&2
-        exit 1
-    fi
+    echo "==> Verifying SSH key permissions"
+    ls -lah ~/.ssh/
 
-    export PASSWORD=$(az keyvault secret show --name pod-eunprod-user-pswrd --vault-name csasecdkvuaeu --query value -o tsv 2>&1)
-    
-    if [[ $? -ne 0 || -z "$PASSWORD" ]]; then
-        echo "ERROR: Failed to fetch PASSWORD from Key Vault!" >&2
-        exit 1
-    fi
+    echo "==> Adding the remote server to known hosts"
+    ssh-keyscan -H HDCLAPPXD027.HealthSpring.Inside >> ~/.ssh/known_hosts
+    chmod 644 ~/.ssh/known_hosts
 
-    export SF_ACCOUNT="connect-nielseniq_west_eu"
-    export SF_ROLE="EUNPROD_DEPLOYMENT_R"
-    export SF_WAREHOUSE="CS_OD_RPT_WH"
+    echo "==> Testing SSH Connection"
+    ssh -v gitactions@HDCLAPPXD027.HealthSpring.Inside "echo 'SSH Connection Successful'"
 
-    echo "All environment variables set successfully."
-
-    set +x
-fi
+    echo "==> Deploying application"
+    sshpass -p "F@lcon2003" ssh -o StrictHostKeyChecking=no \
+        -o HostKeyAlgorithms=+sk-ssh-ed25519@openssh.com \
+        gitactions@HDCLAPPXD027.HealthSpring.Inside "echo 'Deployment started'"
