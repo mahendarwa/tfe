@@ -1,30 +1,10 @@
 - name: Deploy to Dev Environment
   run: |
-    set -x  # Enable debug mode to print all commands being executed
-
-    echo "==> Pinging the server to check network connectivity"
+    set -x
     ping -c 2 HDCLAPPXD027.HealthSpring.Inside
-
-    echo "==> Setting up SSH key"
     mkdir -p ~/.ssh
     echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-    chmod 600 ~/.ssh/id_rsa  # Ensure correct permissions
-
-    echo "==> Adding SSH key to agent"
-    eval "$(ssh-agent -s)"
-    ssh-add ~/.ssh/id_rsa
-
-    echo "==> Verifying SSH key permissions"
-    ls -lah ~/.ssh/
-
-    echo "==> Adding the remote server to known hosts"
-    ssh-keyscan -H HDCLAPPXD027.HealthSpring.Inside >> ~/.ssh/known_hosts
-    chmod 644 ~/.ssh/known_hosts
-
-    echo "==> Testing SSH Connection"
-    ssh -v gitactions@HDCLAPPXD027.HealthSpring.Inside "echo 'SSH Connection Successful'"
-
-    echo "==> Deploying application"
-    sshpass -p "F@lcon2003" ssh -o StrictHostKeyChecking=no \
-        -o HostKeyAlgorithms=+sk-ssh-ed25519@openssh.com \
-        gitactions@HDCLAPPXD027.HealthSpring.Inside "echo 'Deployment started'"
+    chmod 600 ~/.ssh/id_rsa
+    ssh-keyscan -H HDCLAPPXD027.HealthSpring.Inside >> ~/.ssh/known_hosts || sleep 5 && ssh-keyscan -H HDCLAPPXD027.HealthSpring.Inside >> ~/.ssh/known_hosts
+    ls -l ~/.ssh
+    ssh -T gitactions@HDCLAPPXD027.HealthSpring.Inside
