@@ -1,140 +1,33 @@
-name: "PAT QA Docker"
+name: Trigger QA PATService Workflow
 
 on:
   workflow_dispatch:
+    inputs:
+      Environment:
+        description: 'Select the Environment'
+        required: true
+        type: choice
+        options:
+          - pflqa00
+          - pflqa12
+          - pflqa22
+          - pflqa36
+          - pflqa42
 
 jobs:
-  checkout-14:
-    runs-on: self-hosted
+  trigger-bcc-patservice:
+    runs-on: self-host
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-        with:
-          repository: niq-enterprise/bcc-patservice
-          ref: release/1.0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-  server-14:
-    runs-on: self-hosted
-    needs: checkout-14
-    steps:
-      - name: Copy PEM Files
+      - name: Trigger Workflow in bcc-patservice
+        env:
+          GH_TOKEN: ${{ secrets.Pat_token }} 
         run: |
-          echo "${{ secrets.ddrgeneratorprod_cert }}" > /home/jenscm1/adlm_jenkins_1/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-prod/cicd/nginx/prod/ddrgeneratorprod_cert.pem
-          echo "${{ secrets.ddrgeneratorprod_key }}" > /home/jenscm1/adlm_jenkins_1/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-prod/cicd/nginx/prod/ddrgeneratorprod_key.pem
-
-      - name: Build and Deploy
-        run: |
-          cd ddrgenerator
-          export JAVA_HOME=/usr/local/jdk11
-          chmod 755 gradlew
-          ./gradlew clean build -x test
-
-          sudo docker kill ddrgenerator || true
-          sudo docker rm ddrgenerator || true
-          sudo docker image rm -f ddrgenerator || true
-
-          sudo docker kill nginx_pat || true
-          sudo docker rm nginx_pat || true
-          sudo docker image rm -f nginx_pat || true
-
-          cd /home/jenscm1/adlm_jenkins_1/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-prod/ddrgenerator/
-          sudo docker build -t ddrgenerator --file Dockerfile .
-
-          cd /home/jenscm1/adlm_jenkins_1/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-prod/cicd/nginx/prod/
-          sudo docker build -t nginx_pat --file Dockerfile .
-
-          cd /home/jenscm1/adlm_jenkins_1/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-prod/cicd/docker-compose/prod/
-          sudo docker compose -f docker-compose.primary.yml up -d
-
-  checkout-22:
-    runs-on: self-hosted
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-        with:
-          repository: niq-enterprise/bcc-patservice
-          ref: release/1.0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-  server-22:
-    runs-on: self-hosted
-    needs: checkout-22
-    steps:
-      - name: Set Permissions
-        run: chmod -R 755 /home/jenscm1/adlm_jenkins_1/workspace/
-
-      - name: Copy PEM Files
-        run: |
-          echo "${{ secrets.ddrgeneratorprod_cert }}" > /home/jenscm1/adlm_jenkins_1/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-prod/cicd/nginx/prod/ddrgeneratorprod_cert.pem
-          echo "${{ secrets.ddrgeneratorprod_key }}" > /home/jenscm1/adlm_jenkins_1/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-prod/cicd/nginx/prod/ddrgeneratorprod_key.pem
-
-      - name: Build and Deploy
-        run: |
-          cd ddrgenerator
-          export JAVA_HOME=/usr/local/jdk11
-          chmod 755 gradlew
-          ./gradlew clean build -x test
-
-          sudo docker kill ddrgenerator || true
-          sudo docker rm ddrgenerator || true
-          sudo docker image rm -f ddrgenerator || true
-
-          sudo docker kill nginx_pat || true
-          sudo docker rm nginx_pat || true
-          sudo docker image rm -f nginx_pat || true
-
-          cd /home/jenscm1/adlm_jenkins_1/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-prod/ddrgenerator/
-          sudo docker build -t ddrgenerator --file Dockerfile .
-
-          cd /home/jenscm1/adlm_jenkins_1/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-prod/cicd/nginx/prod/
-          sudo docker build -t nginx_pat --file Dockerfile .
-
-          cd /home/jenscm1/adlm_jenkins_1/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-prod/cicd/docker-compose/prod/
-          sudo docker compose -f docker-compose.primary.yml up -d
-
-  checkout-23:
-    runs-on: self-hosted
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-        with:
-          repository: niq-enterprise/bcc-patservice
-          ref: release/1.0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-  server-23:
-    runs-on: self-hosted
-    needs: checkout-23
-    steps:
-      - name: Set Permissions
-        run: chmod -R 755 /home/jenscm1/adlm_jenkins_1/workspace/
-
-      - name: Copy PEM Files
-        run: |
-          echo "${{ secrets.ddrgeneratorprod_cert }}" > /home/jenscm1/adlm_jenkins_1/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-prod/cicd/nginx/prod/ddrgeneratorprod_cert.pem
-          echo "${{ secrets.ddrgeneratorprod_key }}" > /home/jenscm1/adlm_jenkins_1/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-prod/cicd/nginx/prod/ddrgeneratorprod_key.pem
-
-      - name: Build and Deploy
-        run: |
-          cd ddrgenerator
-          export JAVA_HOME=/usr/local/jdk11
-          chmod 755 gradlew
-          ./gradlew clean build -x test
-
-          sudo docker kill ddrgenerator || true
-          sudo docker rm ddrgenerator || true
-          sudo docker image rm -f ddrgenerator || true
-
-          sudo docker kill nginx_pat || true
-          sudo docker rm nginx_pat || true
-          sudo docker image rm -f nginx_pat || true
-
-          cd /home/jenscm1/adlm_jenkins_1/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-prod/ddrgenerator/
-          sudo docker build -t ddrgenerator --file Dockerfile .
-
-          cd /home/jenscm1/adlm_jenkins_1/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-prod/cicd/nginx/prod/
-          sudo docker build -t nginx_pat --file Dockerfile .
-
-          cd /home/jenscm1/adlm_jenkins_1/workspace/Consumer_Panel_Services_Home/Github/PAT/pat-docker-prod/cicd/docker-compose/prod/
-          sudo docker compose -f docker-compose.primary.yml up -d
+          curl -X POST -H "Accept: application/vnd.github.v3+json" \
+               -H "Authorization: token $GH_TOKEN" \
+               https://api.github.com/repos/niq-enterprise/bcc-patservice/actions/workflows/qa.yaml/dispatches \
+               -d '{
+                 "ref": "trn/feature/jan31",
+                 "inputs": {
+                   "Environment": "${{ github.event.inputs.Environment }}"
+                 }
+               }'
