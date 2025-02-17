@@ -16,20 +16,23 @@ on:
 
 jobs:
   trigger-qa:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Install jq (JSON Processor)
+        run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Get QA Workflow ID from bcc-patservice
         id: get_workflow_id
         run: |
           WORKFLOW_ID=$(curl -s -X GET \
             -H "Accept: application/vnd.github.v3+json" \
-            -H "Authorization: Bearer ${{ secrets.PAT_TOKEN }}" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/repos/niq-enterprise/bcc-patservice/actions/workflows" | 
-            jq '.workflows[] | select(.path == ".github/workflows/qa.yml") | .id')
-          
+            jq -r '.workflows[] | select(.path == ".github/workflows/qa.yml") | .id')
+
           if [ -z "$WORKFLOW_ID" ]; then
             echo "Error: Could not find qa.yml workflow ID"
             exit 1
@@ -41,6 +44,6 @@ jobs:
         run: |
           curl -X POST \
             -H "Accept: application/vnd.github.v3+json" \
-            -H "Authorization: Bearer ${{ secrets.PAT_TOKEN }}" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/repos/niq-enterprise/bcc-patservice/actions/workflows/${{ env.workflow_id }}/dispatches" \
             -d '{"ref": "trn/feature/jan31", "inputs": {"Environment": "${{ github.event.inputs.Environment }}"}}'
