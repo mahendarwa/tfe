@@ -1,2 +1,1 @@
-Python installed as system-wide package :	OS Team : ---	Might affect system tools, OS needs validation
-Python installed in application virtual environment: -- 	App Team:--  	No impact on OS, App team needs to validate
+if Python System-wide installed: OS Team – OS validation required, may affect system tools or if Python in Virtual Env: App Team – No OS impact, App Team validates**
