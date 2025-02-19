@@ -1,8 +1,7 @@
-/usr/local/bin/python3 --version
+/usr/local/bin/pip3 --version
+/usr/local/bin/pip3 list
+/usr/local/bin/pip3 install --upgrade pip
+ls /usr/local/bin | grep pip
+/usr/local/bin/pip3.6 --version
 /usr/local/bin/python3 -m ensurepip --upgrade
-curl -O https://bootstrap.pypa.io/pip/3.6/get-pip.py
-/usr/local/bin/python3 get-pip.py
-/usr/local/bin/python3 -m pip --version
-sudo ln -s /usr/local/bin/pip3 /usr/bin/pip3
-rm get-pip.py
-/usr/local/bin/python3 -m pip install requests
+/usr/local/bin/python3 -m pip install --upgrade pip
