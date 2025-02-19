@@ -1,2 +1,8 @@
-gopkg.in/yaml.v2 (v2.2.3 → v2.2.4)	Requires Go version 1.6+	Needs upgrade to avoid parsing vulnerabilities	Tactical: Update YAML library to v2.2.4 for security fixes
-gopkg.in/yaml.v2 (v2.x → v3.x)	Requires Go version 1.12+	Breaking changes in YAML parsing, changes needed in serialization logic	Long-term: Modify codebase to align with new YAML parsing methods
+/usr/local/bin/python3 --version
+/usr/local/bin/python3 -m ensurepip --upgrade
+curl -O https://bootstrap.pypa.io/pip/3.6/get-pip.py
+/usr/local/bin/python3 get-pip.py
+/usr/local/bin/python3 -m pip --version
+sudo ln -s /usr/local/bin/pip3 /usr/bin/pip3
+rm get-pip.py
+/usr/local/bin/python3 -m pip install requests
