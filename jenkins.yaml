@@ -1,34 +1,9 @@
-name: Trigger QA Workflow in bcc-patservice
-
-on:
-  workflow_dispatch:
-    inputs:
-      Environment:
-        description: 'Select the Environment'
-        required: true
-        type: choice
-        options:
-          - pflqa00
-          - pflqa12
-          - pflqa22
-          - pflqa36
-          - pflqa42
-
-jobs:
-  trigger-qa:
-    runs-on: self-hosted
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Get Current Branch
-        id: get-branch
-        run: echo "BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_ENV
-
-      - name: Trigger QA Workflow in bcc-patservice
-        run: |
-          curl -X POST \
-            -H "Accept: application/vnd.github.v3+json" \
-            -H "Authorization: Bearer ${{ secrets.PAT_TOEKN }}" \
-            "https://api.github.com/repos/niq-enterprise/bcc-patservice/actions/workflows/qa.yml/dispatches" \
-            -d '{"ref": "${{ env.BRANCH_NAME }}", "inputs": {"Environment": "${{ github.event.inputs.Environment }}"}}
+python3 -m ensurepip --default-pip
+python3 -m pip install --upgrade pip
+curl -O https://bootstrap.pypa.io/get-pip.py
+python3 get-pip.py --force-reinstall
+which pip3
+export PATH=$HOME/.local/bin:$PATH
+sudo rm -rf /usr/local/bin/pip3
+python3 -m ensurepip --default-pip
+pip3 list
