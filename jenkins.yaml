@@ -1,9 +1,7 @@
-python3 -m ensurepip --default-pip
-python3 -m pip install --upgrade pip
-curl -O https://bootstrap.pypa.io/get-pip.py
-python3 get-pip.py --force-reinstall
-which pip3
-export PATH=$HOME/.local/bin:$PATH
-sudo rm -rf /usr/local/bin/pip3
-python3 -m ensurepip --default-pip
-pip3 list
+ping 10.116.12.104
+nc -zv 10.116.12.104 8443
+echo "$UDEPLOY_PASSWORD"
+cat udeploy.json | jq .
+curl -v -k --max-time 300 -u SVP_TDM_SVC_PROD_ROL:$UDEPLOY_PASSWORD \
+     -X PUT "https://10.116.12.104:8443/cli/component/integrate" \
+     -H "Accept: application/json" -d @udeploy.json
