@@ -1,1 +1,2 @@
-netsh advfirewall firewall show rule name=all | findstr 8443
+https://10.116.12.104:8443/cli/component/integrate
+Invoke-WebRequest -Uri "https://10.116.12.104:8443/cli/component/integrate" -UseBasicParsing
