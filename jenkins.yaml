@@ -1,7 +1,1 @@
-ping -c 4 10.116.12.104
-nc -zv 10.116.12.104 8443
-echo "$UDEPLOY_PASSWORD"
-cat udeploy.json | jq .
-curl -v -k --max-time 300 -u SVP_TDM_SVC_PROD_ROL:$UDEPLOY_PASSWORD \
-     -X PUT "https://10.116.12.104:8443/cli/component/integrate" \
-     -H "Accept: application/json" -d @udeploy.json
+netsh advfirewall firewall show rule name=all | findstr 8443
