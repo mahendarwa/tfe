@@ -1,4 +1,4 @@
-ping 10.116.12.104
+ping -c 4 10.116.12.104
 nc -zv 10.116.12.104 8443
 echo "$UDEPLOY_PASSWORD"
 cat udeploy.json | jq .
