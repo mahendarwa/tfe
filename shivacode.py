@@ -25,9 +25,24 @@ def sf_get_oauth_token(client_id, sf_acc_nm):
         print(f"Error obtaining OAuth token: {str(e)}")
         return None
 
+def set_proxies():
+    try:
+        env = get_env()
+        url_env = env if env in ['dev', 'qa'] else ''
+        if "HTTPS_PROXY" not in os.environ:
+            os.environ["HTTPS_PROXY"] = f"http://proxy.us-east-1.app{url_env}.dtcc.org:8080"
+        if "HTTP_PROXY" not in os.environ:
+            os.environ["HTTP_PROXY"] = f"http://proxy.us-east-1.app{url_env}.dtcc.org:8080"
+        if "NO_PROXY" not in os.environ:
+            os.environ["NO_PROXY"] = "privatelink.snowflakecomputing.com"
+        print(f"Proxy set: {os.environ['HTTPS_PROXY']}")
+    except Exception as e:
+        print(f"Error setting proxy: {str(e)}")
+
 def sf_create_ctx(oauth_token=None):
     try:
         env = "dev"
+        set_proxies()
         client_id = f"snowflake_{env}"
         sf_acc_nm = get_conf_val("sf_config", "SF_USER")
 
