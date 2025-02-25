@@ -3,6 +3,20 @@ import re
 import getpass
 import snowflake.connector
 
+def get_env():
+    env = None
+    os_env = os.environ.get("DTCC_SERVER_ENVIRONMENT", "")
+
+    if os_env == "DEVELOPMENT":
+        env = "dev"
+    elif os_env == "QA":
+        env = "qa"
+    elif os_env == "PRODUCTION":
+        env = "prod"
+
+    print(f"Detected environment: {env}")
+    return env
+
 def sanitize_input(input_str):
     return re.sub(r'[^a-zA-Z0-9_-]', '', input_str)
 
@@ -28,21 +42,23 @@ def sf_get_oauth_token(client_id, sf_acc_nm):
 def set_proxies():
     try:
         env = get_env()
-        url_env = env if env in ['dev', 'qa'] else ''
+        url_env = env if env in ["dev", "qa"] else ""
+
         if "HTTPS_PROXY" not in os.environ:
             os.environ["HTTPS_PROXY"] = f"http://proxy.us-east-1.app{url_env}.dtcc.org:8080"
         if "HTTP_PROXY" not in os.environ:
             os.environ["HTTP_PROXY"] = f"http://proxy.us-east-1.app{url_env}.dtcc.org:8080"
         if "NO_PROXY" not in os.environ:
             os.environ["NO_PROXY"] = "privatelink.snowflakecomputing.com"
-        print(f"Proxy set: {os.environ['HTTPS_PROXY']}")
+
+        print("Proxy settings applied successfully.")
     except Exception as e:
         print(f"Error setting proxy: {str(e)}")
 
 def sf_create_ctx(oauth_token=None):
     try:
-        env = "dev"
         set_proxies()
+        env = get_env()
         client_id = f"snowflake_{env}"
         sf_acc_nm = get_conf_val("sf_config", "SF_USER")
 
