@@ -85,12 +85,12 @@ def get_conf_val(section, key):
     config = {
         "sf_config": {
             "HIPAM_AUTH_ACC": "apadmin",
-            "SF_USER": "SRVC_BSD_APP_DEV",
+            "SF_USER": "SRVC_ARIP_APP_DEV",
             "SF_ACCOUNT_ID": "dtccriskdev",
-            "SF_URL": "dtccriskdev.us-east-1.privatelink.snowflakecomputing.com",
-            "SF_WAREHOUSE": "BSD_ADHOC_WH",
-            "SF_DATABASE": "BSD",
-            "SF_SCHEMA": "RAW"
+            "SF_URL": "dtccriskdev.us-east-1.snowflakecomputing.com",
+            "SF_WAREHOUSE": "ARIP_APP_WH",
+            "SF_DATABASE": "ARIP",
+            "SF_SCHEMA": "AFRS"
         }
     }
     return config.get(section, {}).get(key, "")
