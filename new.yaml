@@ -1,25 +1,20 @@
 Key Highlights from the Discussion:
-	1. AWS S3 Cleanup Process in ARIES Common
-		○ A script in ARIES Common AWS Ops - S3 Ops - Versions is used to clean up old S3 objects efficiently.
-		○ Supports bucket selection, prefix filtering, time delta, and version-based cleanup (previous, latest, all).
-	2. Planned S3 Cleanup Execution
-		○ Cleanup was done in Dev, next steps include QA and later Prod.
-		○ Users need to be notified before cleanup to confirm data requirements.
-	3. Challenges in S3 Cleanup
-		○ Some configuration files and test data (e.g., PI tests, Snowflake config) should not be deleted.
-		○ Users are still writing output where they shouldn’t, leading to unnecessary data retention.
-	4. S3 Versioning & Automation
-		○ Objects often have multiple versions, making manual deletion difficult.
-		○ The script automates cleanup by retrieving version IDs and deleting outdated objects.
-		○ A preview mode allows users to check what will be deleted before committing the action.
-	5. Logging & Access Restrictions
-		○ Cleanup operations generate detailed logs stored under apps → ARIES → AWS Ops → S3 Ops → Versions → Logs.
-	6. Decommissioning Aries Common & Tomcat HTTPD
-		○ Aries Common was an infrastructure API but is no longer needed.
-		○ Aries Common Tomcat HTTPD instance should be decommissioned, as it only supports Snowflake config updates.
-		○ Future credential storage should move from S3 to the local file system.
-	7. Next Steps in Cleanup & Transition
-		○ Confirm with QRM team whether QA cleanup should proceed.
-		○ Execute cleanup in QA and Prod after approvals.
-		○ Fix access issues for log files and ensure logs are correctly stored.
-     Decommission Aries Common Tomcat HTTPD and shift S3-stored credentials to local config storage.
+	1. DevOps Tooling & Responsibilities
+		○ Terraform & Infrastructure as Code (IaC) is managed by Cloud Delivery teams, but understanding it helps in collaboration.
+		○ Jenkins, Bitbucket, and JIRA are key DevOps tools, with Jenkins pipelines being essential for deployment.
+	2. AWS Migration Roadmap & Challenges
+		○ 175 applications need to be migrated from legacy AWS environments by early 2026.
+	3. Concerns Over AWS Migration Strategy
+		○ AWS batch patterns rely on EC2 with Tomcat, whereas the team uses EC2 with Apache HTTPD, causing compatibility issues.
+		○ Snowflake integration and HiPAM service account management remain tedious and are unlikely to be improved.
+	4. Pipeline & Account Creation Evolution
+		○ AWS account creation is moving to JSON-based configuration, reducing visibility into pipeline config files.
+		○ SSP (Self-Service Provisioning) will integrate account creation, making it more interactive but still complex.
+	5. Immutable Infrastructure & Logging Challenges
+		○ Future AWS deployments will be immutable (no SSH or RDP access), requiring all logging to be integrated into CloudWatch.
+	6. Pipeline Deployment & Jenkins Automation
+		○ Jenkins pipeline deployment process is evolving, moving towards EC2/OCP-based builds with integrated pipeline automation.
+	7. AWS Tooling & Documentation Gaps
+		○ AWS Landing Zone meetings are introducing GitHub instead of Bitbucket.
+	8. Evergreen & Infrastructure Modernization
+		Evergreen initiative tracks modernization efforts like Python 3.6 to 3.9 migration, RHEL upgrades, and security fixes.
