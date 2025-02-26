@@ -1,20 +1,2 @@
-Key Highlights from the Discussion:
-	1. DevOps Tooling & Responsibilities
-		○ Terraform & Infrastructure as Code (IaC) is managed by Cloud Delivery teams, but understanding it helps in collaboration.
-		○ Jenkins, Bitbucket, and JIRA are key DevOps tools, with Jenkins pipelines being essential for deployment.
-	2. AWS Migration Roadmap & Challenges
-		○ 175 applications need to be migrated from legacy AWS environments by early 2026.
-	3. Concerns Over AWS Migration Strategy
-		○ AWS batch patterns rely on EC2 with Tomcat, whereas the team uses EC2 with Apache HTTPD, causing compatibility issues.
-		○ Snowflake integration and HiPAM service account management remain tedious and are unlikely to be improved.
-	4. Pipeline & Account Creation Evolution
-		○ AWS account creation is moving to JSON-based configuration, reducing visibility into pipeline config files.
-		○ SSP (Self-Service Provisioning) will integrate account creation, making it more interactive but still complex.
-	5. Immutable Infrastructure & Logging Challenges
-		○ Future AWS deployments will be immutable (no SSH or RDP access), requiring all logging to be integrated into CloudWatch.
-	6. Pipeline Deployment & Jenkins Automation
-		○ Jenkins pipeline deployment process is evolving, moving towards EC2/OCP-based builds with integrated pipeline automation.
-	7. AWS Tooling & Documentation Gaps
-		○ AWS Landing Zone meetings are introducing GitHub instead of Bitbucket.
-	8. Evergreen & Infrastructure Modernization
-		Evergreen initiative tracks modernization efforts like Python 3.6 to 3.9 migration, RHEL upgrades, and security fixes.
+Mentioned that Terraform & Infrastructure as Code (IaC) are managed by the Cloud Delivery teams, but understanding them helps in collaboration.
+Crieg also pointed out that Jenkins, Bitbucket, and JIRA are key DevOps tools, with Jenkins pipelines being essential for deploymen
