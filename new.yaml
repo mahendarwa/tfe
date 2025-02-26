@@ -1,158 +1,25 @@
-name: Teradata Deployment Pipeline
-
-on:
-  workflow_dispatch:
-    inputs:
-      release_branch:
-        description: "Release branch name"
-        required: true
-        default: ""
-
-      feature_branch:
-        description: "Feature branch name"
-        required: true
-        default: "feature/default-branch"
-
-      DEPLOY_TIMEZONE:
-        description: "Select deployment Timezone"
-        required: true
-        default: "CST"
-        type: choice
-        options:
-          - CST
-          - EST
-
-      newModuleName:
-        description: "New Module Name"
-        required: true
-
-      moduleDeploymentGroup:
-        description: "Module Deployment Group"
-        required: true
-
-      moduleTag:
-        description: "Module Tag"
-        required: true
-
-      version:
-        description: "Deployment version"
-        required: true
-        default: '{"version": "1.0.0", "image_name": "teradata-release"}'
-
-env:
-  GIT_REPO: 'zilvertonz/GBS_DAE_OSS'
-  BUILD_RETENTION_DAYS: 15
-  DEPLOY_TIME_ZONE: 'CST'
-  UDEPLOY_URL: "https://udeploy.sys.cigna.com:8443"
-
-jobs:
-  build:
-    runs-on: zilverton-private-x64-ubuntu
-    permissions:
-      id-token: write
-      contents: write
-      packages: write
-    environment: ${{ github.event.inputs.DEPLOY_TIMEZONE }}
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.MY_GITHUB_TOKEN }}
-
-      - name: Checkout External Repository
-        uses: actions/checkout@v4
-        with:
-          repository: 'zilvertonz/GBS_DAE_OSS'
-          ref: 'master'
-          token: ${{ secrets.MY_GITHUB_TOKEN }}
-          path: 'GBS_DAE_OSS'
-
-      - name: Set Up Git
-        run: |
-          git config --global user.email "deployments@cignahealthcare.com"
-          git config --global user.name "CI_GitHub_Actions"
-
-      - name: Create Release Feature Branch
-        run: |
-          cd GBS_DAE_OSS
-          RELEASE_BRANCH="${{ github.event.inputs.release_branch }}"
-          FEATURE_BRANCH="${{ github.event.inputs.feature_branch }}"
-          git fetch origin master
-          git checkout -b $RELEASE_BRANCH
-          git push origin $RELEASE_BRANCH --force
-          git checkout -b $FEATURE_BRANCH origin/$RELEASE_BRANCH
-          git push origin $FEATURE_BRANCH --force
-
-      - name: Set Build Version
-        run: |
-          COMMIT_ID=$(git rev-parse --short HEAD)
-          feature_branch="${{ github.event.inputs.feature_branch }}"
-          echo "COMMIT_ID=${COMMIT_ID}" >> $GITHUB_ENV
-          FEATURE_BUILD_VERSION="${feature_branch}.${{ github.run_number }}.${COMMIT_ID}"
-          echo "FEATURE_BUILD_VERSION=$FEATURE_BUILD_VERSION" >> $GITHUB_ENV
-          RELEASE_BUILD_VERSION="${{ github.ref_name }}.${{ github.run_number }}.${COMMIT_ID}"
-          echo "RELEASE_BUILD_VERSION=${RELEASE_BUILD_VERSION}" >> $GITHUB_ENV
-
-      - name: Read Teradata Properties
-        run: |
-          PROPERTIES_FILE="GBS_DAE_OSS/TD_DEPLOY_CONTROL_FILE.Properties"
-          if [ -f "$PROPERTIES_FILE" ]; then
-            while IFS='=' read -r key value; do
-              echo "$key=$value" >> $GITHUB_ENV
-            done < "$PROPERTIES_FILE"
-          else
-            echo "Properties file not found"
-            exit 1
-          fi
-
-      - name: Build Teradata Package
-        run: |
-          mkdir -p PACKAGE/src
-          cp -r GBS_DAE_OSS/Teradata/src/* PACKAGE/src/
-          tar -czvf teradata-deploy-release.tgz -C PACKAGE .
-          echo "Build completed successfully."
-
-      - name: Deploy to DEV
-        run: |
-          echo "Deploying to DEV..."
-          curl -X POST -H "Content-Type: application/json" \
-            -d '{"environment": "DEV", "version": "${{ env.RELEASE_BUILD_VERSION }}"}' \
-            $UDEPLOY_URL/api/deploy
-          echo "Deployment to DEV completed."
-
-      - name: Deploy to QA
-        run: |
-          echo "Deploying to QA..."
-          curl -X POST -H "Content-Type: application/json" \
-            -d '{"environment": "QA", "version": "${{ env.RELEASE_BUILD_VERSION }}"}' \
-            $UDEPLOY_URL/api/deploy
-          echo "Deployment to QA completed."
-
-      - name: Deploy to INT
-        run: |
-          echo "Deploying to INT..."
-          curl -X POST -H "Content-Type: application/json" \
-            -d '{"environment": "INT", "version": "${{ env.RELEASE_BUILD_VERSION }}"}' \
-            $UDEPLOY_URL/api/deploy
-          echo "Deployment to INT completed."
-
-      - name: Deploy to UAT
-        run: |
-          echo "Deploying to UAT..."
-          curl -X POST -H "Content-Type: application/json" \
-            -d '{"environment": "UAT", "version": "${{ env.RELEASE_BUILD_VERSION }}"}' \
-            $UDEPLOY_URL/api/deploy
-          echo "Deployment to UAT completed."
-
-      - name: Deploy to PVS
-        run: |
-          echo "Deploying to PVS..."
-          curl -X POST -H "Content-Type: application/json" \
-            -d '{"environment": "PVS", "version": "${{ env.RELEASE_BUILD_VERSION }}"}' \
-            $UDEPLOY_URL/api/deploy
-          echo "Deployment to PVS completed."
-
-      - name: Send Deployment Summary Email
-        run: |
-          echo "Teradata Deployment Summary" | mail -s "Deployment Completed: ${{ env.RELEASE_BUILD_VERSION }}" ${{ env.NOTIFICATION_EMAIL }}
+Key Highlights from the Discussion:
+	1. AWS S3 Cleanup Process in ARIES Common
+		○ A script in ARIES Common AWS Ops - S3 Ops - Versions is used to clean up old S3 objects efficiently.
+		○ Supports bucket selection, prefix filtering, time delta, and version-based cleanup (previous, latest, all).
+	2. Planned S3 Cleanup Execution
+		○ Cleanup was done in Dev, next steps include QA and later Prod.
+		○ Users need to be notified before cleanup to confirm data requirements.
+	3. Challenges in S3 Cleanup
+		○ Some configuration files and test data (e.g., PI tests, Snowflake config) should not be deleted.
+		○ Users are still writing output where they shouldn’t, leading to unnecessary data retention.
+	4. S3 Versioning & Automation
+		○ Objects often have multiple versions, making manual deletion difficult.
+		○ The script automates cleanup by retrieving version IDs and deleting outdated objects.
+		○ A preview mode allows users to check what will be deleted before committing the action.
+	5. Logging & Access Restrictions
+		○ Cleanup operations generate detailed logs stored under apps → ARIES → AWS Ops → S3 Ops → Versions → Logs.
+	6. Decommissioning Aries Common & Tomcat HTTPD
+		○ Aries Common was an infrastructure API but is no longer needed.
+		○ Aries Common Tomcat HTTPD instance should be decommissioned, as it only supports Snowflake config updates.
+		○ Future credential storage should move from S3 to the local file system.
+	7. Next Steps in Cleanup & Transition
+		○ Confirm with QRM team whether QA cleanup should proceed.
+		○ Execute cleanup in QA and Prod after approvals.
+		○ Fix access issues for log files and ensure logs are correctly stored.
+     Decommission Aries Common Tomcat HTTPD and shift S3-stored credentials to local config storage.
