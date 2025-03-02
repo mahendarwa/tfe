@@ -1,44 +1,25 @@
-name: "Jar Build"
-
-on:
-  workflow_dispatch:
 
 jobs:
-  Jar-Build:
-    runs-on: dev004-runner
+  deploy:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v2
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Verify Java version
+      - name: Install Python & WinRM Dependencies
         run: |
-          echo "Checking Java version..."
-          java -version
-          javac -version
-          echo "JAVA_HOME is set to: $JAVA_HOME"
+          sudo apt update && sudo apt install -y python3-pip
+          pip install pypsrp
 
-      - name: Print current directory
-        run: pwd
-
-      - name: List files
-        run: ls -al
-
-      - name: Jar Build
+      - name: Connect to Windows Server & Run Command
+        env:
+          WIN_HOST: "HSTNCMSRDIQA02.healthspring.inside"
+          WIN_USER: "internal\\c8x6k9"
+          WIN_PASSWORD: "Dev2s@mpath"
         run: |
-          echo "Using JAVA_HOME: $JAVA_HOME"
-          cd caseservice
-          chmod +x gradlew
-          ./gradlew clean build -x test --no-daemon --stacktrace \
-            -Dorg.gradle.jvmargs="--add-opens jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
-          cd ..
-
-          cd ddrgenerator
-          chmod +x gradlew
-          ./gradlew clean build -x test --no-daemon --stacktrace \
-            -Dorg.gradle.jvmargs="--add-opens jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
+          python3 - <<EOF
+          from pypsrp.client import Client
+          client = Client("${{ env.WIN_HOST }}", username="${{ env.WIN_USER }}", password="${{ env.WIN_PASSWORD }}", auth="ntlm", encryption="auto")
+          stdout, stderr, rc = client.execute_cmd("whoami")
+          print(stdout)
+          EOF
