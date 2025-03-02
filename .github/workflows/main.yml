@@ -1,45 +1,5 @@
-name: Connect to Windows Server and Run Commands
-
-on: 
-  workflow_dispatch
-
-jobs:
-  connect_windows:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Install Dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y python3 python3-pip krb5-user
-        pip install pypsrp requests kerberos
-
-    - name: Test Network Connectivity
-      run: |
-        ping -c 4 HSTNCMSRDIQA02.healthspring.inside
-        nc -zv HSTNCMSRDIQA02.healthspring.inside 5985 || echo "Port 5985 is closed"
-
-    - name: Connect to Windows Server and Run PowerShell Command
-      run: |
-        python3 <<EOF
-        from pypsrp.client import Client
-
-        WIN_SERVER = "HSTNCMSRDIQA02.healthspring.inside"
-        WIN_USER = r"internal\c8x6k9"
-        WIN_PASS = "Dev2s@mpath"
-
-        try:
-            client = Client(WIN_SERVER, username=WIN_USER, password=WIN_PASS, auth="ntlm", encryption="auto")
-            stdout, stderr, rc = client.execute_cmd("whoami")
-            
-            if rc == 0:
-                print(f"Successfully connected to {WIN_SERVER}")
-                print(f"Current User: {stdout}")
-            else:
-                print(f"Error: {stderr}")
-        except Exception as e:
-            print(f"Connection failed: {str(e)}")
-        EOF
+- name: Install Dependencies
+  run: |
+    sudo apt update
+    sudo apt install -y python3 python3-pip gcc g++ libkrb5-dev
+    pip install pypsrp requests kerberos
