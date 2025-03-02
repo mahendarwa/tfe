@@ -1,5 +1,7 @@
-- name: Install Dependencies
-  run: |
-    sudo apt update
-    sudo apt install -y python3 python3-pip gcc g++ libkrb5-dev
-    pip install pypsrp requests kerberos
+winrm get winrm/config
+winrm quickconfig
+Enable-PSRemoting -Force
+Set-Item WSMan:\localhost\Service\AllowUnencrypted -Value true
+Set-Item WSMan:\localhost\Service\Auth\Basic -Value true
+New-NetFirewallRule -Name "Allow WinRM HTTP" -DisplayName "Allow WinRM HTTP" -Protocol TCP -LocalPort 5985 -Action Allow
+New-NetFirewallRule -Name "Allow WinRM HTTPS" -DisplayName "Allow WinRM HTTPS" -Protocol TCP -LocalPort 5986 -Action Allow
