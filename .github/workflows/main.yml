@@ -1,7 +1,8 @@
-winrm get winrm/config
-winrm quickconfig
-Enable-PSRemoting -Force
 Set-Item WSMan:\localhost\Service\AllowUnencrypted -Value true
 Set-Item WSMan:\localhost\Service\Auth\Basic -Value true
+Restart-Service WinRM
 New-NetFirewallRule -Name "Allow WinRM HTTP" -DisplayName "Allow WinRM HTTP" -Protocol TCP -LocalPort 5985 -Action Allow
 New-NetFirewallRule -Name "Allow WinRM HTTPS" -DisplayName "Allow WinRM HTTPS" -Protocol TCP -LocalPort 5986 -Action Allow
+Get-NetFirewallRule -Name "Allow WinRM HTTP", "Allow WinRM HTTPS"
+nc -zv HSTNCMSRDIQA02.healthspring.inside 5985
+nc -zv HSTNCMSRDIQA02.healthspring.inside 5986
