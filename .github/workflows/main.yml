@@ -1,25 +1,46 @@
+name: Connect to Windows Server and Run Commands
+
+on: 
+  workflow_dispatch  # Manually trigger this workflow
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
+  connect_windows:
+    runs-on: ubuntu-latest  # Ubuntu GitHub runner
+
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Install Python & WinRM Dependencies
-        run: |
-          sudo apt update && sudo apt install -y python3-pip
-          pip install pypsrp
+    - name: Install Dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y python3 python3-pip krb5-user
+        pip install pypsrp requests kerberos
 
-      - name: Connect to Windows Server & Run Command
-        env:
-          WIN_HOST: "HSTNCMSRDIQA02.healthspring.inside"
-          WIN_USER: "internal\\c8x6k9"
-          WIN_PASSWORD: "Dev2s@mpath"
-        run: |
-          python3 - <<EOF
-          from pypsrp.client import Client
-          client = Client("${{ env.WIN_HOST }}", username="${{ env.WIN_USER }}", password="${{ env.WIN_PASSWORD }}", auth="ntlm", encryption="auto")
-          stdout, stderr, rc = client.execute_cmd("whoami")
-          print(stdout)
-          EOF
+    - name: Test Network Connectivity
+      run: |
+        echo "Checking connectivity to Windows Server..."
+        ping -c 4 10.116.12.104
+        nc -zv 10.116.12.104 5985 || echo "Port 5985 is closed"
+
+    - name: Connect to Windows Server and Run PowerShell Command
+      run: |
+        python3 <<EOF
+        from pypsrp.client import Client
+
+        WIN_SERVER = "10.116.12.104" 
+        WIN_USER = r"internal\c8x6k9"  
+        WIN_PASS = "Dev2s@mpath" 
+
+        try:
+            client = Client(WIN_SERVER, username=WIN_USER, password=WIN_PASS, auth="ntlm", encryption="auto")
+            stdout, stderr, rc = client.execute_cmd("whoami")
+            
+            if rc == 0:
+                print(f"✅ Successfully connected to {WIN_SERVER}")
+                print(f"Current User: {stdout}")
+            else:
+                print(f"⚠ Error: {stderr}")
+        except Exception as e:
+            print(f"❌ Connection failed: {str(e)}")
+        EOF
