@@ -14,10 +14,10 @@ pipeline {
                     def workspaceDir = "${WORKSPACE_BASE}/build_${buildNumber}"
 
                     echo "Creating new workspace: ${workspaceDir}"
-                    sh "mkdir -p ${workspaceDir}"
+                    sh "mkdir -p '${workspaceDir}'"
 
                     echo "Checking and deleting old workspaces..."
-                    def workspaces = sh(script: "ls -td ${WORKSPACE_BASE}/build_* 2>/dev/null | tail -n +$((MAX_WORKSPACES+1))", returnStdout: true).trim()
+                    def workspaces = sh(script: "ls -td '${WORKSPACE_BASE}'/build_* 2>/dev/null | tail -n +$((MAX_WORKSPACES+1))", returnStdout: true).trim()
 
                     if (workspaces) {
                         echo "Deleting old workspaces:\n${workspaces}"
