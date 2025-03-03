@@ -2,7 +2,7 @@ pipeline {
     agent { label 'consumer-panel-services-agent_qa_daylnxcpsq014' }
 
     environment {
-        WORKSPACE_BASE = "/home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel"
+        WORKSPACE_BASE = "/home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/tes-pipeline"
         MAX_WORKSPACES = "15"
     }
 
@@ -17,13 +17,15 @@ pipeline {
                     sh "mkdir -p '${workspaceDir}'"
 
                     echo "Cleaning up old workspaces..."
-                    def cleanupCommand = "ls -td ${WORKSPACE_BASE}/build_* 2>/dev/null | tail -n +$(( ${MAX_WORKSPACES} + 1 ))"
-                    def workspaces = sh(script: cleanupCommand, returnStdout: true).trim()
-
-                    if (workspaces) {
-                        echo "Deleting old workspaces:\n${workspaces}"
-                        sh "echo '${workspaces}' | xargs rm -rf"
-                    }
+                    sh '''
+                        WORKSPACE_BASE="/home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/tes-pipeline"
+                        MAX_WORKSPACES=15
+                        workspaces=$(ls -td ${WORKSPACE_BASE}/build_* 2>/dev/null | tail -n +$((MAX_WORKSPACES+1)))
+                        if [ ! -z "$workspaces" ]; then
+                            echo "Deleting old workspaces:\n$workspaces"
+                            echo "$workspaces" | xargs rm -rf
+                        fi
+                    '''
 
                     env.WORKSPACE_DIR = workspaceDir
                 }
