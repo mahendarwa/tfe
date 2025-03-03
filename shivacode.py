@@ -1,9 +1,9 @@
 pipeline {
-    agent any
+    agent { label 'consumer-panel-services-agent_qa_daylnxcpsq014' }
 
     environment {
-        WORKSPACE_BASE = "/var/lib/jenkins/builds"
-        MAX_WORKSPACES = 15
+        WORKSPACE_BASE = "/home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel"
+        MAX_WORKSPACES = "15"
     }
 
     stages {
@@ -16,8 +16,9 @@ pipeline {
                     echo "Creating new workspace: ${workspaceDir}"
                     sh "mkdir -p '${workspaceDir}'"
 
-                    echo "Checking and deleting old workspaces..."
-                    def workspaces = sh(script: "ls -td '${WORKSPACE_BASE}'/build_* 2>/dev/null | tail -n +$((MAX_WORKSPACES+1))", returnStdout: true).trim()
+                    echo "Cleaning up old workspaces..."
+                    def cleanupCommand = "ls -td ${WORKSPACE_BASE}/build_* 2>/dev/null | tail -n +$(( ${MAX_WORKSPACES} + 1 ))"
+                    def workspaces = sh(script: cleanupCommand, returnStdout: true).trim()
 
                     if (workspaces) {
                         echo "Deleting old workspaces:\n${workspaces}"
@@ -33,7 +34,7 @@ pipeline {
             steps {
                 script {
                     dir(env.WORKSPACE_DIR) {
-                        sh 'echo "Hello, World! This is job run #${BUILD_NUMBER}"'
+                        sh "echo 'Hello, World! This is job run #${BUILD_NUMBER}'"
                     }
                 }
             }
