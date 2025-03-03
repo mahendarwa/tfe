@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        WORKSPACE_BASE = "/var/lib/jenkins/workspaces"  
-        MAX_WORKSPACES = 15  
+        WORKSPACE_BASE = "/var/lib/jenkins/builds"
+        MAX_WORKSPACES = 15
     }
 
     stages {
@@ -11,16 +11,17 @@ pipeline {
             steps {
                 script {
                     def buildNumber = currentBuild.number
-                    def workspaceDir = "${WORKSPACE_BASE}/workspace_${buildNumber}"
+                    def workspaceDir = "${WORKSPACE_BASE}/build_${buildNumber}"
 
                     echo "Creating new workspace: ${workspaceDir}"
                     sh "mkdir -p ${workspaceDir}"
 
-                    echo "Cleaning up old workspaces..."
-                    def workspaces = sh(script: "ls -td ${WORKSPACE_BASE}/workspace_* | tail -n +${MAX_WORKSPACES}", returnStdout: true).trim()
+                    echo "Checking and deleting old workspaces..."
+                    def workspaces = sh(script: "ls -td ${WORKSPACE_BASE}/build_* 2>/dev/null | tail -n +$((MAX_WORKSPACES+1))", returnStdout: true).trim()
+
                     if (workspaces) {
                         echo "Deleting old workspaces:\n${workspaces}"
-                        sh "rm -rf ${workspaces}"
+                        sh "echo '${workspaces}' | xargs rm -rf"
                     }
 
                     env.WORKSPACE_DIR = workspaceDir
@@ -41,7 +42,7 @@ pipeline {
 
     post {
         always {
-            echo "Job completed. Keeping only ${MAX_WORKSPACES} workspaces."
+            echo "Job completed. Keeping only ${MAX_WORKSPACES} latest builds."
         }
     }
 }
