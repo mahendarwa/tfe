@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         WORKSPACE_BASE = "/home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/tes-pipeline"
-        MAX_WORKSPACES = "15"
+        MAX_WORKSPACES = 15
     }
 
     stages {
@@ -20,7 +20,10 @@ pipeline {
                     sh '''
                         WORKSPACE_BASE="/home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/tes-pipeline"
                         MAX_WORKSPACES=15
-                        workspaces=$(ls -td ${WORKSPACE_BASE}/build_* 2>/dev/null | tail -n +$((MAX_WORKSPACES+1)))
+
+                        # Get the list of builds sorted by date, ignoring '@tmp'
+                        workspaces=$(ls -td ${WORKSPACE_BASE}/build_* | grep -v '@tmp' | tail -n +$((MAX_WORKSPACES+1)))
+
                         if [ ! -z "$workspaces" ]; then
                             echo "Deleting old workspaces:\n$workspaces"
                             echo "$workspaces" | xargs rm -rf
