@@ -16,17 +16,22 @@ pipeline {
                     echo "Creating new workspace: ${workspaceDir}"
                     sh "mkdir -p '${workspaceDir}'"
 
-                    echo "Cleaning up old workspaces..."
+                    echo "Cleaning up old workspaces and @tmp directories..."
                     sh '''
                         WORKSPACE_BASE="/home/bambscm1/adlm_jenkins/daylnxcpsq014/workspace/Consumer_Panel_Services_Home/Github/PAT/tes-pipeline"
                         MAX_WORKSPACES=15
 
-                        # Get the list of builds sorted by date, ignoring '@tmp'
                         workspaces=$(ls -td ${WORKSPACE_BASE}/build_* | grep -v '@tmp' | tail -n +$((MAX_WORKSPACES+1)))
 
                         if [ ! -z "$workspaces" ]; then
                             echo "Deleting old workspaces:\n$workspaces"
                             echo "$workspaces" | xargs rm -rf
+                        fi
+
+                        tmp_dirs=$(ls -d ${WORKSPACE_BASE}/build_*@tmp 2>/dev/null || true)
+                        if [ ! -z "$tmp_dirs" ]; then
+                            echo "Deleting @tmp directories:\n$tmp_dirs"
+                            echo "$tmp_dirs" | xargs rm -rf
                         fi
                     '''
 
