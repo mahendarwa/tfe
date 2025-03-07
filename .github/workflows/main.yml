@@ -1,30 +1,51 @@
-name: Test SQL Server Connectivity
+name: Test Windows Server Connectivity & Authentication
 
 on:
   workflow_dispatch:
 
 jobs:
-  test-sql-server-connectivity:
-    runs-on: self-hosted
+  test-connectivity:
+    runs-on: self-hosted 
     steps:
-      - name: Test Ping to SQL Server
+      - name: Test Ping to Windows 2016 Server
         shell: pwsh
         run: |
-          $ServerName = "your-sql-server-name"
-          Write-Host "Pinging SQL Server..."
+          $ServerName = "your-windows-server-name"
+          Write-Host "Pinging Windows Server..."
           Test-Connection -ComputerName $ServerName -Count 4 -ErrorAction SilentlyContinue
 
-      - name: Test Port 1433 (Default SQL Server Port)
+      - name: Check Network Connectivity to Windows Server
         shell: pwsh
         run: |
-          $ServerName = "your-sql-server-name"
-          $Port = 1433
-          Write-Host "Testing connectivity to SQL Server on port $Port..."
-          $connection = Test-NetConnection -ComputerName $ServerName -Port $Port
-          if ($connection.TcpTestSucceeded) {
-              Write-Host "✅ SQL Server is reachable on port $Port!"
+          $ServerName = "your-windows-server-name"
+          Write-Host "Testing network connectivity..."
+          $connection = Test-NetConnection -ComputerName $ServerName
+          if ($connection.PingSucceeded) {
+              Write-Host "✅ Windows Server is reachable!"
           } else {
-              Write-Host "❌ Cannot reach SQL Server on port $Port!"
+              Write-Host "❌ Cannot reach Windows Server!"
+              exit 1
+          }
+
+      - name: Authenticate to Windows Server via PowerShell
+        shell: pwsh
+        env:
+          WIN_USERNAME: ${{ secrets.WIN_USERNAME }}
+          WIN_PASSWORD: ${{ secrets.WIN_PASSWORD }}
+        run: |
+          $ServerName = "your-windows-server-name"
+          $User = "${{ env.WIN_USERNAME }}"
+          $Pass = ConvertTo-SecureString "${{ env.WIN_PASSWORD }}" -AsPlainText -Force
+          $Cred = New-Object System.Management.Automation.PSCredential ($User, $Pass)
+
+          Write-Host "Attempting to authenticate to Windows Server..."
+          $session = New-PSSession -ComputerName $ServerName -Credential $Cred -ErrorAction SilentlyContinue
+
+          if ($session) {
+              Write-Host "✅ Authentication Successful!"
+              Remove-PSSession $session
+          } else {
+              Write-Host "❌ Authentication Failed!"
               exit 1
           }
 
