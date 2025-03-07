@@ -1,14 +1,23 @@
-package aks_kspm_8
+package wiz
 
 default result = "pass"
 
+some container_name
+
+
 result = "fail" {
-    some container
-    input.metadata.annotations[sprintf("container.apparmor.security.beta.kubernetes.io/%s", [container])] != "runtime/default"
+    input.metadata.annotations[sprintf("container.apparmor.security.beta.kubernetes.io/%s", [container_name])] != "runtime/default"
 }
 
 
-currentConfiguration := sprintf("At least one container has AppArmor profile set to '%s'", [input.metadata.annotations[sprintf("container.apparmor.security.beta.kubernetes.io/%s", [container])]])
+result = "fail" {
+    some i
+    input.spec.containers[i].securityContext.appArmorProfile.type != "RuntimeDefault"
+}
 
+result = "fail" {
+    input.metadata.annotations[sprintf("container.apparmor.security.beta.kubernetes.io/%s", [container_name])] == "unconfined"
+}
 
-expectedConfiguration := "All containers should have AppArmor profile set to 'runtime/default'"
+currentConfiguration := "At least one container has a non-compliant AppArmor profile."
+expectedConfiguration := "All containers should use 'runtime/default' or 'RuntimeDefault' AppArmor profiles."
