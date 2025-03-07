@@ -1,8 +1,41 @@
-Set-Item WSMan:\localhost\Service\AllowUnencrypted -Value true
-Set-Item WSMan:\localhost\Service\Auth\Basic -Value true
-Restart-Service WinRM
-New-NetFirewallRule -Name "Allow WinRM HTTP" -DisplayName "Allow WinRM HTTP" -Protocol TCP -LocalPort 5985 -Action Allow
-New-NetFirewallRule -Name "Allow WinRM HTTPS" -DisplayName "Allow WinRM HTTPS" -Protocol TCP -LocalPort 5986 -Action Allow
-Get-NetFirewallRule -Name "Allow WinRM HTTP", "Allow WinRM HTTPS"
-nc -zv HSTNCMSRDIQA02.healthspring.inside 5985
-nc -zv HSTNCMSRDIQA02.healthspring.inside 5986
+name: Test SQL Server Connection
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-sql-connection:
+    runs-on: self-hosted
+    steps:
+      - name: Test SQL Connection with PowerShell
+        shell: pwsh
+        run: |
+          $ServerName = "your-sql-server-name"
+          $UserName = "your-sql-username"
+          $Password = "your-sql-password"
+
+          $connectionString = "Server=$ServerName;Database=master;User Id=$UserName;Password=$Password;"
+          try {
+              $connection = New-Object System.Data.SqlClient.SqlConnection
+              $connection.ConnectionString = $connectionString
+              $connection.Open()
+              Write-Host "✅ Connection to SQL Server successful!"
+              $connection.Close()
+          } catch {
+              Write-Host "❌ Connection failed: $_"
+              exit 1
+          }
+
+      - name: Run SQL Query using SQLCMD
+        shell: pwsh
+        run: |
+          $ServerName = "your-sql-server-name"
+          $UserName = "your-sql-username"
+          $Password = "your-sql-password"
+          $Query = "SELECT GETDATE();"
+
+          sqlcmd -S $ServerName -U $UserName -P $Password -Q "$Query" || exit 1
+
+      - name: Confirm workflow completed
+        shell: pwsh
+        run: Write-Host "✅ GitHub Actions Workflow Completed Successfully!"
