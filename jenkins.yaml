@@ -1,30 +1,27 @@
-name: SQL Server Connection Test
+name: Configure Kerberos
 
-on:
+on: 
   push:
     branches:
       - main
 
 jobs:
-  test-sql-connection:
+  configure-kerberos:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install Dependencies
+      - name: Create /etc/krb5.conf file
         run: |
-          sudo apt-get update
-          sudo apt-get install -y unixodbc unixodbc-dev
-          curl -O https://packages.microsoft.com/config/ubuntu/20.04/prod.list
-          sudo mv prod.list /etc/apt/sources.list.d/mssql-release.list
-          sudo apt-get update
-          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18
-          sudo ACCEPT_EULA=Y apt-get install -y mssql-tools
-          echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
-          source ~/.bashrc
+          sudo tee /etc/krb5.conf > /dev/null <<EOF
+          [realms]
+           INTERNAL.CIGNA.COM = {
+            kdc = 10.204.64.2
+           }
 
-      - name: Install Python Dependencies
-        run: |
-          pip install pyodbc
+          [domain_realm]
+           .INTERNAL.CIGNA.COM = INTERNAL.CIGNA.COM
+           INTERNAL.CIGNA.COM = INTERNAL.CIGNA.COM
+          EOF
 
-      - name: Run SQL Server Connection Test
-        run: python test_sqlserver.py
+      - name: Verify Kerberos Configuration
+        run: cat /etc/krb5.conf
