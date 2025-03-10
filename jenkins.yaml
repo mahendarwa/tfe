@@ -1,27 +1,19 @@
-name: Configure Kerberos
-
-on: 
-  push:
-    branches:
-      - main
-
 jobs:
-  configure-kerberos:
-    runs-on: ubuntu-latest
-
+  test-sql-connection:
+    runs-on: ubuntu-latest  # Use the appropriate runner
     steps:
-      - name: Create /etc/krb5.conf file
+      - name: Install Kerberos utilities
+        run: sudo apt-get update && sudo apt-get install -y krb5-user libkrb5-dev
+
+      - name: Authenticate with Kerberos
+        env:
+          KRB_USER: "C8X6K9@INTERNAL.CIGNA.COM"
+          KRB_PASSWORD: ${{ secrets.KERBEROS_PASSWORD }}
         run: |
-          sudo tee /etc/krb5.conf > /dev/null <<EOF
-          [realms]
-           INTERNAL.CIGNA.COM = {
-            kdc = 10.204.64.2
-           }
+          echo "$KRB_PASSWORD" | kinit "$KRB_USER"
 
-          [domain_realm]
-           .INTERNAL.CIGNA.COM = INTERNAL.CIGNA.COM
-           INTERNAL.CIGNA.COM = INTERNAL.CIGNA.COM
-          EOF
+      - name: Verify Kerberos Ticket
+        run: klist
 
-      - name: Verify Kerberos Configuration
-        run: cat /etc/krb5.conf
+      - name: Run SQL Server Connection Test
+        run: python testsqlserver.py
