@@ -1,15 +1,29 @@
-package wiz
+name: Run SQL Server Connection Test
 
-default result = "pass"
+on: 
+  workflow_dispatch
 
-some container_name
+jobs:
+  test-sql-connection:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
 
-result = "fail" {
-    some i
-    input.spec.containers[i].securityContext.appArmorProfile.type != "RuntimeDefault"
-}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyodbc
 
-
-currentConfiguration := "At least one container has a non-compliant AppArmor profile."
-expectedConfiguration := "All containers should use 'runtime/default' or 'RuntimeDefault' AppArmor profiles."
+      - name: Run SQL Server Connection Test
+        run: python testsqlserver.py
+        env:
+          UID: "C8X6K9"
+          PWD: "Dev2s@mpath"
+          SERVER: "HSTNCMSRDIQA02.healthspring.inside"
+          DATABASE: "Staging"
