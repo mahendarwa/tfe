@@ -1,29 +1,30 @@
-name: Run SQL Server Connection Test
+name: SQL Server Connection Test
 
-on: 
-  workflow_dispatch
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   test-sql-connection:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-
-      - name: Install dependencies
+      - name: Install Dependencies
         run: |
-          python -m pip install --upgrade pip
+          sudo apt-get update
+          sudo apt-get install -y unixodbc unixodbc-dev
+          curl -O https://packages.microsoft.com/config/ubuntu/20.04/prod.list
+          sudo mv prod.list /etc/apt/sources.list.d/mssql-release.list
+          sudo apt-get update
+          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18
+          sudo ACCEPT_EULA=Y apt-get install -y mssql-tools
+          echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
+          source ~/.bashrc
+
+      - name: Install Python Dependencies
+        run: |
           pip install pyodbc
 
       - name: Run SQL Server Connection Test
-        run: python testsqlserver.py
-        env:
-          UID: "C8X6K9"
-          PWD: "Dev2s@mpath"
-          SERVER: "HSTNCMSRDIQA02.healthspring.inside"
-          DATABASE: "Staging"
+        run: python test_sqlserver.py
