@@ -2,7 +2,7 @@ import os
 import re
 import getpass
 import snowflake.connector
-import datetime
+from datetime import datetime
 
 def get_env():
     env = None
@@ -70,23 +70,9 @@ def get_conf_val(section, key):
     }
     return config.get(section, {}).get(key, "")
 
-def validate_config():
-    """ Validate and print configuration values """
-    config_keys = ["HIPAM_AUTH_ACC", "SF_USER", "SF_ACCOUNT_ID", "SF_URL", "SF_WAREHOUSE", "SF_DATABASE", "SF_SCHEMA"]
-    
-    print("\n🔍 **Validating Configuration**")
-    for key in config_keys:
-        value = get_conf_val("sf_config", key)
-        if not value:
-            print(f"❌ Missing configuration: {key}")
-        else:
-            print(f"✅ {key}: {value}")
-
 def sf_create_ctx(oauth_token=None):
     try:
         set_proxies()
-        validate_config()
-        
         env = get_env()
         client_id = f"snowflake_{env}"
         sf_acc_nm = get_conf_val("sf_config", "SF_USER")
@@ -104,54 +90,40 @@ def sf_create_ctx(oauth_token=None):
             database=get_conf_val("sf_config", "SF_DATABASE"),
             schema=get_conf_val("sf_config", "SF_SCHEMA")
         )
-        print("\n✅ Snowflake connection established successfully.")
+        print("✅ Snowflake connection established successfully.")
         return ctx
     except Exception as e:
         print(f"❌ Snowflake connection failed: {str(e)}")
         return None
 
-def get_business_date():
-    """ Get today's business date assuming it's a working day """
-    today = datetime.date.today()
-    return today.strftime('%Y-%m-%d')
-
-def check_snowflake_data(ctx):
-    """ Check if SLC_TM (sliceid) and DT_KEY exist for the business date """
+def check_latest_business_date(ctx):
     try:
         cursor = ctx.cursor()
-        
-        bus_dt = get_business_date()
-        print(f"\n🔍 Checking data for Business Date: {bus_dt}")
-
-        query = f"""
-        SELECT SLC_TM, DT_KEY
+        query = """
+        SELECT MAX(BUS_DT) AS latest_bus_dt
         FROM ARIP.AFRS.CREDIT_RATING
-        WHERE BUS_DT = '{bus_dt}';
         """
-
         cursor.execute(query)
-        results = cursor.fetchall()
+        latest_bus_dt = cursor.fetchone()[0]
 
-        if results:
-            print("\n✅ Data Found for the Business Date!")
-            for row in results:
-                sliceid, dt_key = row
-                print(f"📌 SLC_TM (sliceid): {sliceid}, DT_KEY: {dt_key}")
+        today_date = datetime.today().strftime('%Y-%m-%d')
+        print(f"\n🔎 Latest Business Date in Snowflake: {latest_bus_dt}")
+        print(f"📆 Expected Business Date: {today_date}")
+
+        if str(latest_bus_dt) == today_date:
+            print("✅ The latest business date matches today's date. The feed has arrived.")
         else:
-            print("\n❌ No Data Found for the Business Date!")
+            print("⚠️ The latest business date does NOT match today's date. The feed may not have arrived.")
 
         cursor.close()
-
     except Exception as e:
-        print(f"❌ Error querying Snowflake: {str(e)}")
+        print(f"Error checking business date: {str(e)}")
 
 if __name__ == "__main__":
-    print("\n🚀 **Starting Snowflake Connection and Data Validation**")
     ctx = sf_create_ctx()
-    
     if ctx:
-        print("\n🎯 **Successfully connected to Snowflake!**")
-        check_snowflake_data(ctx)
+        print("✅ Successfully connected to Snowflake!\n")
+        check_latest_business_date(ctx)
         ctx.close()
     else:
-        print("\n❌ **Failed to connect to Snowflake.**")
+        print("❌ Failed to connect to Snowflake.")
