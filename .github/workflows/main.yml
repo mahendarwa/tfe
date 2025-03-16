@@ -3,10 +3,6 @@ name: QA PAT
 on:
   workflow_dispatch:
     inputs:
-      Environments:
-        description: 'Enter comma-separated environments (e.g., pflqa00,pflqa12)'
-        required: true
-        type: string
       pflqa00:
         description: 'Run for pflqa00?'
         required: true
@@ -27,7 +23,6 @@ on:
         description: 'Run for pflqa42?'
         required: true
         type: boolean
-    
 
 jobs:
   PAT:
@@ -36,4 +31,56 @@ jobs:
       - name: Build Environment List
         id: build_envs
         run: |
-          ls
+          envs=()
+          ${{ github.event.inputs.pflqa00 == 'true' && 'envs+=("pflqa00")' || '' }}
+          ${{ github.event.inputs.pflqa12 == 'true' && 'envs+=("pflqa12")' || '' }}
+          ${{ github.event.inputs.pflqa22 == 'true' && 'envs+=("pflqa22")' || '' }}
+          ${{ github.event.inputs.pflqa36 == 'true' && 'envs+=("pflqa36")' || '' }}
+          ${{ github.event.inputs.pflqa42 == 'true' && 'envs+=("pflqa42")' || '' }}
+
+          for ENV in "${envs[@]}"; do
+            if [[ "$ENV" == "pflqa36" ]]; then
+              ADMIN_USR="pfmgr4"
+              PATH_ENV="pflqa36/"
+            elif [[ "$ENV" == "pflqa42" ]]; then
+              ADMIN_USR="pfmgr4"
+              PATH_ENV="pflqa42/"
+            elif [[ "$ENV" == "pflqa12" ]]; then
+              ADMIN_USR="pfmgr2"
+              PATH_ENV="pflqa12/"
+            elif [[ "$ENV" == "pflqa22" ]]; then
+              ADMIN_USR="pfmgr3"
+              PATH_ENV="pflqa22/"
+            elif [[ "$ENV" == "pflqa00" ]]; then
+              ADMIN_USR="pfmgr"
+              PATH_ENV="pflqa00/"
+            else
+              echo "Invalid environment: $ENV"
+              exit 1
+            fi
+
+            echo "ORG_PATH=/home/bambscm1/actions-runner-2/_work/bcc-pat/bcc-pat/" >> $GITHUB_ENV
+            echo "TMP_PATH=/tmp/actions/" >> $GITHUB_ENV
+            chmod -R 755 /tmp/actions/
+            echo "REMOTE_PATH=/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/pjlcheck_pat/opt/pjlcheck_pat" >> $GITHUB_ENV
+            echo "REMOTE_PATH1=/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/plsegfix_pat/opt/plsegfix_pat" >> $GITHUB_ENV
+            echo "REMOTE_PATH2=/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/plsegchk_pat/opt/plsegchk_pat" >> $GITHUB_ENV
+            echo "REMOTE_PATH3=/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/plstatus_pat/opt/plstatus_pat" >> $GITHUB_ENV
+            echo "LOCAL_PATH=/tmp/actions/" >> $GITHUB_ENV
+
+            scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/pjlcheck_pat/opt/pjlcheck_pat /tmp/actions/ || echo "Skipping REMOTE_PATH"
+            scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/plsegfix_pat/opt/plsegfix_pat /tmp/actions/ || echo "Skipping REMOTE_PATH1"
+            scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/plsegchk_pat/opt/plsegchk_pat /tmp/actions/ || echo "Skipping REMOTE_PATH2"
+            scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/plstatus_pat/opt/plstatus_pat /tmp/actions/ || echo "Skipping REMOTE_PATH3"
+
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chmod 750 /${ENV}/bin"
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chmod -R 750 /${ENV}/bin/* || true"
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "cp /tmp/actions/* /${ENV}/bin/"
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "cp -rf /home/bambscm1/actions-runner-2/_work/bcc-pat/bcc-pat/ETL/scripts/* /${ENV}/bin/etl/scripts/"
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "cp -rf /home/bambscm1/actions-runner-2/_work/bcc-pat/bcc-pat/ETL/sql/* /${ENV}/bin/etl/sql/"
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "cp -rf /home/bambscm1/actions-runner-2/_work/bcc-pat/bcc-pat/ETL/ref/* /${ENV}/bin/etl/ref/"
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chmod -R 750 /${ENV}/bin/* || true"
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chmod -R 550 /${ENV}/bin/* || true"
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chgrp -R ${ENV} /${ENV}/bin/* || true"
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chmod -R 550 /${ENV}/bin || true"
+          done
