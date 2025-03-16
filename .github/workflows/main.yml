@@ -1,54 +1,34 @@
-name: Test Windows Server Connectivity & Authentication
+name: QA PAT
 
 on:
   workflow_dispatch:
+    inputs:
+      pflqa00:
+        description: 'Run for pflqa00?'
+        required: true
+        type: boolean
+      pflqa12:
+        description: 'Run for pflqa12?'
+        required: true
+        type: boolean
+      pflqa22:
+        description: 'Run for pflqa22?'
+        required: true
+        type: boolean
+      pflqa36:
+        description: 'Run for pflqa36?'
+        required: true
+        type: boolean
+      pflqa42:
+        description: 'Run for pflqa42?'
+        required: true
+        type: boolean
 
 jobs:
-  test-connectivity:
-    runs-on: self-hosted 
+  PAT:
+    runs-on: qa-runner
     steps:
-      - name: Test Ping to Windows 2016 Server
-        shell: pwsh
+      - name: Build Environment List
+        id: build_envs
         run: |
-          $ServerName = "your-windows-server-name"
-          Write-Host "Pinging Windows Server..."
-          Test-Connection -ComputerName $ServerName -Count 4 -ErrorAction SilentlyContinue
-
-      - name: Check Network Connectivity to Windows Server
-        shell: pwsh
-        run: |
-          $ServerName = "your-windows-server-name"
-          Write-Host "Testing network connectivity..."
-          $connection = Test-NetConnection -ComputerName $ServerName
-          if ($connection.PingSucceeded) {
-              Write-Host "✅ Windows Server is reachable!"
-          } else {
-              Write-Host "❌ Cannot reach Windows Server!"
-              exit 1
-          }
-
-      - name: Authenticate to Windows Server via PowerShell
-        shell: pwsh
-        env:
-          WIN_USERNAME: ${{ secrets.WIN_USERNAME }}
-          WIN_PASSWORD: ${{ secrets.WIN_PASSWORD }}
-        run: |
-          $ServerName = "your-windows-server-name"
-          $User = "${{ env.WIN_USERNAME }}"
-          $Pass = ConvertTo-SecureString "${{ env.WIN_PASSWORD }}" -AsPlainText -Force
-          $Cred = New-Object System.Management.Automation.PSCredential ($User, $Pass)
-
-          Write-Host "Attempting to authenticate to Windows Server..."
-          $session = New-PSSession -ComputerName $ServerName -Credential $Cred -ErrorAction SilentlyContinue
-
-          if ($session) {
-              Write-Host "✅ Authentication Successful!"
-              Remove-PSSession $session
-          } else {
-              Write-Host "❌ Authentication Failed!"
-              exit 1
-          }
-
-      - name: Confirm workflow completed
-        shell: pwsh
-        run: Write-Host "✅ GitHub Actions Workflow Completed Successfully!"
+          ls
