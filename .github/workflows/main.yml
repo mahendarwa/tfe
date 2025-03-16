@@ -28,17 +28,18 @@ jobs:
   PAT:
     runs-on: qa-runner
     steps:
-      - name: Build Environment List
-        id: build_envs
+      - name: Set and Process Selected Environments
         run: |
-          envs=()
-          ${{ github.event.inputs.pflqa00 == 'true' && 'envs+=("pflqa00")' || '' }}
-          ${{ github.event.inputs.pflqa12 == 'true' && 'envs+=("pflqa12")' || '' }}
-          ${{ github.event.inputs.pflqa22 == 'true' && 'envs+=("pflqa22")' || '' }}
-          ${{ github.event.inputs.pflqa36 == 'true' && 'envs+=("pflqa36")' || '' }}
-          ${{ github.event.inputs.pflqa42 == 'true' && 'envs+=("pflqa42")' || '' }}
+          declare -a envs=()
+          if [[ "${{ github.event.inputs.pflqa00 }}" == "true" ]]; then envs+=("pflqa00"); fi
+          if [[ "${{ github.event.inputs.pflqa12 }}" == "true" ]]; then envs+=("pflqa12"); fi
+          if [[ "${{ github.event.inputs.pflqa22 }}" == "true" ]]; then envs+=("pflqa22"); fi
+          if [[ "${{ github.event.inputs.pflqa36 }}" == "true" ]]; then envs+=("pflqa36"); fi
+          if [[ "${{ github.event.inputs.pflqa42 }}" == "true" ]]; then envs+=("pflqa42"); fi
 
           for ENV in "${envs[@]}"; do
+            echo "Processing $ENV"
+
             if [[ "$ENV" == "pflqa36" ]]; then
               ADMIN_USR="pfmgr4"
               PATH_ENV="pflqa36/"
@@ -59,26 +60,31 @@ jobs:
               exit 1
             fi
 
-            echo "ORG_PATH=/home/bambscm1/actions-runner-2/_work/bcc-pat/bcc-pat/" >> $GITHUB_ENV
-            echo "TMP_PATH=/tmp/actions/" >> $GITHUB_ENV
-            chmod -R 755 /tmp/actions/
-            echo "REMOTE_PATH=/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/pjlcheck_pat/opt/pjlcheck_pat" >> $GITHUB_ENV
-            echo "REMOTE_PATH1=/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/plsegfix_pat/opt/plsegfix_pat" >> $GITHUB_ENV
-            echo "REMOTE_PATH2=/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/plsegchk_pat/opt/plsegchk_pat" >> $GITHUB_ENV
-            echo "REMOTE_PATH3=/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/plstatus_pat/opt/plstatus_pat" >> $GITHUB_ENV
-            echo "LOCAL_PATH=/tmp/actions/" >> $GITHUB_ENV
+            echo "Environment: $ENV"
+            echo "Admin User: $ADMIN_USR"
+            echo "Selected Path: $PATH_ENV"
 
-            scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/pjlcheck_pat/opt/pjlcheck_pat /tmp/actions/ || echo "Skipping REMOTE_PATH"
-            scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/plsegfix_pat/opt/plsegfix_pat /tmp/actions/ || echo "Skipping REMOTE_PATH1"
-            scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/plsegchk_pat/opt/plsegchk_pat /tmp/actions/ || echo "Skipping REMOTE_PATH2"
-            scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/plstatus_pat/opt/plstatus_pat /tmp/actions/ || echo "Skipping REMOTE_PATH3"
+            ORG_PATH="/home/bambscm1/actions-runner-2/_work/bcc-pat/bcc-pat/"
+            TMP_PATH=/tmp/actions/
+            chmod -R 755 $TMP_PATH
 
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chmod 750 /${ENV}/bin"
+            REMOTE_PATH="/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/pjlcheck_pat/opt/pjlcheck_pat"
+            REMOTE_PATH1="/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/plsegfix_pat/opt/plsegfix_pat"
+            REMOTE_PATH2="/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/plsegchk_pat/opt/plsegchk_pat"
+            REMOTE_PATH3="/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/plstatus_pat/opt/plstatus_pat"
+            LOCAL_PATH=/tmp/actions/
+
+            scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH $LOCAL_PATH || echo "Skipping $REMOTE_PATH due to permission error"
+            scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH1 $LOCAL_PATH || echo "Skipping $REMOTE_PATH1 due to permission error"
+            scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH2 $LOCAL_PATH || echo "Skipping $REMOTE_PATH2 due to permission error"
+            scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH3 $LOCAL_PATH || echo "Skipping $REMOTE_PATH3 due to permission error"
+
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chmod 750 /${ENV}/bin" 
             ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chmod -R 750 /${ENV}/bin/* || true"
             ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "cp /tmp/actions/* /${ENV}/bin/"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "cp -rf /home/bambscm1/actions-runner-2/_work/bcc-pat/bcc-pat/ETL/scripts/* /${ENV}/bin/etl/scripts/"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "cp -rf /home/bambscm1/actions-runner-2/_work/bcc-pat/bcc-pat/ETL/sql/* /${ENV}/bin/etl/sql/"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "cp -rf /home/bambscm1/actions-runner-2/_work/bcc-pat/bcc-pat/ETL/ref/* /${ENV}/bin/etl/ref/"
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "cp -rf ${ORG_PATH}ETL/scripts/* /${ENV}/bin/etl/scripts/"
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "cp -rf ${ORG_PATH}ETL/sql/* /${ENV}/bin/etl/sql/"
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "cp -rf ${ORG_PATH}ETL/ref/* /${ENV}/bin/etl/ref/"
             ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chmod -R 750 /${ENV}/bin/* || true"
             ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chmod -R 550 /${ENV}/bin/* || true"
             ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chgrp -R ${ENV} /${ENV}/bin/* || true"
