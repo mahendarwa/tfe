@@ -3,6 +3,10 @@ name: QA PAT
 on:
   workflow_dispatch:
     inputs:
+      Environments:
+        description: 'Enter comma-separated environments (e.g., pflqa00,pflqa12)'
+        required: true
+        type: string
       pflqa00:
         description: 'Run for pflqa00?'
         required: true
@@ -23,6 +27,7 @@ on:
         description: 'Run for pflqa42?'
         required: true
         type: boolean
+    
 
 jobs:
   PAT:
