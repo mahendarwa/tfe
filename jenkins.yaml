@@ -1,19 +1,26 @@
-jobs:
-  test-sql-connection:
-    runs-on: ubuntu-latest  # Use the appropriate runner
-    steps:
-      - name: Install Kerberos utilities
-        run: sudo apt-get update && sudo apt-get install -y krb5-user libkrb5-dev
-
-      - name: Authenticate with Kerberos
-        env:
-          KRB_USER: "C8X6K9@INTERNAL.CIGNA.COM"
-          KRB_PASSWORD: ${{ secrets.KERBEROS_PASSWORD }}
-        run: |
-          echo "$KRB_PASSWORD" | kinit "$KRB_USER"
-
-      - name: Verify Kerberos Ticket
-        run: klist
-
-      - name: Run SQL Server Connection Test
-        run: python testsqlserver.py
+apiVersion: v1
+kind: Pod
+metadata:
+  name: container-custom-apparmor-profile
+  namespace: kspm-negative-testing
+spec:
+  containers:
+    - name: test-application
+      image: e0001meastus2acrcrsl2.azurecr.io/tdex/azcld/kspm/test-application:1.0.0
+      resources:
+        requests:
+          memory: 1Gi
+          cpu: 0.5
+        limits:
+          memory: 1Gi
+          cpu: 0.5
+      securityContext:
+        appArmorProfile:
+          type: Localhost
+          localhostProfile: k8s-apparmor-example
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
