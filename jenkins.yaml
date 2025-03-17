@@ -1,26 +1,31 @@
-apiVersion: v1
-kind: Pod
-metadata:
-  name: container-custom-apparmor-profile
-  namespace: kspm-negative-testing
-spec:
-  containers:
-    - name: test-application
-      image: e0001meastus2acrcrsl2.azurecr.io/tdex/azcld/kspm/test-application:1.0.0
-      resources:
-        requests:
-          memory: 1Gi
-          cpu: 0.5
-        limits:
-          memory: 1Gi
-          cpu: 0.5
-      securityContext:
-        appArmorProfile:
-          type: Localhost
-          localhostProfile: k8s-apparmor-example
-        runAsNonRoot: true
-        allowPrivilegeEscalation: false
-        readOnlyRootFilesystem: true
-        capabilities:
-          drop:
-            - ALL
+- name: Build Environment List
+  id: build_envs
+  run: |
+    envs=()
+    [[ "${{ github.event.inputs.pflqa00 }}" == 'true' ]] && envs+=("pflqa00")
+    [[ "${{ github.event.inputs.pflqa12 }}" == 'true' ]] && envs+=("pflqa12")
+    [[ "${{ github.event.inputs.pflqa22 }}" == 'true' ]] && envs+=("pflqa22")
+    [[ "${{ github.event.inputs.pflqa36 }}" == 'true' ]] && envs+=("pflqa36")
+    [[ "${{ github.event.inputs.pflqa42 }}" == 'true' ]] && envs+=("pflqa42")
+
+    for ENV in "${envs[@]}"; do
+      if [[ "$ENV" == "pflqa36" ]]; then
+        ADMIN_USR="pfmgr4"
+        PATH_ENV="pflqa36"
+      elif [[ "$ENV" == "pflqa42" ]]; then
+        ADMIN_USR="pfmgr4"
+        PATH_ENV="pflqa42"
+      elif [[ "$ENV" == "pflqa12" ]]; then
+        ADMIN_USR="pfmgr2"
+        PATH_ENV="pflqa12"
+      elif [[ "$ENV" == "pflqa22" ]]; then
+        ADMIN_USR="pfmgr3"
+        PATH_ENV="pflqa22"
+      elif [[ "$ENV" == "pflqa00" ]]; then
+        ADMIN_USR="pfmgr1"
+        PATH_ENV="pflqa00"
+      fi
+    done
+
+    echo "ADMIN_USR=${ADMIN_USR}" >> $GITHUB_ENV
+    echo "PATH_ENV=${PATH_ENV}" >> $GITHUB_ENV
