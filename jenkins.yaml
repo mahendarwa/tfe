@@ -1,31 +1,87 @@
-- name: Build Environment List
-  id: build_envs
-  run: |
-    envs=()
-    [[ "${{ github.event.inputs.pflqa00 }}" == 'true' ]] && envs+=("pflqa00")
-    [[ "${{ github.event.inputs.pflqa12 }}" == 'true' ]] && envs+=("pflqa12")
-    [[ "${{ github.event.inputs.pflqa22 }}" == 'true' ]] && envs+=("pflqa22")
-    [[ "${{ github.event.inputs.pflqa36 }}" == 'true' ]] && envs+=("pflqa36")
-    [[ "${{ github.event.inputs.pflqa42 }}" == 'true' ]] && envs+=("pflqa42")
+name: QA PATService
 
-    for ENV in "${envs[@]}"; do
-      if [[ "$ENV" == "pflqa36" ]]; then
-        ADMIN_USR="pfmgr4"
-        PATH_ENV="pflqa36"
-      elif [[ "$ENV" == "pflqa42" ]]; then
-        ADMIN_USR="pfmgr4"
-        PATH_ENV="pflqa42"
-      elif [[ "$ENV" == "pflqa12" ]]; then
-        ADMIN_USR="pfmgr2"
-        PATH_ENV="pflqa12"
-      elif [[ "$ENV" == "pflqa22" ]]; then
-        ADMIN_USR="pfmgr3"
-        PATH_ENV="pflqa22"
-      elif [[ "$ENV" == "pflqa00" ]]; then
-        ADMIN_USR="pfmgr1"
-        PATH_ENV="pflqa00"
-      fi
-    done
+on:
+  workflow_dispatch:
+    inputs:
+      pflqa00:
+        description: 'pflqa00'
+        required: true
+        type: boolean
+      pflqa12:
+        description: 'pflqa12'
+        required: true
+        type: boolean
+      pflqa22:
+        description: 'pflqa22'
+        required: true
+        type: boolean
+      pflqa36:
+        description: 'pflqa36'
+        required: true
+        type: boolean
+      pflqa42:
+        description: 'pflqa42'
+        required: true
+        type: boolean
 
-    echo "ADMIN_USR=${ADMIN_USR}" >> $GITHUB_ENV
-    echo "PATH_ENV=${PATH_ENV}" >> $GITHUB_ENV
+jobs:
+  PATService:
+    runs-on: qa15-runner
+
+    steps:
+      - name: Build Environment List
+        id: build_envs
+        run: |
+          envs=()
+          [[ "${{ github.event.inputs.pflqa00 }}" == 'true' ]] && envs+=("pflqa00")
+          [[ "${{ github.event.inputs.pflqa12 }}" == 'true' ]] && envs+=("pflqa12")
+          [[ "${{ github.event.inputs.pflqa22 }}" == 'true' ]] && envs+=("pflqa22")
+          [[ "${{ github.event.inputs.pflqa36 }}" == 'true' ]] && envs+=("pflqa36")
+          [[ "${{ github.event.inputs.pflqa42 }}" == 'true' ]] && envs+=("pflqa42")
+
+          echo "SELECTED_ENVS=${envs[*]}" >> $GITHUB_ENV
+
+      - name: Set Common Variables
+        run: |
+          echo "REMOTE_PATH=/home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/ddrgenerator/build/libs/ddrgenerator.war" >> $GITHUB_ENV
+          echo "REMOTE_PATH1=/home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/caseservice/build/libs/caseservice-PAT.jar" >> $GITHUB_ENV
+          echo "LOCAL_PATH=/tmp/actions/" >> $GITHUB_ENV
+          mkdir -p /tmp/actions/
+          chmod -R 755 /tmp/actions/
+
+      - name: Copy Files from Remote to Local
+        run: |
+          ls -la /home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/ddrgenerator/build/libs/
+          cp -rf "$REMOTE_PATH" "$LOCAL_PATH"
+          cp -rf "$REMOTE_PATH1" "$LOCAL_PATH"
+
+      - name: Execute for Each Environment
+        run: |
+          IFS=' ' read -r -a envs <<< "$SELECTED_ENVS"
+
+          for ENV in "${envs[@]}"; do
+            if [[ "$ENV" == "pflqa36" ]]; then
+              ADMIN_USR="pfmgr4"
+            elif [[ "$ENV" == "pflqa42" ]]; then
+              ADMIN_USR="pfmgr4"
+            elif [[ "$ENV" == "pflqa12" ]]; then
+              ADMIN_USR="pfmgr2"
+            elif [[ "$ENV" == "pflqa22" ]]; then
+              ADMIN_USR="pfmgr3"
+            elif [[ "$ENV" == "pflqa00" ]]; then
+              ADMIN_USR="pfmgr"
+            else
+              echo "Invalid environment: $ENV"
+              exit 1
+            fi
+
+            echo "Processing $ENV with user $ADMIN_USR"
+
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq015.enterprisenet.org" "chmod 750 /${ENV}/bin"
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq015.enterprisenet.org" "chmod -R 750 /${ENV}/bin/* || true"
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq015.enterprisenet.org" "cp /tmp/actions/* /${ENV}/bin/"
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq015.enterprisenet.org" "chmod -R 750 /${ENV}/bin/* || true"
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq015.enterprisenet.org" "chmod -R 550 /${ENV}/bin/* || true"
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq015.enterprisenet.org" "chgrp -R ${ENV} /${ENV}/bin/* || true"
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq015.enterprisenet.org" "chmod -R 550 /${ENV}/bin || true"
+          done
