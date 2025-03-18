@@ -9,28 +9,23 @@ jobs:
   test-sql-connection:
     runs-on: zilverton-private-x64-windows
 
-    env:
-      USERNAME: ${{ secrets.USERNAME }}
-      PASSWORDSQL: ${{ secrets.PASSWORDSQL }}
-
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3  # ✅ This clones your repo to the runner
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
-      - name: Install ODBC Driver and pyodbc
+      - name: Install ODBC Driver 17 and pyodbc
         run: |
-          choco install -y microsoft-odbc-driver-18-for-sql-server
+          choco install -y microsoft-odbc-driver-17-for-sql-server
           pip install pyodbc
 
-      - name: List ODBC Drivers (for verification)
+      - name: Verify ODBC Drivers Installed
         run: |
           python -c "import pyodbc; print('Available ODBC Drivers:', pyodbc.drivers())"
 
       - name: Run SQL Server Connection Test
-        run: |
-          python test_sql_connection.py
+        run: python test_sql_connection.py
