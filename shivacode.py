@@ -2,7 +2,8 @@ import pyodbc
 
 print("Connecting to SQL Server...")
 
-username = "Internal\\c8x6k9"
+# Correctly formatted raw string username
+username = r"INTERNAL\c8x6k9"
 password = "Dev2s@mpath"
 
 connection_string = (
