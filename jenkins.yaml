@@ -1,4 +1,4 @@
-name: SQL Server Connection Test
+name: SQL Server SQLCMD Auth Test
 
 on:
   push:
@@ -6,26 +6,11 @@ on:
       - test-windows-server
 
 jobs:
-  test-sql-connection:
+  test-sqlcmd-auth:
     runs-on: zilverton-private-x64-windows
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-
-      - name: Install ODBC Driver 17 and pyodbc
+      - name: Run sqlcmd to Test SQL Server Authentication
         run: |
-          choco install -y microsoft-odbc-driver-17-for-sql-server
-          pip install pyodbc
-
-      - name: Verify ODBC Drivers Installed
-        run: |
-          python -c "import pyodbc; print('Available ODBC Drivers:', pyodbc.drivers())"
-
-      - name: Run SQL Server Connection Test
-        run: python test_sql_connection.py
+          sqlcmd -S HSTNCMSRDIDEV01.healthspring.inside -U INTERNAL\\c8x6k9 -P "Dev2s@mpath" -Q "SELECT @@VERSION"
+        shell: cmd
