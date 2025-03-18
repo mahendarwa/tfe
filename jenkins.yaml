@@ -14,6 +14,9 @@ jobs:
       PASSWORDSQL: ${{ secrets.PASSWORDSQL }}
 
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3  # ✅ This clones your repo to the runner
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -30,4 +33,4 @@ jobs:
 
       - name: Run SQL Server Connection Test
         run: |
-          python test.py
+          python test_sql_connection.py
