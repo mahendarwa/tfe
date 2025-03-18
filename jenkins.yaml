@@ -1,87 +1,18 @@
-name: QA PATService
-
-on:
-  workflow_dispatch:
-    inputs:
-      pflqa00:
-        description: 'pflqa00'
-        required: true
-        type: boolean
-      pflqa12:
-        description: 'pflqa12'
-        required: true
-        type: boolean
-      pflqa22:
-        description: 'pflqa22'
-        required: true
-        type: boolean
-      pflqa36:
-        description: 'pflqa36'
-        required: true
-        type: boolean
-      pflqa42:
-        description: 'pflqa42'
-        required: true
-        type: boolean
-
 jobs:
-  PATService:
-    runs-on: qa15-runner
-
+  sql-test:
+    runs-on: windows-latest  # Switch to Windows runner
     steps:
-      - name: Build Environment List
-        id: build_envs
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Python Dependencies
         run: |
-          envs=()
-          [[ "${{ github.event.inputs.pflqa00 }}" == 'true' ]] && envs+=("pflqa00")
-          [[ "${{ github.event.inputs.pflqa12 }}" == 'true' ]] && envs+=("pflqa12")
-          [[ "${{ github.event.inputs.pflqa22 }}" == 'true' ]] && envs+=("pflqa22")
-          [[ "${{ github.event.inputs.pflqa36 }}" == 'true' ]] && envs+=("pflqa36")
-          [[ "${{ github.event.inputs.pflqa42 }}" == 'true' ]] && envs+=("pflqa42")
+          pip install pyodbc
 
-          echo "SELECTED_ENVS=${envs[*]}" >> $GITHUB_ENV
-
-      - name: Set Common Variables
-        run: |
-          echo "REMOTE_PATH=/home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/ddrgenerator/build/libs/ddrgenerator.war" >> $GITHUB_ENV
-          echo "REMOTE_PATH1=/home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/caseservice/build/libs/caseservice-PAT.jar" >> $GITHUB_ENV
-          echo "LOCAL_PATH=/tmp/actions/" >> $GITHUB_ENV
-          mkdir -p /tmp/actions/
-          chmod -R 755 /tmp/actions/
-
-      - name: Copy Files from Remote to Local
-        run: |
-          ls -la /home/bambscm1/actions-runner/_work/bcc-patservice/bcc-patservice/ddrgenerator/build/libs/
-          cp -rf "$REMOTE_PATH" "$LOCAL_PATH"
-          cp -rf "$REMOTE_PATH1" "$LOCAL_PATH"
-
-      - name: Execute for Each Environment
-        run: |
-          IFS=' ' read -r -a envs <<< "$SELECTED_ENVS"
-
-          for ENV in "${envs[@]}"; do
-            if [[ "$ENV" == "pflqa36" ]]; then
-              ADMIN_USR="pfmgr4"
-            elif [[ "$ENV" == "pflqa42" ]]; then
-              ADMIN_USR="pfmgr4"
-            elif [[ "$ENV" == "pflqa12" ]]; then
-              ADMIN_USR="pfmgr2"
-            elif [[ "$ENV" == "pflqa22" ]]; then
-              ADMIN_USR="pfmgr3"
-            elif [[ "$ENV" == "pflqa00" ]]; then
-              ADMIN_USR="pfmgr"
-            else
-              echo "Invalid environment: $ENV"
-              exit 1
-            fi
-
-            echo "Processing $ENV with user $ADMIN_USR"
-
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq015.enterprisenet.org" "chmod 750 /${ENV}/bin"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq015.enterprisenet.org" "chmod -R 750 /${ENV}/bin/* || true"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq015.enterprisenet.org" "cp /tmp/actions/* /${ENV}/bin/"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq015.enterprisenet.org" "chmod -R 750 /${ENV}/bin/* || true"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq015.enterprisenet.org" "chmod -R 550 /${ENV}/bin/* || true"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq015.enterprisenet.org" "chgrp -R ${ENV} /${ENV}/bin/* || true"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq015.enterprisenet.org" "chmod -R 550 /${ENV}/bin || true"
-          done
+      - name: Run SQL Server Connection Test
+        run: python test.py
