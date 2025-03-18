@@ -1,34 +1,55 @@
-name: Test SQL Server Network Connectivity
+name: Test SQL Server Connectivity
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
 
 jobs:
-  network-test:
+  test-sql-connect:
     runs-on: windows-latest
 
-    steps:
-      - name: Ping SQL Server
-        shell: powershell
-        run: |
-          $server = "HSTNCMSRDIDEV01.healthspring.inside"
-          Write-Host "Pinging $server..."
-          if (Test-Connection -ComputerName $server -Count 2 -Quiet) {
-            Write-Host "✅ Ping successful"
-          } else {
-            Write-Host "❌ Ping failed"
-            exit 1
-          }
+    env:
+      SQL_SERVER: HSTNCMSRDIDEV01.healthspring.inside
+      SQL_USERNAME: ${{ secrets.USERNAME }}
+      SQL_PASSWORD: ${{ secrets.PASSWORDSQL }}
 
-      - name: Test Port 1433 (SQL Server)
-        shell: powershell
-        run: |
-          $server = "HSTNCMSRDIDEV01.healthspring.inside"
-          $port = 1433
-          Write-Host "Testing port $port on $server..."
-          $tcpTest = Test-NetConnection -ComputerName $server -Port $port
-          if ($tcpTest.TcpTestSucceeded) {
-            Write-Host "✅ Port $port is open"
-          } else {
-            Write-Host "❌ Port $port is closed or unreachable"
-            exit 1
+    steps:
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install pyodbc and SQL Driver
+      run: |
+        choco install -y microsoft-odbc-driver-18-for-sql-server
+        pip install pyodbc
+
+    - name: Run SQL Server Connection Test
+      run: |
+        $connectionString = @"
+        DRIVER={ODBC Driver 18 for SQL Server};
+        SERVER=${env:SQL_SERVER};
+        DATABASE=master;
+        UID=${env:SQL_USERNAME};
+        PWD=${env:SQL_PASSWORD};
+        TrustServerCertificate=yes;
+        Trusted_Connection=no;
+        "@
+
+        $query = "SELECT @@VERSION"
+
+        try {
+          $conn = New-Object -ComObject ADODB.Connection
+          $conn.ConnectionString = $connectionString
+          $conn.Open()
+          Write-Host "✅ Connected to SQL Server successfully."
+
+          $cmd = $conn.Execute($query)
+          while (!$cmd.EOF) {
+            Write-Host $cmd.Fields.Item(0).Value
+            $cmd.MoveNext()
           }
+          $conn.Close()
+        } catch {
+          Write-Host "❌ Failed to connect to SQL Server: $_"
+          exit 1
+        }
