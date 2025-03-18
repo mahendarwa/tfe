@@ -1,11 +1,13 @@
-name: Test SQL Server Connectivity
+name: SQL Server Connection Test
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - test-windows-server
 
 jobs:
-  test-sql-connect:
-    runs-on: windows-latest
+  test-sql-connection:
+    runs-on: zilverton-private-x64-windows
 
     env:
       SQL_SERVER: HSTNCMSRDIDEV01.healthspring.inside
@@ -18,38 +20,38 @@ jobs:
       with:
         python-version: '3.9'
 
-    - name: Install pyodbc and SQL Driver
+    - name: Install ODBC Driver and pyodbc
       run: |
         choco install -y microsoft-odbc-driver-18-for-sql-server
         pip install pyodbc
 
+    - name: List ODBC Drivers (for verification)
+      run: |
+        import pyodbc
+        print("Available ODBC Drivers:", pyodbc.drivers())
+      shell: python
+
     - name: Run SQL Server Connection Test
       run: |
-        $connectionString = @"
-        DRIVER={ODBC Driver 18 for SQL Server};
-        SERVER=${env:SQL_SERVER};
-        DATABASE=master;
-        UID=${env:SQL_USERNAME};
-        PWD=${env:SQL_PASSWORD};
-        TrustServerCertificate=yes;
-        Trusted_Connection=no;
-        "@
-
-        $query = "SELECT @@VERSION"
-
-        try {
-          $conn = New-Object -ComObject ADODB.Connection
-          $conn.ConnectionString = $connectionString
-          $conn.Open()
-          Write-Host "✅ Connected to SQL Server successfully."
-
-          $cmd = $conn.Execute($query)
-          while (!$cmd.EOF) {
-            Write-Host $cmd.Fields.Item(0).Value
-            $cmd.MoveNext()
-          }
-          $conn.Close()
-        } catch {
-          Write-Host "❌ Failed to connect to SQL Server: $_"
-          exit 1
-        }
+        import pyodbc
+        conn_str = (
+          "DRIVER={ODBC Driver 18 for SQL Server};"
+          "SERVER=${{ env.SQL_SERVER }};"
+          "DATABASE=master;"
+          "UID=${{ env.SQL_USERNAME }};"
+          "PWD=${{ env.SQL_PASSWORD }};"
+          "TrustServerCertificate=yes;"
+          "Trusted_Connection=no;"
+        )
+        try:
+          conn = pyodbc.connect(conn_str, timeout=5)
+          cursor = conn.cursor()
+          cursor.execute("SELECT @@VERSION")
+          row = cursor.fetchone()
+          print("✅ Connected to SQL Server:")
+          print(row[0])
+          conn.close()
+        except Exception as e:
+          print("❌ Connection failed:", e)
+          exit(1)
+      shell: python
