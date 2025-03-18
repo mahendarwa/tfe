@@ -10,7 +10,7 @@ jobs:
     runs-on: zilverton-private-x64-windows
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Set up Python
@@ -28,7 +28,4 @@ jobs:
           python -c "import pyodbc; print('Available ODBC Drivers:', pyodbc.drivers())"
 
       - name: Run SQL Server Connection Test
-        env:
-          USERNAME: ${{ secrets.USERNAME }}
-          PASSWORDSQL: ${{ secrets.PASSWORDSQL }}
         run: python test_sql_connection.py
