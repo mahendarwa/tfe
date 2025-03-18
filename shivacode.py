@@ -1,13 +1,21 @@
 import pyodbc
+import os
 
 print("Connecting to SQL Server...")
 
+# Fetch credentials securely from environment variables
+username = os.getenv('USERNAME')  # Should be: Internal\c8x6k9
+password = os.getenv('PASSWORDSQL')  # Should be: Dev2s@mpath
+
+# Properly escape backslash in username
+escaped_username = username.replace("\\", "\\\\")
+
 connection_string = (
-    r'DRIVER={ODBC Driver 17 for SQL Server};'
-    r'SERVER=HSTNCMSRDIDEV01.healthspring.inside;'
-    r'Trusted_Connection=no;'
-    r'UID=Internal\\c8x6k9;'
-    r'PWD=Dev2s@mpath;'
+    f"DRIVER={{ODBC Driver 17 for SQL Server}};"
+    f"SERVER=HSTNCMSRDIDEV01.healthspring.inside;"
+    f"UID={escaped_username};"
+    f"PWD={password};"
+    f"Trusted_Connection=no;"
 )
 
 try:
