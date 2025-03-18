@@ -1,18 +1,34 @@
+name: Test SQL Server Network Connectivity
+
+on: workflow_dispatch
+
 jobs:
-  sql-test:
-    runs-on: windows-latest  # Switch to Windows runner
+  network-test:
+    runs-on: windows-latest
+
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-
-      - name: Install Python Dependencies
+      - name: Ping SQL Server
+        shell: powershell
         run: |
-          pip install pyodbc
+          $server = "HSTNCMSRDIDEV01.healthspring.inside"
+          Write-Host "Pinging $server..."
+          if (Test-Connection -ComputerName $server -Count 2 -Quiet) {
+            Write-Host "✅ Ping successful"
+          } else {
+            Write-Host "❌ Ping failed"
+            exit 1
+          }
 
-      - name: Run SQL Server Connection Test
-        run: python test.py
+      - name: Test Port 1433 (SQL Server)
+        shell: powershell
+        run: |
+          $server = "HSTNCMSRDIDEV01.healthspring.inside"
+          $port = 1433
+          Write-Host "Testing port $port on $server..."
+          $tcpTest = Test-NetConnection -ComputerName $server -Port $port
+          if ($tcpTest.TcpTestSucceeded) {
+            Write-Host "✅ Port $port is open"
+          } else {
+            Write-Host "❌ Port $port is closed or unreachable"
+            exit 1
+          }
