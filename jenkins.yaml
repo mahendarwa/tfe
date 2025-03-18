@@ -28,4 +28,7 @@ jobs:
           python -c "import pyodbc; print('Available ODBC Drivers:', pyodbc.drivers())"
 
       - name: Run SQL Server Connection Test
+        env:
+          USERNAME: ${{ secrets.USERNAME }}
+          PASSWORDSQL: ${{ secrets.PASSWORDSQL }}
         run: python test_sql_connection.py
