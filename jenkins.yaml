@@ -1,14 +1,8 @@
-sudo su
-# Install Microsoft repo
-curl https://packages.microsoft.com/config/rhel/7/prod.repo | tee /etc/yum.repos.d/msprod.repo
-
-# Install ODBC driver
-sudo yum install -y msodbcsql17 unixODBC unixODBC-devel
-
-
-ls /opt/microsoft/msodbcsql17/lib64/
-sudo yum remove msodbcsql17
-sudo yum install msodbcsql17
+sudo rpm -Uvh https://packages.microsoft.com/config/rhel/8/packages-microsoft-prod.rpm
+sudo yum clean all
+sudo yum makecache
+sudo yum install -y msodbcsql17
+sudo yum install -y mssql-tools
 ====
 
 import pyodbc
