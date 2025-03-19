@@ -1,9 +1,6 @@
-sudo yum remove -y msodbcsql* && \
-sudo curl https://packages.microsoft.com/config/rhel/8/prod.repo -o /etc/yum.repos.d/mssql-release.repo && \
-sudo ACCEPT_EULA=Y yum install -y msodbcsql17 unixODBC-devel
-ls /opt/microsoft/msodbcsql17/lib64/libmsodbcsql-17.*.so && \
-odbcinst -q -d -n "ODBC Driver 17 for SQL Server"
-
+sudo su -c 'curl -o /etc/yum.repos.d/mssql-release.repo https://packages.microsoft.com/config/rhel/8/prod.repo && \
+yum clean all && \
+ACCEPT_EULA=Y yum install -y msodbcsql17 unixODBC-devel'
 
 
 import pyodbc
