@@ -1,8 +1,7 @@
-sudo rpm -Uvh https://packages.microsoft.com/config/rhel/8/packages-microsoft-prod.rpm
+sudo curl -o /etc/yum.repos.d/mssql-release.repo https://packages.microsoft.com/config/rhel/8/prod.repo
 sudo yum clean all
 sudo yum makecache
-sudo yum install -y msodbcsql17
-sudo yum install -y mssql-tools
+sudo ACCEPT_EULA=Y yum install -y msodbcsql17
 ====
 
 import pyodbc
