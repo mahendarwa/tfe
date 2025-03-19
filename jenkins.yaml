@@ -1,16 +1,46 @@
-name: SQL Server SQLCMD Auth Test
+# Remove previous broken/missing installations
+sudo apt-get remove --purge msodbcsql*
 
-on:
-  push:
-    branches:
-      - test-windows-server
+# Install Microsoft ODBC Driver 17
+curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+sudo apt-add-repository "$(curl https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/prod.list)"
+sudo apt-get update
+sudo apt-get install -y msodbcsql17
 
-jobs:
-  test-sqlcmd-auth:
-    runs-on: zilverton-private-x64-windows
 
-    steps:
-      - name: Run sqlcmd to Test SQL Server Authentication
-        run: |
-          sqlcmd -S HSTNCMSRDIDEV01.healthspring.inside -U INTERNAL\\c8x6k9 -P "Dev2s@mpath" -Q "SELECT @@VERSION"
-        shell: cmd
+import pyodbc
+
+# Connection string
+connection_string = (
+    r'DRIVER={ODBC Driver 17 for SQL Server};'
+    r'SERVER=HSTNCMSRDIQA02.healthspring.inside;'
+    r'Trusted_Connection=yes;'
+    r'TrustServerCertificate=yes;'
+    r'DATABASE=Staging;'
+    r'DOMAIN=INTERNAL;'
+    r'UID=C8X6K9;'
+    r'PWD=Dev2s@mpath;'
+)
+
+connection = None  # Initialize to avoid NameError
+try:
+    connection = pyodbc.connect(connection_string)
+    cursor = connection.cursor()
+    print("Connected to SQL Server")
+
+    # Execute query
+    cursor.execute("SELECT @@version;")
+    row = cursor.fetchone()
+    print(f"SQL Server version: {row[0]}")
+
+except pyodbc.Error as ex:
+    print("Connection error:", ex)
+    sqlstate = ex.args[0]
+    if sqlstate == '28000':
+        print("Invalid credentials")
+
+finally:
+    if connection:
+        cursor.close()
+        connection.close()
+        print("Connection closed")
