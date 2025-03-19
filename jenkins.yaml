@@ -1,15 +1,24 @@
-sudo su -c 'curl -o /etc/yum.repos.d/mssql-release.repo https://packages.microsoft.com/config/rhel/8/prod.repo && \
-yum clean all && \
-ACCEPT_EULA=Y yum install -y msodbcsql17 unixODBC-devel'
+sudo su
+# Install Microsoft repo
+curl https://packages.microsoft.com/config/rhel/7/prod.repo | tee /etc/yum.repos.d/msprod.repo
 
+# Install ODBC driver
+sudo yum install -y msodbcsql17 unixODBC unixODBC-devel
+
+
+ls /opt/microsoft/msodbcsql17/lib64/
+sudo yum remove msodbcsql17
+sudo yum install msodbcsql17
+====
 
 import pyodbc
 
-# Connection string
+connection = None  # Initialize
+
 connection_string = (
     r'DRIVER={ODBC Driver 17 for SQL Server};'
-    r'SERVER=HSTNCMSRDIQA02.healthspring.inside;'
-    r'Trusted_Connection=yes;'
+    r'SERVER=HSTNCMNSRIDQA02.hatshipping.inside;'
+    r'Trusted_connection=yes;'
     r'TrustServerCertificate=yes;'
     r'DATABASE=Staging;'
     r'DOMAIN=INTERNAL;'
@@ -17,22 +26,22 @@ connection_string = (
     r'PWD=Dev2s@mpath;'
 )
 
-connection = None  # Initialize to avoid NameError
 try:
     connection = pyodbc.connect(connection_string)
     cursor = connection.cursor()
     print("Connected to SQL Server")
 
-    # Execute query
     cursor.execute("SELECT @@version;")
     row = cursor.fetchone()
     print(f"SQL Server version: {row[0]}")
 
 except pyodbc.Error as ex:
-    print("Connection error:", ex)
+    print(ex)
     sqlstate = ex.args[0]
     if sqlstate == '28000':
         print("Invalid credentials")
+    else:
+        print("Connection error:", ex)
 
 finally:
     if connection:
