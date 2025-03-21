@@ -1,2 +1,21 @@
-Mentioned that Terraform & Infrastructure as Code (IaC) are managed by the Cloud Delivery teams, but understanding them helps in collaboration.
-Crieg also pointed out that Jenkins, Bitbucket, and JIRA are key DevOps tools, with Jenkins pipelines being essential for deploymen
+Subject: Planned Renaming of Anaconda, Python 3.6/3.8 on Dev Servers – Action Required
+
+As discussed, we are planning to rename the Anaconda folder and Python 3.6 / 3.8 directories on the development servers as part of -------
+
+Objective:
+To hide Anaconda and older Python versions (3.6/3.8) to validate if any applications still rely on them.
+We aim to shift all environments to Python 3.9+ which is already available on EC2 servers.
+This change will help us identify dependencies and move towards a cleaner, license-compliant setup (Anaconda now requires a paid license).
+
+
+Initial Action:
+
+Rename Anaconda, Python 3.6, and Python 3.8 root directories to something like _old on one development server.
+No deletion will be done initially. This allows us to easily revert if needed.
+
+Testing & Monitoring:
+All applications should be rebuilt and tested using Python 3.9 or 3.11.
+
+Collaboration Required:
+Development teams should verify their applications function properly without Anaconda.
+Please coordinate with us if you encounter any issues post renaming.
