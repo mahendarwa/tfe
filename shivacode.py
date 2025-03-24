@@ -16,39 +16,38 @@ connection_string = (
 try:
     connection = pyodbc.connect(connection_string)
     cursor = connection.cursor()
-    print("Connected to SQL Server")
+    print("✅ Connected to SQL Server")
 
-    # Example: Execute a query to view SQL Server version
+    # View SQL Server version
     cursor.execute("SELECT @@version;")
     row = cursor.fetchone()
     print(f"SQL Server version: {row[0]}")
 
-    # 🔍 Query to view SourceDataKey for given procedurecode
+    # 🔍 Query to view some rows from dbo.Export_CIOX
     query_sql = """
-        SELECT SourceDataKey 
-        FROM build.dbo.ProcedureCodeDim 
-        WHERE procedurecode = 'G0432';
+        SELECT TOP 5 ProjectName, ReportingPopulation, MemberID 
+        FROM dbo.Export_CIOX;
     """
     cursor.execute(query_sql)
     results = cursor.fetchall()
 
     if results:
-        print("🔎 Retrieved SourceDataKey values:")
+        print("🔎 Sample rows from Export_CIOX:")
         for r in results:
-            print(f"SourceDataKey: {r[0]}")
+            print(r)
     else:
-        print("No matching records found.")
+        print("No data found in Export_CIOX.")
 
 except pyodbc.Error as ex:
     print(ex)
     sqlstate = ex.args[0]
     if sqlstate == '28000':
-        print("Invalid credentials")
+        print("❌ Invalid credentials")
     else:
-        print("Connection error:", ex)
+        print("❌ Connection error:", ex)
 
 finally:
     if connection:
         cursor.close()
         connection.close()
-        print("Connection closed")
+        print("✅ Connection closed")
