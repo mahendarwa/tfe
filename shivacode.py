@@ -1,27 +1,48 @@
 import pyodbc
 
-print("Connecting to SQL Server...")
-
-# Correctly formatted raw string username
-username = r"INTERNAL\c8x6k9"
-password = "Dev2s@mpath"
-
+# Connection string
 connection_string = (
-    "DRIVER={ODBC Driver 17 for SQL Server};"
-    "SERVER=HSTNCMSRDIDEV01.healthspring.inside;"
-    f"UID={username};"
-    f"PWD={password};"
-    "Trusted_Connection=no;"
+    r'DRIVER={ODBC Driver 18 for SQL Server};'
+    r'SERVER=HSTNCMSRDIQA02.healthspring.inside;'
+    r'Trusted_connection=yes;'
+    r'TrustServerCertificate=yes;'
+    r'DATABASE=Staging;'
+    r'DOMAIN=INTERNAL;'
+    r'UID=C8X6K9;'
+    r'PWD=Dev2s@mpath;'
 )
 
+# Establish connection
 try:
-    conn = pyodbc.connect(connection_string, timeout=5)
-    cursor = conn.cursor()
-    cursor.execute("SELECT @@VERSION;")
+    connection = pyodbc.connect(connection_string)
+    cursor = connection.cursor()
+    print("Connected to SQL Server")
+
+    # Example: Execute a query
+    cursor.execute("SELECT @@version;")
     row = cursor.fetchone()
-    print("Connection successful!")
     print(f"SQL Server version: {row[0]}")
-    cursor.close()
-    conn.close()
-except pyodbc.Error as e:
-    print("Connection failed:", e)
+
+    # Execute your SQL update command
+    update_sql = """
+        UPDATE build.dbo.ProcedureCodeDim 
+        SET ProcedureTypeCode = 'H' 
+        WHERE procedurecode = 'G0432' AND SourceDataKey = 2;
+    """
+    cursor.execute(update_sql)
+    connection.commit()
+    print("✅ SQL update executed successfully")
+
+except pyodbc.Error as ex:
+    print(ex)
+    sqlstate = ex.args[0]
+    if sqlstate == '28000':
+        print("Invalid credentials")
+    else:
+        print("Connection error:", ex)
+
+finally:
+    if connection:
+        cursor.close()
+        connection.close()
+        print("Connection closed")
