@@ -1,11 +1,8 @@
-Summary of the Code
-This Python code is for an AWS Lambda function that processes observability data from AWS S3 buckets and sends it to Splunk using Splunk’s HTTP Event Collector (HEC) API. The Lambda function supports error handling, file skipping, and retries by storing failed data back to S3 for future processing. Configuration is read from an .ini file in the Lambda's deployment package.
-
-
-pushDataToSplunk---	Sends a batch of events to Splunk via HEC, deletes S3 object if needed, and handles errors by saving to error bucket.
-processS3File---	Reads and processes a file from S3, applies patterns, creates Splunk event JSONs, and triggers pushDataToSplunk.
-process_s3_event ---	Extracts bucket and key from the S3 event and calls processS3File.
-purge_s3_object----	Deletes an object from S3.
-s3_exists ----	Checks whether a specific object exists in an S3 bucket.
-process_trigger-----Handles SQS or SNS event triggers, deletes messages, and processes S3 events.
-lambda_handler ----	Main Lambda entry point; reads config, decides on trigger type (S3/SNS/SQS/Scheduled), and delegates to respective function.
+Snowflake Stream/Task/Stage → push data to S3.
+Create S3 bucket + S3 trigger for Lambda.
+Enable Splunk HEC + token.
+Package Lambda code + .ini file + dependencies.
+Deploy Lambda with appropriate IAM Role + environment variables.
+ 
+ 
+ flow ----Snowflake → S3 → Lambda → Splunk.
