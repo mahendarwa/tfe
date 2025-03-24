@@ -12,31 +12,24 @@ connection_string = (
     r'PWD=Dev2s@mpath;'
 )
 
-# Establish connection
 try:
     connection = pyodbc.connect(connection_string)
     cursor = connection.cursor()
     print("✅ Connected to SQL Server")
 
-    # View SQL Server version
-    cursor.execute("SELECT @@version;")
-    row = cursor.fetchone()
-    print(f"SQL Server version: {row[0]}")
-
-    # 🔍 Query to view some rows from dbo.Export_CIOX
-    query_sql = """
-        SELECT TOP 5 ProjectName, ReportingPopulation, MemberID 
-        FROM dbo.Export_CIOX;
+    # 🔍 Check if dbo.Export_CIOX exists
+    check_table_query = """
+        SELECT 1 
+        FROM INFORMATION_SCHEMA.TABLES 
+        WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = 'Export_CIOX';
     """
-    cursor.execute(query_sql)
-    results = cursor.fetchall()
+    cursor.execute(check_table_query)
+    exists = cursor.fetchone()
 
-    if results:
-        print("🔎 Sample rows from Export_CIOX:")
-        for r in results:
-            print(r)
+    if exists:
+        print("✅ Table dbo.Export_CIOX exists in Staging database.")
     else:
-        print("No data found in Export_CIOX.")
+        print("❌ Table dbo.Export_CIOX does NOT exist in Staging database.")
 
 except pyodbc.Error as ex:
     print(ex)
@@ -47,7 +40,8 @@ except pyodbc.Error as ex:
         print("❌ Connection error:", ex)
 
 finally:
-    if connection:
+    if 'cursor' in locals():
         cursor.close()
+    if 'connection' in locals():
         connection.close()
         print("✅ Connection closed")
