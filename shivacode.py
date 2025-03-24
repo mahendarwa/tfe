@@ -18,20 +18,26 @@ try:
     cursor = connection.cursor()
     print("Connected to SQL Server")
 
-    # Example: Execute a query
+    # Example: Execute a query to view SQL Server version
     cursor.execute("SELECT @@version;")
     row = cursor.fetchone()
     print(f"SQL Server version: {row[0]}")
 
-    # Execute your SQL update command
-    update_sql = """
-        UPDATE build.dbo.ProcedureCodeDim 
-        SET ProcedureTypeCode = 'H' 
-        WHERE procedurecode = 'G0432' AND SourceDataKey = 2;
+    # 🔍 Query to view SourceDataKey for given procedurecode
+    query_sql = """
+        SELECT SourceDataKey 
+        FROM build.dbo.ProcedureCodeDim 
+        WHERE procedurecode = 'G0432';
     """
-    cursor.execute(update_sql)
-    connection.commit()
-    print("✅ SQL update executed successfully")
+    cursor.execute(query_sql)
+    results = cursor.fetchall()
+
+    if results:
+        print("🔎 Retrieved SourceDataKey values:")
+        for r in results:
+            print(f"SourceDataKey: {r[0]}")
+    else:
+        print("No matching records found.")
 
 except pyodbc.Error as ex:
     print(ex)
