@@ -1,21 +1,11 @@
-Subject: Planned Renaming of Anaconda, Python 3.6/3.8 on Dev Servers – Action Required
-
-As discussed, we are planning to rename the Anaconda folder and Python 3.6 / 3.8 directories on the development servers as part of -------
-
-Objective:
-To hide Anaconda and older Python versions (3.6/3.8) to validate if any applications still rely on them.
-We aim to shift all environments to Python 3.9+ which is already available on EC2 servers.
-This change will help us identify dependencies and move towards a cleaner, license-compliant setup (Anaconda now requires a paid license).
+Summary of the Code
+This Python code is for an AWS Lambda function that processes observability data from AWS S3 buckets and sends it to Splunk using Splunk’s HTTP Event Collector (HEC) API. The Lambda function supports error handling, file skipping, and retries by storing failed data back to S3 for future processing. Configuration is read from an .ini file in the Lambda's deployment package.
 
 
-Initial Action:
-
-Rename Anaconda, Python 3.6, and Python 3.8 root directories to something like _old on one development server.
-No deletion will be done initially. This allows us to easily revert if needed.
-
-Testing & Monitoring:
-All applications should be rebuilt and tested using Python 3.9 or 3.11.
-
-Collaboration Required:
-Development teams should verify their applications function properly without Anaconda.
-Please coordinate with us if you encounter any issues post renaming.
+pushDataToSplunk---	Sends a batch of events to Splunk via HEC, deletes S3 object if needed, and handles errors by saving to error bucket.
+processS3File---	Reads and processes a file from S3, applies patterns, creates Splunk event JSONs, and triggers pushDataToSplunk.
+process_s3_event ---	Extracts bucket and key from the S3 event and calls processS3File.
+purge_s3_object----	Deletes an object from S3.
+s3_exists ----	Checks whether a specific object exists in an S3 bucket.
+process_trigger-----Handles SQS or SNS event triggers, deletes messages, and processes S3 events.
+lambda_handler ----	Main Lambda entry point; reads config, decides on trigger type (S3/SNS/SQS/Scheduled), and delegates to respective function.
