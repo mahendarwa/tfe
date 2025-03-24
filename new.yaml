@@ -1,8 +1,18 @@
-Snowflake Stream/Task/Stage → push data to S3.
-Create S3 bucket + S3 trigger for Lambda.
-Enable Splunk HEC + token.
-Package Lambda code + .ini file + dependencies.
-Deploy Lambda with appropriate IAM Role + environment variables.
- 
- 
- flow ----Snowflake → S3 → Lambda → Splunk.
+2. processS3File
+Purpose:
+Reads a file from S3 line-by-line, filters lines by regex patterns, constructs Splunk event JSON, and sends batched data via pushDataToSplunk.
+
+Parameters:
+bucket, key: Source S3 bucket and object key.
+
+Key Logic:
+Matches file name against file_pattern in splunk_props.
+Skips file if skip_file_pattern matches.
+Reads lines from file, filtering:
+Empty lines → skip.
+Lines matching drop_event_pattern → skip.
+For valid lines:
+Extracts event_time from line if regex pattern is provided, else uses current timestamp.
+Constructs JSON event with time, index, source, sourcetype, host, event.
+Batches events up to max_request_size_bytes.
+On batch size exceeded or EOF: sends to Splunk via pushDataToSplunk.
