@@ -1,7 +1,10 @@
 sh """
+  set -e
+
   pid=\$(ps -u ${env.adminuser} -o pid= | xargs -I {} sh -c 'ps -o args= -p {} | grep -q "Dserver.port=${env.server_port}" && echo {}')
 
   if [ -n "\$pid" ]; then
+    echo "Found process \$pid, killing it..."
     kill -9 \$pid
     kill_status=\$?
     if [ \$kill_status -eq 0 ]; then
