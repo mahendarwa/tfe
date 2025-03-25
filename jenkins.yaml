@@ -6,13 +6,7 @@ stage('Kill service') {
                 set +e
                 echo "🔍 Searching for PID running on port ${env.server_port} for user ${env.adminuser}"
 
-                pid=\$(ps -u ${env.adminuser} -o pid= | xargs -r -I {} sh -c 'ps -o args= -p {} | grep -q "Dserver.port=${env.server_port}" && echo {}')
-                status=\$?
-
-                if [ \$status -ne 0 ]; then
-                    echo "⚠️  ps or grep failed with status \$status"
-                    exit \$status
-                fi
+                pid=\$(ps -u ${env.adminuser} -o pid= | xargs -r -I {} sh -c 'ps -o args= -p {} | grep "Dserver.port=${env.server_port}" >/dev/null 2>&1 && echo {}')
 
                 if [ -n "\$pid" ]; then
                     echo "🛑 Found PID: \$pid. Attempting to kill..."
