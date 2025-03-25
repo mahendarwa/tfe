@@ -1,18 +1,97 @@
-sh """
-  set -e
+pipeline {
+    agent none
 
-  pid=\$(ps -u ${env.adminuser} -o pid= | xargs -I {} sh -c 'ps -o args= -p {} | grep -q "Dserver.port=${env.server_port}" && echo {}')
+    parameters {
+        choice(
+            name: 'prod_envi',
+            choices: [
+                'pfnz', 'pfid', 'pfph', 'pfsg', 'pfhk', 'pfau', 'pfbp', 'omau',
+                'pfgb', 'pffi', 'pfpt', 'pfes', 'pffr', 'pfde', 'pfch',
+                'pfit', 'pfra', 'pfca', 'pfco', 'pfpr', 'pfcl', 'pfbr',
+                'pfmx', 'pfxu', 'pfus', 'omca', 'pfth'
+            ],
+            description: 'Select the production environment'
+        )
+    }
 
-  if [ -n "\$pid" ]; then
-    echo "Found process \$pid, killing it..."
-    kill -9 \$pid
-    kill_status=\$?
-    if [ \$kill_status -eq 0 ]; then
-      echo "Process with PID \$pid killed successfully."
-    else
-      echo "Failed to kill process with PID \$pid. Exit code: \$kill_status"
-    fi
-  else
-    echo "No matching process found for user ${env.adminuser}."
-  fi
-"""
+    environment {
+        ADMIN_USER = ''
+        SERVER = ''
+        SERVER_PORT = ''
+    }
+
+    stages {
+        stage('Map admin user') {
+            agent any
+            steps {
+                script {
+                    def mapping = [
+                        pfnz: ['pfnzsup3', 'daylnxcpsp023', '8152'],
+                        pfid: ['pfidsup3', 'daylnxcpsp023', '8159'],
+                        omca: ['omcasup3', 'daylnxcpsp014', '8151'],
+                        pfhk: ['pfhksup3', 'daylnxcpsp023', '8163'],
+                        pffi: ['pffisup3', 'daylnxcpsp022', '8154'],
+                        pfco: ['pfcosup3', 'daylnxcpsp014', '8155'],
+                        pfpr: ['pfprsup3', 'daylnxcpsp014', '8156'],
+                        pfcl: ['pfclsup3', 'daylnxcpsp014', '8157'],
+                        pfbr: ['pfbrsup3', 'daylnxcpsp014', '8158'],
+                        pfca: ['pfcasup3', 'daylnxcpsp014', '8150'],
+                        pfph: ['pfphsup3', 'daylnxcpsp023', '8160'],
+                        pfth: ['pfthsup3', 'daylnxcpsp023', '8161'],
+                        pfsg: ['pfsgsup3', 'daylnxcpsp023', '8162'],
+                        pfmx: ['pfmxsup3', 'daylnxcpsp014', '8164'],
+                        pfxu: ['pfxusup3', 'daylnxcpsp014', '8165'],
+                        pfus: ['pfussup3', 'daylnxcpsp014', '8166'],
+                        pfra: ['pfrasup3', 'daylnxcpsp022', '8167'],
+                        pfgb: ['pfgbsup3', 'daylnxcpsp022', '8153'],
+                        pfau: ['pfausup3', 'daylnxcpsp023', '8174'],
+                        pfpt: ['pfptsup3', 'daylnxcpsp022', '8168'],
+                        pfes: ['pfessup3', 'daylnxcpsp022', '8169'],
+                        pffr: ['pffrsup3', 'daylnxcpsp022', '8170'],
+                        pfde: ['pfdesup3', 'daylnxcpsp022', '8171'],
+                        pfch: ['pfchsup3', 'daylnxcpsp022', '8172'],
+                        pfit: ['pfitsup3', 'daylnxcpsp022', '8173'],
+                        pfbp: ['pfbpsup3', 'daylnxcpsp023', '8175'],
+                        omau: ['omausup3', 'daylnxcpsp023', '8176']
+                    ]
+
+                    def entry = mapping[params.prod_envi]
+                    if (!entry) {
+                        error("Invalid name choice: ${params.prod_envi}")
+                    }
+
+                    env.ADMIN_USER = entry[0]
+                    env.SERVER = entry[1]
+                    env.SERVER_PORT = entry[2]
+                }
+            }
+        }
+
+        stage('Kill service') {
+            agent { label 'consumer-panel-services-agent_prod_daylnxcpsp023' }
+            steps {
+                script {
+                    sh """
+                        set +e
+                        echo "Checking for PID running on port ${env.SERVER_PORT} for user ${env.ADMIN_USER}"
+                        pid=\$(ps -u ${env.ADMIN_USER} -o pid= | xargs -I {} sh -c 'ps -o args= -p {} | grep -q "Dserver.port=${env.SERVER_PORT}" && echo {}')
+                        
+                        if [ -n "\$pid" ]; then
+                            echo "Found process \$pid, attempting to kill it..."
+                            kill -9 \$pid
+                            kill_status=\$?
+                            if [ \$kill_status -eq 0 ]; then
+                                echo "✅ Process with PID \$pid killed successfully."
+                            else
+                                echo "❌ Failed to kill process with PID \$pid. Exit code: \$kill_status"
+                                exit \$kill_status
+                            fi
+                        else
+                            echo "ℹ️  No matching process found for user ${env.ADMIN_USER} on port ${env.SERVER_PORT}."
+                        fi
+                    """
+                }
+            }
+        }
+    }
+}
