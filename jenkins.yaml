@@ -1,5 +1,6 @@
 sh """
-  pid=\$(ps -u ${env.adminuser} -o pid= | xargs -I {} sh -c "ps -o args= -p {} | grep -q \\"Dserver.port=${env.server_port}\\" && echo {}")
+  pid=\$(ps -u ${env.adminuser} -o pid= | xargs -I {} sh -c 'ps -o args= -p {} | grep -q "Dserver.port=${env.server_port}" && echo {}')
+
   if [ -n "\$pid" ]; then
     kill -9 \$pid
     kill_status=\$?
