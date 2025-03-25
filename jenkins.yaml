@@ -2,67 +2,133 @@ pipeline {
     agent none
 
     parameters {
-        choice(
-            name: 'prod_envi',
-            choices: [
-                'pfnz', 'pfid', 'pfph', 'pfsg', 'pfhk', 'pfau', 'pfbp', 'omau',
-                'pfgb', 'pffi', 'pfpt', 'pfes', 'pffr', 'pfde', 'pfch',
-                'pfit', 'pfra', 'pfca', 'pfco', 'pfpr', 'pfcl', 'pfbr',
-                'pfmx', 'pfxu', 'pfus', 'omca', 'pfth'
-            ],
-            description: 'Select the production environment'
-        )
-    }
-
-    environment {
-        ADMIN_USER = ''
-        SERVER = ''
-        SERVER_PORT = ''
+        choice(name: 'prod_envi', choices: [
+            'pfnz','pfid','pfph','pfsg','pfhk','pfau','pfbp','omau','pfgb','pffi','pfpt','pfes','pffr','pfde','pfch','pfit',
+            'pfra','pfca','pfco','pfpr','pfcl','pfbr','pfmx','pfxu','pfus','omca','pfth'
+        ], description: 'Select the production environment')
     }
 
     stages {
         stage('Map admin user') {
-            agent any
             steps {
                 script {
-                    def mapping = [
-                        pfnz: ['pfnzsup3', 'daylnxcpsp023', '8152'],
-                        pfid: ['pfidsup3', 'daylnxcpsp023', '8159'],
-                        omca: ['omcasup3', 'daylnxcpsp014', '8151'],
-                        pfhk: ['pfhksup3', 'daylnxcpsp023', '8163'],
-                        pffi: ['pffisup3', 'daylnxcpsp022', '8154'],
-                        pfco: ['pfcosup3', 'daylnxcpsp014', '8155'],
-                        pfpr: ['pfprsup3', 'daylnxcpsp014', '8156'],
-                        pfcl: ['pfclsup3', 'daylnxcpsp014', '8157'],
-                        pfbr: ['pfbrsup3', 'daylnxcpsp014', '8158'],
-                        pfca: ['pfcasup3', 'daylnxcpsp014', '8150'],
-                        pfph: ['pfphsup3', 'daylnxcpsp023', '8160'],
-                        pfth: ['pfthsup3', 'daylnxcpsp023', '8161'],
-                        pfsg: ['pfsgsup3', 'daylnxcpsp023', '8162'],
-                        pfmx: ['pfmxsup3', 'daylnxcpsp014', '8164'],
-                        pfxu: ['pfxusup3', 'daylnxcpsp014', '8165'],
-                        pfus: ['pfussup3', 'daylnxcpsp014', '8166'],
-                        pfra: ['pfrasup3', 'daylnxcpsp022', '8167'],
-                        pfgb: ['pfgbsup3', 'daylnxcpsp022', '8153'],
-                        pfau: ['pfausup3', 'daylnxcpsp023', '8174'],
-                        pfpt: ['pfptsup3', 'daylnxcpsp022', '8168'],
-                        pfes: ['pfessup3', 'daylnxcpsp022', '8169'],
-                        pffr: ['pffrsup3', 'daylnxcpsp022', '8170'],
-                        pfde: ['pfdesup3', 'daylnxcpsp022', '8171'],
-                        pfch: ['pfchsup3', 'daylnxcpsp022', '8172'],
-                        pfit: ['pfitsup3', 'daylnxcpsp022', '8173'],
-                        pfbp: ['pfbpsup3', 'daylnxcpsp023', '8175'],
-                        omau: ['omausup3', 'daylnxcpsp023', '8176']
-                    ]
+                    def nameValue = params.prod_envi
 
-                    def entry = mapping[params.prod_envi]
-                    if (!entry) {
-                        error("Invalid name choice: ${params.prod_envi}")
+                    if (nameValue == 'pfnz') {
+                        env.adminuser = "pfnzsup3"
+                        env.server = "daylnxcpsp023"
+                        env.server_port = "8152"
+                    } else if (nameValue == 'pfid') {
+                        env.adminuser = "pfidsup3"
+                        env.server = "daylnxcpsp023"
+                        env.server_port = "8159"
+                    } else if (nameValue == 'omca') {
+                        env.adminuser = 'omcasup3'
+                        env.server = "daylnxcpsp014"
+                        env.server_port = "8151"
+                    } else if (nameValue == 'pfhk') {
+                        env.adminuser = 'pfhksup3'
+                        env.server = "daylnxcpsp023"
+                        env.server_port = "8163"
+                    } else if (nameValue == 'pffi') {
+                        env.adminuser = 'pffisup3'
+                        env.server = "daylnxcpsp022"
+                        env.server_port = "8154"
+                    } else if (nameValue == 'pfco') {
+                        env.adminuser = 'pfcosup3'
+                        env.server = "daylnxcpsp014"
+                        env.server_port = "8155"
+                    } else if (nameValue == 'pfpr') {
+                        env.adminuser = 'pfprsup3'
+                        env.server = "daylnxcpsp014"
+                        env.server_port = "8156"
+                    } else if (nameValue == 'pfcl') {
+                        env.adminuser = 'pfclsup3'
+                        env.server = "daylnxcpsp014"
+                        env.server_port = "8157"
+                    } else if (nameValue == 'pfbr') {
+                        env.adminuser = 'pfbrsup3'
+                        env.server = "daylnxcpsp014"
+                        env.server_port = "8158"
+                    } else if (nameValue == 'pfca') {
+                        env.adminuser = 'pfcasup3'
+                        env.server = "daylnxcpsp014"
+                        env.server_port = "8150"
+                    } else if (nameValue == 'pfph') {
+                        env.adminuser = 'pfphsup3'
+                        env.server = "daylnxcpsp023"
+                        env.server_port = "8160"
+                    } else if (nameValue == 'pfth') {
+                        env.adminuser = 'pfthsup3'
+                        env.server = "daylnxcpsp023"
+                        env.server_port = "8161"
+                    } else if (nameValue == 'pfsg') {
+                        env.adminuser = 'pfsgsup3'
+                        env.server = "daylnxcpsp023"
+                        env.server_port = "8162"
+                    } else if (nameValue == 'pfhk') {
+                        env.adminuser = 'pfnzsup3'
+                        env.server = "daylnxcpsp023"
+                        env.server_port = "8152"
+                    } else if (nameValue == 'pfmx') {
+                        env.adminuser = 'pfmxsup3'
+                        env.server = "daylnxcpsp014"
+                        env.server_port = "8164"
+                    } else if (nameValue == 'pfxu') {
+                        env.adminuser = 'pfxusup3'
+                        env.server = "daylnxcpsp014"
+                        env.server_port = "8165"
+                    } else if (nameValue == 'pfus') {
+                        env.adminuser = 'pfussup3'
+                        env.server = "daylnxcpsp014"
+                        env.server_port = "8166"
+                    } else if (nameValue == 'pfra') {
+                        env.adminuser = 'pfrasup3'
+                        env.server = "daylnxcpsp022"
+                        env.server_port = "8167"
+                    } else if (nameValue == 'pfgb') {
+                        env.adminuser = 'pfgbsup3'
+                        env.server = "daylnxcpsp022"
+                        env.server_port = "8153"
+                    } else if (nameValue == 'pfau') {
+                        env.adminuser = 'pfausup3'
+                        env.server = "daylnxcpsp023"
+                        env.server_port = "8174"
+                    } else if (nameValue == 'pfpt') {
+                        env.adminuser = 'pfptsup3'
+                        env.server = "daylnxcpsp022"
+                        env.server_port = "8168"
+                    } else if (nameValue == 'pfes') {
+                        env.adminuser = 'pfessup3'
+                        env.server = "daylnxcpsp022"
+                        env.server_port = "8169"
+                    } else if (nameValue == 'pffr') {
+                        env.adminuser = 'pffrsup3'
+                        env.server = "daylnxcpsp022"
+                        env.server_port = "8170"
+                    } else if (nameValue == 'pfde') {
+                        env.adminuser = 'pfdesup3'
+                        env.server = "daylnxcpsp022"
+                        env.server_port = "8171"
+                    } else if (nameValue == 'pfch') {
+                        env.adminuser = 'pfchsup3'
+                        env.server = "daylnxcpsp022"
+                        env.server_port = "8172"
+                    } else if (nameValue == 'pfit') {
+                        env.adminuser = 'pfitsup3'
+                        env.server = "daylnxcpsp022"
+                        env.server_port = "8173"
+                    } else if (nameValue == 'pfbp') {
+                        env.adminuser = 'pfbpsup3'
+                        env.server = "daylnxcpsp023"
+                        env.server_port = "8175"
+                    } else if (nameValue == 'omau') {
+                        env.adminuser = 'omausup3'
+                        env.server = "daylnxcpsp023"
+                        env.server_port = "8176"
+                    } else {
+                        error("Invalid name choice: ${nameValue}")
                     }
-
-                    env.ADMIN_USER = entry[0]
-                    env.SERVER = entry[1]
-                    env.SERVER_PORT = entry[2]
                 }
             }
         }
@@ -72,22 +138,20 @@ pipeline {
             steps {
                 script {
                     sh """
-                        set +e
-                        echo "Checking for PID running on port ${env.SERVER_PORT} for user ${env.ADMIN_USER}"
-                        pid=\$(ps -u ${env.ADMIN_USER} -o pid= | xargs -I {} sh -c 'ps -o args= -p {} | grep -q "Dserver.port=${env.SERVER_PORT}" && echo {}')
+                        echo "🔍 Searching for PID running on port ${env.server_port} for user ${env.adminuser}"
+                        pid=\$(ps -u ${env.adminuser} -o pid= | xargs -I {} sh -c 'ps -o args= -p {} | grep -q "Dserver.port=${env.server_port}" && echo {}')
                         
                         if [ -n "\$pid" ]; then
-                            echo "Found process \$pid, attempting to kill it..."
+                            echo "🛑 Found process \$pid, killing..."
                             kill -9 \$pid
-                            kill_status=\$?
-                            if [ \$kill_status -eq 0 ]; then
-                                echo "✅ Process with PID \$pid killed successfully."
+                            if [ \$? -eq 0 ]; then
+                                echo "✅ Process \$pid killed successfully."
                             else
-                                echo "❌ Failed to kill process with PID \$pid. Exit code: \$kill_status"
-                                exit \$kill_status
+                                echo "❌ Failed to kill process \$pid"
+                                exit 1
                             fi
                         else
-                            echo "ℹ️  No matching process found for user ${env.ADMIN_USER} on port ${env.SERVER_PORT}."
+                            echo "ℹ️  No matching process found for user ${env.adminuser} on port ${env.server_port}."
                         fi
                     """
                 }
