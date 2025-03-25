@@ -1,18 +1,60 @@
-2. processS3File
-Purpose:
-Reads a file from S3 line-by-line, filters lines by regex patterns, constructs Splunk event JSON, and sends batched data via pushDataToSplunk.
+Lambda Functtion:---
+reads configuration from an .ini file (externalized config).
+Extracts values like:---
+HEC URL, token (Splunk),
+Index, Source Type, Source, Event Time.
 
-Parameters:
-bucket, key: Source S3 bucket and object key.
 
-Key Logic:
-Matches file name against file_pattern in splunk_props.
-Skips file if skip_file_pattern matches.
-Reads lines from file, filtering:
-Empty lines → skip.
-Lines matching drop_event_pattern → skip.
-For valid lines:
-Extracts event_time from line if regex pattern is provided, else uses current timestamp.
-Constructs JSON event with time, index, source, sourcetype, host, event.
-Batches events up to max_request_size_bytes.
-On batch size exceeded or EOF: sends to Splunk via pushDataToSplunk.
+AWS Components Required: 
+
+S3 Bucket – To store Snowflake task output.
+Lambda Function – Triggered by S3 event.
+S3 Trigger – Connects S3 to Lambda.
+IAM Roles:
+  For Snowflake to write to S3.
+  For Lambda to access S3.
+KMS Keys – For encryption, permissions added to IAM roles.
+
+===
+Snowflake Integration Steps:
+1. Snowflake Storage Integration:
+   - Raise an RITM request to Snowflake DBA.
+   - Provide S3 bucket name (format: `s3://bucket-name`).
+   - outcome after the request completed----: You get External ID** & IAM User ARN.
+
+2. Cloud Delivery Setup:
+   - Parallel request to cloud delivery team to create:
+     - S3 bucket, Lambda, triggers, IAM roles, KMS.
+   - Feed External ID** and **IAM User ARN** (from Snowflake) to them for proper access setup.
+
+3. Snowflake Stage Creation (Step 3):
+   - Another RITM to DBAs to create the **external stage**.
+   - Provide:
+     - S3 bucket location.
+     - KMS key** for encryption access.
+======
+Pipeline Coordination--
+- Provide **cloud infra and lambda deployment pipelines** to the Cloud Delivery Team.
+- Deployment steps:
+  1. Cloud team runs cloud infra pipeline.
+  2. You run Lambda pipeline.
+  3. Cloud team completes final infra setup.
+=========
+Splunk Configuration**
+- Reach out to **Splunk Admin/Engineering Team** to get:
+  - HEC Token**
+  - Index
+  - Source Type**
+
+- These values are added to the `.ini` file and used by Lambda when pushing data to Splunk.
+
+=======
+Splunk Output Format-----
+- Data arrives in **JSON or original format (CSV, XML, etc.).
+- Splunk fields populated:
+  - host = AWS account ID + region.
+  - source = file name from S3.
+  - source typ = defined in `.ini` or given by Splunk team.
+  - index = destination index in Splunk.
+  - event time = extracted via regex or defaults to current time.
+
