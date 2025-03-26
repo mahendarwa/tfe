@@ -22,7 +22,11 @@ paths := ["containers", "initContainers"]
 
 result = "fail" {
   some i, j, k
-  container := input.object.spec[paths[i]][j]
-  container.securityContext.capabilities.add[_] == cap
+  container := input.spec[paths[i]][j]
+  caps := container.securityContext.capabilities.add
+  cap := caps[k]
   not allowed_caps[cap]
 }
+
+currentConfiguration := "securityContext.capabilities.add includes values beyond the allowed values"
+expectedConfiguration := "securityContext.capabilities.add should be empty (`[]`) or contain only allowed values"
