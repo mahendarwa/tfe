@@ -1,2 +1,1 @@
-odbcinst -q -d -n "ODBC Driver 17 for SQL Server"
-
+{ODBC Driver 17 for SQL Server};'
