@@ -1,1 +1,5 @@
-{ODBC Driver 17 for SQL Server};'
+export ODBCSYSINI=/etc
+export ODBCINI=/etc/odbc.ini
+export LD_LIBRARY_PATH=/opt/microsoft/msodbcsql17/lib64:$LD_LIBRARY_PATH
+import os
+os.environ['LD_LIBRARY_PATH'] = '/opt/microsoft/msodbcsql17/lib64'
