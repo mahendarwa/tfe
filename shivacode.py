@@ -20,11 +20,9 @@ allowed_caps := {
 
 paths := ["containers", "initContainers"]
 
-# Fail if any added capability is not in the allowed list
 result = "fail" {
   some i, j, k
   container := input.object.spec[paths[i]][j]
-  caps := container.securityContext.capabilities.add
-  cap := caps[k]
+  container.securityContext.capabilities.add[_] == cap
   not allowed_caps[cap]
 }
