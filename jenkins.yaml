@@ -1,27 +1,2 @@
-stage('Kill service') {
-    agent { label 'consumer-panel-services-agent_prod_daylnxcpsp023' }
-    steps {
-        script {
-            sh """
-                set +e
-                echo "🔍 Searching for PID running on port ${env.server_port} for user ${env.adminuser}"
+odbcinst -q -d -n "ODBC Driver 17 for SQL Server"
 
-                pid=\$(ps -u ${env.adminuser} -o pid= | xargs -r -I {} sh -c 'ps -o args= -p {} | grep "Dserver.port=${env.server_port}" >/dev/null 2>&1 && echo {}')
-
-                if [ -n "\$pid" ]; then
-                    echo "🛑 Found PID: \$pid. Attempting to kill..."
-                    kill -9 \$pid
-                    kill_status=\$?
-                    if [ \$kill_status -eq 0 ]; then
-                        echo "✅ Process \$pid killed successfully."
-                    else
-                        echo "❌ Failed to kill PID \$pid. Exit code: \$kill_status"
-                        exit \$kill_status
-                    fi
-                else
-                    echo "ℹ️  No matching process found for user ${env.adminuser} on port ${env.server_port}."
-                fi
-            """
-        }
-    }
-}
