@@ -1,47 +1,30 @@
-import pyodbc
+package wiz
 
-# Connection string
-connection_string = (
-    r'DRIVER={ODBC Driver 18 for SQL Server};'
-    r'SERVER=HSTNCMSRDIQA02.healthspring.inside;'
-    r'Trusted_connection=yes;'
-    r'TrustServerCertificate=yes;'
-    r'DATABASE=Staging;'
-    r'DOMAIN=INTERNAL;'
-    r'UID=C8X6K9;'
-    r'PWD=Dev2s@mpath;'
-)
+default result = "pass"
 
-try:
-    connection = pyodbc.connect(connection_string)
-    cursor = connection.cursor()
-    print("✅ Connected to SQL Server")
+allowed_caps := {
+  "AUDIT_WRITE",
+  "CHOWN",
+  "DAC_OVERRIDE",
+  "FOWNER",
+  "FSETID",
+  "KILL",
+  "MKNOD",
+  "NET_BIND_SERVICE",
+  "SETFCAP",
+  "SETGID",
+  "SETPCAP",
+  "SETUID",
+  "SYS_CHROOT"
+}
 
-    # 🔍 Check if dbo.Export_CIOX exists
-    check_table_query = """
-        SELECT 1 
-        FROM INFORMATION_SCHEMA.TABLES 
-        WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = 'Export_CIOX';
-    """
-    cursor.execute(check_table_query)
-    exists = cursor.fetchone()
+paths := ["containers", "initContainers"]
 
-    if exists:
-        print("✅ Table dbo.Export_CIOX exists in Staging database.")
-    else:
-        print("❌ Table dbo.Export_CIOX does NOT exist in Staging database.")
-
-except pyodbc.Error as ex:
-    print(ex)
-    sqlstate = ex.args[0]
-    if sqlstate == '28000':
-        print("❌ Invalid credentials")
-    else:
-        print("❌ Connection error:", ex)
-
-finally:
-    if 'cursor' in locals():
-        cursor.close()
-    if 'connection' in locals():
-        connection.close()
-        print("✅ Connection closed")
+# Fail if any added capability is not in the allowed list
+result = "fail" {
+  some i, j, k
+  container := input.object.spec[paths[i]][j]
+  caps := container.securityContext.capabilities.add
+  cap := caps[k]
+  not allowed_caps[cap]
+}
