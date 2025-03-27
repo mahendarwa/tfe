@@ -1,14 +1,14 @@
-# Define the network share path
-$sharePath = "\\HSTNTDMO1.Healthspring.Inside\TDMnonprod"
+$sharePath = "\\HSTNTDM01.Healthspring.Inside"
 
-# Check if the path is accessible
-if (Test-Path $sharePath) {
-    Write-Host "✅ Access to the share is successful: $sharePath"
-    
-    # List files and folders (optional)
-    Get-ChildItem $sharePath | ForEach-Object {
-        Write-Host " - $_"
+try {
+    if (Test-Path $sharePath) {
+        $folders = Get-ChildItem -Path $sharePath -Directory
+        Write-Output "✅ Access to $sharePath successful. Folders:"
+        $folders.Name | ForEach-Object { Write-Output " - $_" }
+    } else {
+        Write-Output "❌ Path not accessible or does not exist: $sharePath"
     }
-} else {
-    Write-Host "❌ Cannot access the share: $sharePath"
+}
+catch {
+    Write-Output "❌ Error accessing $sharePath: $_"
 }
