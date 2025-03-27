@@ -10,5 +10,5 @@ try {
     }
 }
 catch {
-    Write-Output "❌ Error accessing $sharePath: $_"
+    Write-Output "❌ Error accessing $sharePath: $($_.Exception.Message)"
 }
