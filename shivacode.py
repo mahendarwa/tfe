@@ -1,30 +1,26 @@
-stage('Kill service') {
+stage('Start service') {
   agent { label 'consumer-panel-services-agent_prod_daylnxcpsp014' }
 
   steps {
     script {
-      def sshCommand = """
-        ssh -o StrictHostKeyChecking=no ${env.adminuser}@${env.server}.enterprisenet.org '
-          echo " Checking for PID on port ${env.server_port} for user ${env.adminuser}..."
-
-          pid=\$(ps -u ${env.adminuser} -o pid= | xargs -I {} sh -c "ps -o args= -p {} | grep -q \\"Dserver.port=${env.server_port}\\" && echo {}")
-          
-          if [ -n "\$pid" ]; then
-            echo "Found PID: \$pid. Attempting to kill..."
-            kill -9 \$pid
-            kill_status=\$?
-            if [ \$kill_status -eq 0 ]; then
-              echo "Process with PID \$pid killed successfully."
-            else
-              echo "Failed to kill process with PID \$pid. Exit code: \$kill_status"
-              exit 1
-            fi
-          else
-            echo "  No matching process found for user ${env.adminuser} on port ${env.server_port}."
-          fi
-        '
+      def remoteScriptContent = """
+        #!/bin/bash
+        nohup ~/startPATservice_${params.prod_envi}.sh > service.log 2>&1 &
       """
-      sh returnStatus: true, script: sshCommand
+
+      // Save script to workspace
+      writeFile file: 'remote_start_service.sh', text: remoteScriptContent
+
+      // Remove previous files and copy new scripts + jar using working ssh key
+      sh "ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode pfmgrap@${env.server}.enterprisenet.org 'rm -rf ~/caseservice-PAT.jar'"
+      sh "ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode pfmgrap@${env.server}.enterprisenet.org 'cp /${params.prod_envi}/bin/caseservice-PAT.jar ~/'"
+
+      sh "ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode pfmgrap@${env.server}.enterprisenet.org 'rm -rf ~/startPATservice_${params.prod_envi}.sh'"
+      sh "ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode pfmgrap@${env.server}.enterprisenet.org 'cp /${params.prod_envi}/bin/startPATservice_${params.prod_envi}.sh ~/'"
+
+      // Copy and run script remotely
+      sh "scp -o StrictHostKeyChecking=no -i ~/.ssh/vscode remote_start_service.sh pfmgrap@${env.server}.enterprisenet.org:~/"
+      sh "ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode pfmgrap@${env.server}.enterprisenet.org 'chmod +x ~/remote_start_service.sh && bash ~/remote_start_service.sh'"
     }
   }
 }
