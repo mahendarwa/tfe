@@ -1,34 +1,30 @@
-stage('Kill PAT service') {
+stage('Kill PAT service on port') {
   agent { label 'consumer-panel-services-agent_prod_daylnxcpsp014' }
 
   steps {
     script {
-      def sshUser = env.adminuser
-      def sshHost = "${env.server}.enterprisenet.org"
-      def sshPort = env.server_port
+      def sshCommand = '''
+        ssh pfnzsup3@daylnxcpsp023.enterprisenet.org << 'ENDSSH'
+        echo "🔍 Checking for PID using port 8152 for user pfnzsup3..."
+        pid_list=$(ps -u pfnzsup3 -o pid= | xargs -I {} sh -c 'ps -o args= -p {} | grep "Dserver.port=8152" >/dev/null && echo {}')
+        if [ -n "$pid_list" ]; then
+          echo "✅ Found PID(s): $pid_list. Attempting to kill..."
+          for pid in $pid_list; do
+            kill -9 "$pid"
+            status=$?
+            if [ $status -eq 0 ]; then
+              echo "🗡️  Killed PID $pid successfully."
+            else
+              echo "❌ Failed to kill PID $pid (exit code $status)"
+              exit 1
+            fi
+          done
+        else
+          echo "⚠️  No PID found using port 8152 under user pfnzsup3."
+        fi
+        ENDSSH
+      '''
 
-      def sshCommand = """
-        ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -i ~/.ssh/vscode ${sshUser}@${sshHost} '
-          echo "🔍 Checking for PAT process on port ${sshPort} for user ${sshUser}"
-          ps -ef | grep "[D]server.port=${sshPort}" | grep ${sshUser}
-          pid=\$(ps -ef | grep "[D]server.port=${sshPort}" | grep ${sshUser} | awk "{print \\\$2}")
-          echo "Found PID(s): \$pid"
-
-          if [ -n "\$pid" ]; then
-              echo "🔪 Killing PID \$pid..."
-              kill -9 \$pid
-              kill_status=\$?
-              if [ \$kill_status -eq 0 ]; then
-                  echo "✅ Killed PID \$pid"
-              else
-                  echo "❌ Failed to kill PID \$pid (code \$kill_status)"
-                  exit 1
-              fi
-          else
-              echo "⚠️ No PID found to kill for port ${sshPort} and user ${sshUser}"
-          fi
-        '
-      """
       sh returnStatus: true, script: sshCommand
     }
   }
