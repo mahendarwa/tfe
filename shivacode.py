@@ -1,36 +1,35 @@
-stage('Kill service') {
-    agent { label 'consumer-panel-services-agent_prod_daylnxcpsp014' }
+stage('Kill PAT service') {
+  agent { label 'consumer-panel-services-agent_prod_daylnxcpsp014' }
 
-    steps {
-        script {
-            def sshCommand = '''
-                ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -i ~/.ssh/vscode ${env.adminuser}@${env.server}.enterprisenet.org '
-                    echo "✅ Connected to $(hostname) as $(whoami)"
-                    echo "🔍 Searching for PID with port ${env.server_port} owned by user ${env.adminuser}"
+  steps {
+    script {
+      def sshUser = env.adminuser
+      def sshHost = "${env.server}.enterprisenet.org"
+      def sshPort = env.server_port
 
-                    ps_output=$(ps -ef | grep "[D]server.port=${env.server_port}" | grep ${env.adminuser})
-                    echo "🔎 Matched ps output:"
-                    echo "$ps_output"
+      def sshCommand = """
+        ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -i ~/.ssh/vscode ${sshUser}@${sshHost} '
+          echo "🔍 Checking for PAT process on port ${sshPort} for user ${sshUser}"
+          ps -ef | grep "[D]server.port=${sshPort}" | grep ${sshUser}
+          pid=\$(ps -ef | grep "[D]server.port=${sshPort}" | grep ${sshUser} | awk "{print \\\$2}")
+          echo "Found PID(s): \$pid"
 
-                    pid=$(echo "$ps_output" | awk "{print \\$2}")
-
-                    if [ -n "$pid" ]; then
-                        echo "🔺 Found PID(s): $pid"
-                        echo "⚠️ Attempting to kill..."
-                        kill -9 $pid
-                        kill_status=$?
-                        if [ $kill_status -eq 0 ]; then
-                            echo "✅ Process $pid killed successfully."
-                        else
-                            echo "❌ Failed to kill PID $pid. Exit code: $kill_status"
-                            exit 1
-                        fi
-                    else
-                        echo "⚠️ No matching process found for ${env.adminuser} on port ${env.server_port}."
-                    fi
-                '
-            '''
-            sh returnStatus: true, script: sshCommand
-        }
+          if [ -n "\$pid" ]; then
+              echo "🔪 Killing PID \$pid..."
+              kill -9 \$pid
+              kill_status=\$?
+              if [ \$kill_status -eq 0 ]; then
+                  echo "✅ Killed PID \$pid"
+              else
+                  echo "❌ Failed to kill PID \$pid (code \$kill_status)"
+                  exit 1
+              fi
+          else
+              echo "⚠️ No PID found to kill for port ${sshPort} and user ${sshUser}"
+          fi
+        '
+      """
+      sh returnStatus: true, script: sshCommand
     }
+  }
 }
