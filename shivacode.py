@@ -1,1 +1,1 @@
-pytest --collect-only -q | grep "::" | cut -d"::" -f1 | sort | uniq | wc -l
+pytest --collect-only -q | grep "::" | awk -F"::" '{print $1}' | sort | uniq | wc -l
