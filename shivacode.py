@@ -2,32 +2,19 @@ package wiz
 
 default result = "pass"
 
-# Fail if pod-level is false and container-level is undefined
+# Fail if any container does not set runAsNonRoot and pod-level is also not true
 result = "fail" {
-    input.spec.securityContext.runAsNonRoot == false
-    not input.spec.containers[_].securityContext.runAsNonRoot
-}
-
-# Fail if pod-level is false and container-level is false
-result = "fail" {
-    input.spec.securityContext.runAsNonRoot == false
-    input.spec.containers[_].securityContext.runAsNonRoot == false
-}
-
-# Fail if pod-level is true and container-level is false
-result = "fail" {
-    input.spec.securityContext.runAsNonRoot == true
-    input.spec.containers[_].securityContext.runAsNonRoot == false
-}
-
-# Fail if pod-level is not defined and container-level is false
-result = "fail" {
+    count(input.spec.containers) > 0
+    some i
+    container := input.spec.containers[i]
+    not container.securityContext.runAsNonRoot
     not input.spec.securityContext.runAsNonRoot
-    input.spec.containers[_].securityContext.runAsNonRoot == false
 }
 
-# Fail if pod-level is not defined and container-level is also not defined
+# Fail if any container explicitly sets runAsNonRoot to false
 result = "fail" {
-    not input.spec.securityContext.runAsNonRoot
-    not input.spec.containers[_].securityContext.runAsNonRoot
+    count(input.spec.containers) > 0
+    some i
+    container := input.spec.containers[i]
+    container.securityContext.runAsNonRoot == false
 }
