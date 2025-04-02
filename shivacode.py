@@ -1,1 +1,1 @@
-nohup ./startPATservice_${params.prod_envi}.sh > /dev/null 2>&1 &
+pytest --collect-only -q | grep "::" | cut -d"::" -f1 | sort | uniq | wc -l
