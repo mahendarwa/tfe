@@ -122,10 +122,6 @@ pipeline {
                     } else {
                         error("Invalid name choice: ${nameValue}")
                     }
-
-                    env.adminuser = adminuser
-                    env.server = server
-                    env.server_port = server_port
                 }
             }
         }
@@ -135,24 +131,24 @@ pipeline {
             steps {
                 script {
                     def sshCommand = """
-                        ssh ${env.adminuser}@${env.server}.enterprisenet.org << ENDSSH
+                        ssh ${env.adminuser}@${env.server}.enterprisenet.org << 'ENDSSH'
 
                         echo "Checking for process listening on port ${env.server_port}..."
 
                         pid=\$(lsof -i :${env.server_port} -sTCP:LISTEN -t)
 
                         if [ -n "\$pid" ]; then
-                          echo "Found PID: \$pid"
-                          kill -9 \$pid
-                          status=\$?
-                          if [ \$status -eq 0 ]; then
-                            echo "Killed PID \$pid successfully"
-                          else
-                            echo "Failed to kill PID \$pid (exit code \$status)"
-                            exit 1
-                          fi
+                            echo "Found PID: \$pid"
+                            kill -9 \$pid
+                            status=\$?
+                            if [ \$status -eq 0 ]; then
+                                echo "Killed PID \$pid successfully"
+                            else
+                                echo "Failed to kill PID \$pid (exit code \$status)"
+                                exit 1
+                            fi
                         else
-                          echo "No process found listening on port ${env.server_port}"
+                            echo "No process found listening on port ${env.server_port}"
                         fi
 
                         pwd
@@ -160,7 +156,7 @@ pipeline {
                         cd /${params.prod_envi}/bin || echo "Directory not found"
                         nohup ./startPATservice_${params.prod_envi}.sh > /tmp/service.log 2>&1 &
 
-                        ENDSSH
+ENDSSH
                     """
                     sh returnStatus: true, script: sshCommand
                 }
