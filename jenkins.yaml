@@ -1,5 +1,129 @@
-export ODBCSYSINI=/etc
-export ODBCINI=/etc/odbc.ini
-export LD_LIBRARY_PATH=/opt/microsoft/msodbcsql17/lib64:$LD_LIBRARY_PATH
-import os
-os.environ['LD_LIBRARY_PATH'] = '/opt/microsoft/msodbcsql17/lib64'
+pipeline {
+    agent none
+
+    parameters {
+        booleanParam(name: 'pfnz', defaultValue: false, description: '')
+        booleanParam(name: 'pfid', defaultValue: false, description: '')
+        booleanParam(name: 'pfth', defaultValue: false, description: '')
+        booleanParam(name: 'pfph', defaultValue: false, description: '')
+        booleanParam(name: 'pfsg', defaultValue: false, description: '')
+        booleanParam(name: 'pfhk', defaultValue: false, description: '')
+        booleanParam(name: 'pfau', defaultValue: false, description: '')
+        booleanParam(name: 'pfbp', defaultValue: false, description: '')
+        booleanParam(name: 'omau', defaultValue: false, description: '')
+        booleanParam(name: 'pfgb', defaultValue: false, description: '')
+        booleanParam(name: 'pffi', defaultValue: false, description: '')
+        booleanParam(name: 'pfpt', defaultValue: false, description: '')
+        booleanParam(name: 'pfes', defaultValue: false, description: '')
+        booleanParam(name: 'pfra', defaultValue: false, description: '')
+        booleanParam(name: 'pffr', defaultValue: false, description: '')
+        booleanParam(name: 'pfde', defaultValue: false, description: '')
+        booleanParam(name: 'pfch', defaultValue: false, description: '')
+        booleanParam(name: 'pfit', defaultValue: false, description: '')
+        booleanParam(name: 'omca', defaultValue: false, description: '')
+        booleanParam(name: 'pfca', defaultValue: false, description: '')
+        booleanParam(name: 'pfco', defaultValue: false, description: '')
+        booleanParam(name: 'pfpr', defaultValue: false, description: '')
+        booleanParam(name: 'pfcl', defaultValue: false, description: '')
+        booleanParam(name: 'pfbr', defaultValue: false, description: '')
+        booleanParam(name: 'pfmx', defaultValue: false, description: '')
+        booleanParam(name: 'pfxu', defaultValue: false, description: '')
+        booleanParam(name: 'pfus', defaultValue: false, description: '')
+    }
+
+    stages {
+        stage('Loop over environments') {
+            matrix {
+                axes {
+                    axis {
+                        name 'envName'
+                        values 'pfnz','pfid','pfth','pfph','pfsg','pfhk','pfau','pfbp','omau','pfgb','pffi','pfpt','pfes','pfra','pffr','pfde','pfch','pfit','omca','pfca','pfco','pfpr','pfcl','pfbr','pfmx','pfxu','pfus'
+                    }
+                }
+                when {
+                    expression {
+                        return params[env.envName]
+                    }
+                }
+                stages {
+                    stage('Map admin user') {
+                        steps {
+                            script {
+                                def mapping = [
+                                    pfnz: ['adminuser': 'pfnzsup3', 'server': 'daylnxcpsp023', 'port': '8152'],
+                                    pfid: ['adminuser': 'pfidsup3', 'server': 'daylnxcpsp023', 'port': '8159'],
+                                    omca: ['adminuser': 'omcasup3', 'server': 'daylnxcpsp014', 'port': '8151'],
+                                    pfhk: ['adminuser': 'pfhksup3', 'server': 'daylnxcpsp023', 'port': '8163'],
+                                    pffi: ['adminuser': 'pffisup3', 'server': 'daylnxcpsp022', 'port': '8154'],
+                                    pfco: ['adminuser': 'pfcosup3', 'server': 'daylnxcpsp014', 'port': '8155'],
+                                    pfpr: ['adminuser': 'pfprsup3', 'server': 'daylnxcpsp014', 'port': '8156'],
+                                    pfcl: ['adminuser': 'pfclsup3', 'server': 'daylnxcpsp014', 'port': '8157'],
+                                    pfbr: ['adminuser': 'pfbrsup3', 'server': 'daylnxcpsp014', 'port': '8158'],
+                                    pfca: ['adminuser': 'pfcasup3', 'server': 'daylnxcpsp014', 'port': '8150'],
+                                    pfph: ['adminuser': 'pfphsup3', 'server': 'daylnxcpsp023', 'port': '8160'],
+                                    pfth: ['adminuser': 'pfthsup3', 'server': 'daylnxcpsp023', 'port': '8161'],
+                                    pfsg: ['adminuser': 'pfsgsup3', 'server': 'daylnxcpsp023', 'port': '8162'],
+                                    pfmx: ['adminuser': 'pfmxsup3', 'server': 'daylnxcpsp014', 'port': '8164'],
+                                    pfxu: ['adminuser': 'pfxusup3', 'server': 'daylnxcpsp014', 'port': '8165'],
+                                    pfus: ['adminuser': 'pfussup3', 'server': 'daylnxcpsp014', 'port': '8166'],
+                                    pfra: ['adminuser': 'pfrasup3', 'server': 'daylnxcpsp022', 'port': '8167'],
+                                    pfgb: ['adminuser': 'pfgbsup3', 'server': 'daylnxcpsp022', 'port': '8153'],
+                                    pfau: ['adminuser': 'pfausup3', 'server': 'daylnxcpsp023', 'port': '8174'],
+                                    pfpt: ['adminuser': 'pfptsup3', 'server': 'daylnxcpsp022', 'port': '8168'],
+                                    pfes: ['adminuser': 'pfessup3', 'server': 'daylnxcpsp022', 'port': '8169'],
+                                    pffr: ['adminuser': 'pffrsup3', 'server': 'daylnxcpsp022', 'port': '8170'],
+                                    pfde: ['adminuser': 'pfdesup3', 'server': 'daylnxcpsp022', 'port': '8171'],
+                                    pfch: ['adminuser': 'pfchsup3', 'server': 'daylnxcpsp022', 'port': '8172'],
+                                    pfit: ['adminuser': 'pfitsup3', 'server': 'daylnxcpsp022', 'port': '8173'],
+                                    pfbp: ['adminuser': 'pfbpsup3', 'server': 'daylnxcpsp023', 'port': '8175'],
+                                    omau: ['adminuser': 'omausup3', 'server': 'daylnxcpsp023', 'port': '8176']
+                                ]
+                                def selected = mapping[env.envName]
+                                env.adminuser = selected.adminuser
+                                env.server = selected.server
+                                env.server_port = selected.port
+                            }
+                        }
+                    }
+
+                    stage('Kill and Start PAT Service') {
+                        agent { label 'consumer-panel-services-agent_prod_daylnxcpsp014' }
+                        steps {
+                            script {
+                                def sshCommand = """
+                                    ssh ${env.adminuser}@${env.server}.enterprisenet.org << 'ENDSSH'
+
+                                    echo "Checking for process listening on port ${env.server_port}..."
+
+                                    pid=\$(lsof -i :${env.server_port} -sTCP:LISTEN -t)
+
+                                    if [ -n "\$pid" ]; then
+                                        echo "Found PID: \$pid"
+                                        kill -9 \$pid
+                                        status=\$?
+                                        if [ \$status -eq 0 ]; then
+                                            echo "Killed PID \$pid successfully"
+                                        else
+                                            echo "Failed to kill PID \$pid (exit code \$status)"
+                                            exit 1
+                                        fi
+                                    else
+                                        echo "No process found listening on port ${env.server_port}"
+                                    fi
+
+                                    pwd
+                                    whoami
+                                    cd /${env.envName}/bin || echo "Directory not found"
+                                    nohup ./startPATservice_${env.envName}.sh > /dev/null 2>&1 &
+
+ENDSSH
+                                """
+                                sh returnStatus: true, script: sshCommand
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
