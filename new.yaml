@@ -1,2 +1,31 @@
-source /home/rpanjala/venv/py39/bin/activate
-sudo chmod -R o+rx /home/rpanjala/venv/py39
+name: Build Teradata Package
+
+on:
+  workflow_dispatch:
+
+env:
+  TD_RUN: "TRUE"
+  GIT_REPO: github.com/cigna/GBS_DAE_OSS.git
+  ARTIFACTORY_URL: https://repo.sys.cigna.com/artifactory/maven-release-repos/
+
+jobs:
+  build-teradata:
+    if: env.TD_RUN == 'TRUE'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Clone release branch
+        run: |
+          git clone --branch ${{ github.ref_name }} https://${{ secrets.GITHUB_USER }}:${{ secrets.GITHUB_TOKEN }}@${{ env.GIT_REPO }} repo
+          cd repo
+
+      - name: Build Package
+        run: |
+          chmod +x ./scripts/build_teradata_package.sh
+          ./scripts/build_teradata_package.sh
