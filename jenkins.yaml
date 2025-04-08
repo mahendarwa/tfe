@@ -1,11 +1,57 @@
-env:
-  BUILD: release-${{ github.run_number }}-${{ github.sha }}
-mvn \
-  -Durl=https://maven.pkg.github.com/zilvertonz/GBS_DAE_Devops_Automation \
-  -DrepositoryId=github \
-  -DgroupId=com.zilvertonz.teradata \
-  -DartifactId=odms-teradata-release \
-  -Dversion=${BUILD} \
-  -Dfile=./odms-teradata-release.tgz \
-  -DgeneratePom=true \
-  deploy:deploy-file
+name: Publish Teradata Package
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    env:
+      GITHUB_ACTOR: ${{ github.actor }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      BUILD_VERSION: testing
+      PACKAGE_FILE: odms-teradata-release.tgz
+      GROUP_ID: com.zilvertonz.teradata
+      ARTIFACT_ID: odms-teradata-release
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Teradata Package
+        run: |
+          cp -rf GBS_DAE_OSS/* .
+          chmod +x build_teradata_package.sh
+          ./build_teradata_package.sh
+          echo "Package created:"
+          ls -lh *.tgz
+
+      - name: Generate Maven settings.xml for GitHub authentication
+        run: |
+          cat <<EOF > settings.xml
+          <settings>
+            <servers>
+              <server>
+                <id>github</id>
+                <username>${GITHUB_ACTOR}</username>
+                <password>${GITHUB_TOKEN}</password>
+              </server>
+            </servers>
+          </settings>
+          EOF
+
+      - name: Publish package to GitHub Maven Package
+        run: |
+          mvn -s settings.xml \
+            -Durl=https://maven.pkg.github.com/${{ github.repository }} \
+            -DrepositoryId=github \
+            -DgroupId=${GROUP_ID} \
+            -DartifactId=${ARTIFACT_ID} \
+            -Dversion=${BUILD_VERSION} \
+            -Dfile=${PACKAGE_FILE} \
+            -DgeneratePom=true \
+            deploy:deploy-file
+
+      - name: Confirm package deployment
+        run: echo "Uploaded to https://github.com/${{ github.repository }}/packages"
