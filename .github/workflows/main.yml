@@ -1,92 +1,107 @@
-name: QA PAT
+name: Kill and Restart PAT Service
 
 on:
   workflow_dispatch:
     inputs:
-      pflqa00:
-        description: 'Run for pflqa00?'
+      prod_envi:
+        description: 'Select the production environment'
         required: true
-        type: boolean
-      pflqa12:
-        description: 'Run for pflqa12?'
-        required: true
-        type: boolean
-      pflqa22:
-        description: 'Run for pflqa22?'
-        required: true
-        type: boolean
-      pflqa36:
-        description: 'Run for pflqa36?'
-        required: true
-        type: boolean
-      pflqa42:
-        description: 'Run for pflqa42?'
-        required: true
-        type: boolean
+        type: choice
+        options:
+          - pfnz
+          - pfid
+          - pfth
+          - pfph
+          - pfsg
+          - pfhk
+          - pfau
+          - pfbp
+          - omau
+          - pfgb
+          - pffi
+          - pfpt
+          - pfes
+          - pffr
+          - pfde
+          - pfch
+          - pfit
+          - omca
+          - pfca
+          - pfco
+          - pfpr
+          - pfcl
+          - pfbr
+          - pfmx
+          - pfxu
+          - pfus
 
 jobs:
-  PAT:
-    runs-on: qa-runner
+  kill_and_restart:
+    runs-on: ubuntu-latest
     steps:
-      - name: Set and Process Selected Environments
+      - name: Map Environment Variables
+        id: mapenv
         run: |
-          declare -a envs=()
-          if [[ "${{ github.event.inputs.pflqa00 }}" == "true" ]]; then envs+=("pflqa00"); fi
-          if [[ "${{ github.event.inputs.pflqa12 }}" == "true" ]]; then envs+=("pflqa12"); fi
-          if [[ "${{ github.event.inputs.pflqa22 }}" == "true" ]]; then envs+=("pflqa22"); fi
-          if [[ "${{ github.event.inputs.pflqa36 }}" == "true" ]]; then envs+=("pflqa36"); fi
-          if [[ "${{ github.event.inputs.pflqa42 }}" == "true" ]]; then envs+=("pflqa42"); fi
+          declare -A USERS=(
+            [pfnz]="pfnzsup3|daylnxcpsp023|8152"
+            [pfid]="pfidsup3|daylnxcpsp023|8159"
+            [omca]="omcasup3|daylnxcpsp014|8151"
+            [pfhk]="pfhksup3|daylnxcpsp023|8163"
+            [pffi]="pffisup3|daylnxcpsp022|8154"
+            [pfco]="pfcosup3|daylnxcpsp014|8155"
+            [pfpr]="pfprsup3|daylnxcpsp014|8156"
+            [pfcl]="pfclsup3|daylnxcpsp014|8157"
+            [pfbr]="pfbrsup3|daylnxcpsp014|8158"
+            [pfca]="pfcasup3|daylnxcpsp014|8150"
+            [pfph]="pfphsup3|daylnxcpsp023|8160"
+            [pfth]="pfthsup3|daylnxcpsp023|8161"
+            [pfsg]="pfsgsup3|daylnxcpsp023|8162"
+            [pfmx]="pfmxsup3|daylnxcpsp014|8164"
+            [pfxu]="pfxusup3|daylnxcpsp014|8165"
+            [pfus]="pfussup3|daylnxcpsp014|8166"
+            [pfra]="pfrasup3|daylnxcpsp022|8167"
+            [pfgb]="pfgbsup3|daylnxcpsp022|8153"
+            [pfau]="pfausup3|daylnxcpsp023|8174"
+            [pfpt]="pfptsup3|daylnxcpsp022|8168"
+            [pfes]="pfessup3|daylnxcpsp022|8169"
+            [pffr]="pffrsup3|daylnxcpsp022|8170"
+            [pfde]="pfdesup3|daylnxcpsp022|8171"
+            [pfch]="pfchsup3|daylnxcpsp022|8172"
+            [pfit]="pfitsup3|daylnxcpsp022|8173"
+            [pfbp]="pfbpsup3|daylnxcpsp023|8175"
+            [omau]="omausup3|daylnxcpsp023|8176"
+          )
 
-          for ENV in "${envs[@]}"; do
-            echo "Processing $ENV"
+          IFS='|' read -r adminuser server port <<< "${USERS[${{ github.event.inputs.prod_envi }}]}"
 
-            if [[ "$ENV" == "pflqa36" ]]; then
-              ADMIN_USR="pfmgr4"
-              PATH_ENV="pflqa36/"
-            elif [[ "$ENV" == "pflqa42" ]]; then
-              ADMIN_USR="pfmgr4"
-              PATH_ENV="pflqa42/"
-            elif [[ "$ENV" == "pflqa12" ]]; then
-              ADMIN_USR="pfmgr2"
-              PATH_ENV="pflqa12/"
-            elif [[ "$ENV" == "pflqa22" ]]; then
-              ADMIN_USR="pfmgr3"
-              PATH_ENV="pflqa22/"
-            elif [[ "$ENV" == "pflqa00" ]]; then
-              ADMIN_USR="pfmgr"
-              PATH_ENV="pflqa00/"
-            else
-              echo "Invalid environment: $ENV"
-              exit 1
-            fi
+          if [ -z "$adminuser" ]; then
+            echo "Invalid environment value"
+            exit 1
+          fi
 
-            echo "Environment: $ENV"
-            echo "Admin User: $ADMIN_USR"
-            echo "Selected Path: $PATH_ENV"
+          echo "adminuser=$adminuser" >> "$GITHUB_OUTPUT"
+          echo "server=$server" >> "$GITHUB_OUTPUT"
+          echo "port=$port" >> "$GITHUB_OUTPUT"
 
-            ORG_PATH="/home/bambscm1/actions-runner-2/_work/bcc-pat/bcc-pat/"
-            TMP_PATH=/tmp/actions/
-            chmod -R 755 $TMP_PATH
+      - name: SSH to Kill and Restart PAT Service
+        env:
+          ADMINUSER: ${{ steps.mapenv.outputs.adminuser }}
+          SERVER: ${{ steps.mapenv.outputs.server }}
+          PORT: ${{ steps.mapenv.outputs.port }}
+          PROD_ENVI: ${{ github.event.inputs.prod_envi }}
+        run: |
+          echo "Executing SSH operations on $SERVER:$PORT"
 
-            REMOTE_PATH="/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/pjlcheck_pat/opt/pjlcheck_pat"
-            REMOTE_PATH1="/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/plsegfix_pat/opt/plsegfix_pat"
-            REMOTE_PATH2="/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/plsegchk_pat/opt/plsegchk_pat"
-            REMOTE_PATH3="/home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/plstatus_pat/opt/plstatus_pat"
-            LOCAL_PATH=/tmp/actions/
-
-            scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH $LOCAL_PATH || echo "Skipping $REMOTE_PATH due to permission error"
-            scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH1 $LOCAL_PATH || echo "Skipping $REMOTE_PATH1 due to permission error"
-            scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH2 $LOCAL_PATH || echo "Skipping $REMOTE_PATH2 due to permission error"
-            scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd002:$REMOTE_PATH3 $LOCAL_PATH || echo "Skipping $REMOTE_PATH3 due to permission error"
-
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chmod 750 /${ENV}/bin" 
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chmod -R 750 /${ENV}/bin/* || true"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "cp /tmp/actions/* /${ENV}/bin/"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "cp -rf ${ORG_PATH}ETL/scripts/* /${ENV}/bin/etl/scripts/"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "cp -rf ${ORG_PATH}ETL/sql/* /${ENV}/bin/etl/sql/"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "cp -rf ${ORG_PATH}ETL/ref/* /${ENV}/bin/etl/ref/"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chmod -R 750 /${ENV}/bin/* || true"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chmod -R 550 /${ENV}/bin/* || true"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chgrp -R ${ENV} /${ENV}/bin/* || true"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsq014.enterprisenet.org" "chmod -R 550 /${ENV}/bin || true"
-          done
+          ssh -o StrictHostKeyChecking=no ${ADMINUSER}@${SERVER}.enterprisenet.org <<EOF
+          echo "Checking for process listening on port ${PORT}..."
+          pid=\$(lsof -i :${PORT} -sTCP:LISTEN -t)
+          if [ -n "\$pid" ]; then
+            echo "Found PID: \$pid"
+            kill -9 \$pid
+            echo "Killed PID \$pid"
+          else
+            echo "No process found on port ${PORT}"
+          fi
+          cd /${PROD_ENVI}/bin || echo "Directory not found"
+          nohup ./startPATservice_${PROD_ENVI}.sh > /dev/null 2>&1 &
+          EOF
