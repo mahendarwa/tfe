@@ -10,7 +10,7 @@ on:
 
 jobs:
   kill_and_restart:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted]
     steps:
       - name: Run PAT restart for selected environments
         env:
@@ -31,17 +31,38 @@ jobs:
             if [[ "${!VAR_NAME}" == "true" ]]; then
               IFS='|' read -r ADMINUSER SERVER PORT <<< "${CONFIGS[$ENV]}"
 
-              ssh_command="pid=\$(lsof -i :${PORT} -sTCP:LISTEN -t);
-              if [ -n \"\$pid\" ]; then
-                kill -9 \$pid;
-                status=\$?;
-                if [ \$status -ne 0 ]; then
-                  exit 1;
-                fi;
-              fi;
-              cd /${ENV}/bin || echo 'Directory not found';
-              nohup ./startPATservice_${ENV}.sh > /dev/null 2>&1 &"
-
-              ssh -o StrictHostKeyChecking=no ${ADMINUSER}@${SERVER}.enterprisenet.org bash -c "$ssh_command"
+              ssh -o StrictHostKeyChecking=no ${ADMINUSER}@${SERVER}.enterprisenet.org bash -s <<EOF
+          echo "[INFO] Checking for process on port ${PORT}"
+          pid=\$(lsof -i :${PORT} -sTCP:LISTEN -t)
+          if [ -n "\$pid" ]; then
+            echo "[INFO] Found PID: \$pid"
+            kill -9 \$pid
+            status=\$?
+            if [ \$status -ne 0 ]; then
+              echo "[ERROR] Failed to kill process \$pid (exit \$status)"
+              exit 1
+            else
+              echo "[INFO] Killed process \$pid successfully"
             fi
-          done
+          else
+            echo "[INFO] No process found listening on port ${PORT}"
+          fi
+          
+          echo "[INFO] Switching to /${ENV}/bin"
+          cd /${ENV}/bin || { echo "[ERROR] Directory /${ENV}/bin not found"; exit 1; }
+          
+          echo "[INFO] Making script executable"
+          chmod +x ./startPATservice_${ENV}.sh
+          
+          echo "[INFO] Starting PAT service in background"
+          nohup ./startPATservice_${ENV}.sh > start.log 2>&1 &
+          
+          echo "[INFO] Waiting 3s to let service log something"
+          sleep 3
+          
+          echo "[INFO] Tailing start.log output"
+          tail -n 10 start.log || echo "[WARN] No log file created or empty"
+          EOF
+          
+                      fi
+                    done
