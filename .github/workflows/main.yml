@@ -30,18 +30,17 @@ jobs:
             VAR_NAME=$(echo "$ENV" | tr '[:lower:]' '[:upper:]')
             if [[ "${!VAR_NAME}" == "true" ]]; then
               IFS='|' read -r ADMINUSER SERVER PORT <<< "${CONFIGS[$ENV]}"
-
-              ssh -o StrictHostKeyChecking=no ${ADMINUSER}@${SERVER}.enterprisenet.org <<EOF
-                pid=\$(lsof -i :${PORT} -sTCP:LISTEN -t)
-                if [ -n "\$pid" ]; then
-                  kill -9 \$pid
-                  status=\$?
-                  if [ \$status -ne 0 ]; then
-                    exit 1
-                  fi
+              ssh -o StrictHostKeyChecking=no ${ADMINUSER}@${SERVER}.enterprisenet.org <<'EOF'
+              pid=$(lsof -i :'"${PORT}"' -sTCP:LISTEN -t)
+              if [ -n "$pid" ]; then
+                kill -9 $pid
+                status=$?
+                if [ $status -ne 0 ]; then
+                  exit 1
                 fi
-                cd /${ENV}/bin || echo "Directory not found"
-                nohup ./startPATservice_${ENV}.sh > /dev/null 2>&1 &
-EOF
-            fi
-          done
+              fi
+              cd /'"${ENV}"'/bin || echo "Directory not found"
+              nohup ./startPATservice_'"${ENV}"'.sh > /dev/null 2>&1 &
+              EOF
+                          fi
+                        done
