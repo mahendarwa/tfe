@@ -1,48 +1,12 @@
-name: Kill and Restart PAT Services
-
-on:
-  workflow_dispatch:
-    inputs:
-      pfnz: { description: 'pfnz', required: true, type: boolean }
-      pfid: { description: 'pfid', required: true, type: boolean }
-      pfth: { description: 'pfth', required: true, type: boolean }
-      pfph: { description: 'pfph', required: true, type: boolean }
-
-jobs:
-  kill_and_restart:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run PAT restart for selected environments
-        env:
-          PFNZ: ${{ github.event.inputs.pfnz }}
-          PFID: ${{ github.event.inputs.pfid }}
-          PFTH: ${{ github.event.inputs.pfth }}
-          PFPH: ${{ github.event.inputs.pfph }}
-        run: |
-          declare -A CONFIGS=(
-            [pfnz]="pfnzsup3|daylnxcpsp023|8152"
-            [pfid]="pfidsup3|daylnxcpsp023|8159"
-            [pfth]="pfthsup3|daylnxcpsp023|8161"
-            [pfph]="pfphsup3|daylnxcpsp023|8160"
-          )
-
-          for ENV in "${!CONFIGS[@]}"; do
-            VAR_NAME=$(echo "$ENV" | tr '[:lower:]' '[:upper:]')
-            if [[ "${!VAR_NAME}" == "true" ]]; then
-              IFS='|' read -r ADMINUSER SERVER PORT <<< "${CONFIGS[$ENV]}"
-
-              ssh -o StrictHostKeyChecking=no ${ADMINUSER}@${SERVER}.enterprisenet.org bash -s <<SCRIPT
-              pid=\$(lsof -i :${PORT} -sTCP:LISTEN -t)
-              if [ -n "\$pid" ]; then
-                kill -9 \$pid
-                status=\$?
-                if [ \$status -ne 0 ]; then
-                  exit 1
-                fi
-              fi
-              cd /${ENV}/bin || echo "Directory not found"
-              nohup ./startPATservice_${ENV}.sh > /dev/null 2>&1 &
-              SCRIPT
-              
-                          fi
-                        done
+ssh -o StrictHostKeyChecking=no ${ADMINUSER}@${SERVER}.enterprisenet.org bash -s <<'EOF'
+pid=$(lsof -i :'"${PORT}"' -sTCP:LISTEN -t)
+if [ -n "$pid" ]; then
+  kill -9 $pid
+  status=$?
+  if [ $status -ne 0 ]; then
+    exit 1
+  fi
+fi
+cd /'"${ENV}"'/bin || echo "Directory not found"
+nohup ./startPATservice_'"${ENV}"'.sh > /dev/null 2>&1 &
+EOF
