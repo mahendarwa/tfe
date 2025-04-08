@@ -1,105 +1,55 @@
-name: Restart PAT Service
+name: Build & Deploy Teradata Package
 
 on:
   workflow_dispatch:
-    inputs:
-      prod_envi:
-        description: 'Select the production environment'
-        required: true
-        type: choice
-        options:
-          - pfnz
-          - pfid
-          - pfth
-          - pfph
-          - pfsg
-          - pfhk
-          - pfau
-          - pfbp
-          - omau
-          - pfgb
-          - pffi
-          - pfpt
-          - pfes
-          - pfra
-          - pffr
-          - pfde
-          - pfch
-          - pfit
-          - omca
-          - pfca
-          - pfco
-          - pfpr
-          - pfcl
-          - pfbr
-          - pfmx
-          - pfxu
-          - pfus
 
 jobs:
-  restart-pat:
+  build-and-deploy:
     runs-on: ubuntu-latest
+
+    env:
+      BUILD_VERSION: v1.0.${{ github.run_number }}-${{ github.sha }}
+      TERADATA_HOST: ${{ secrets.TD_HOST }}
+      TERADATA_USER: ${{ secrets.TD_USER }}
+      TERADATA_PASSWORD: ${{ secrets.TD_PASSWORD }}
+      PACKAGE_FILE: odms-teradata-release.tgz
+
     steps:
-      - name: Map environment details
-        id: map
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Build Teradata Package
         run: |
-          ENV="${{ github.event.inputs.prod_envi }}"
+          chmod +x build_teradata_package.sh
+          ./build_teradata_package.sh
 
-          # Define the values
-          declare -A ADMINUSERS=(
-            [pfnz]=pfnzsup3 [pfid]=pfidsup3 [pfph]=pfphsup3 [pfth]=pfthsup3 [pfsg]=pfsgsup3
-            [pfhk]=pfhksup3 [pfau]=pfausup3 [pfbp]=pfbpsup3 [omau]=omausup3 [pfgb]=pfgbsup3
-            [pffi]=pffisup3 [pfpt]=pfptsup3 [pfes]=pfessup3 [pfra]=pfrasup3 [pffr]=pffrsup3
-            [pfde]=pfdesup3 [pfch]=pfchsup3 [pfit]=pfitsup3 [omca]=omcasup3 [pfca]=pfcasup3
-            [pfco]=pfcosup3 [pfpr]=pfprsup3 [pfcl]=pfclsup3 [pfbr]=pfbrsup3 [pfmx]=pfmxsup3
-            [pfxu]=pfxusup3 [pfus]=pfussup3
-          )
-
-          declare -A SERVERS=(
-            [pfnz]=daylnxcpsp023 [pfid]=daylnxcpsp023 [pfph]=daylnxcpsp023 [pfth]=daylnxcpsp023
-            [pfsg]=daylnxcpsp023 [pfhk]=daylnxcpsp023 [pfau]=daylnxcpsp023 [pfbp]=daylnxcpsp023
-            [omau]=daylnxcpsp023 [pfgb]=daylnxcpsp022 [pffi]=daylnxcpsp022 [pfpt]=daylnxcpsp022
-            [pfes]=daylnxcpsp022 [pfra]=daylnxcpsp022 [pffr]=daylnxcpsp022 [pfde]=daylnxcpsp022
-            [pfch]=daylnxcpsp022 [pfit]=daylnxcpsp022 [omca]=daylnxcpsp014 [pfca]=daylnxcpsp014
-            [pfco]=daylnxcpsp014 [pfpr]=daylnxcpsp014 [pfcl]=daylnxcpsp014 [pfbr]=daylnxcpsp014
-            [pfmx]=daylnxcpsp014 [pfxu]=daylnxcpsp014 [pfus]=daylnxcpsp014
-          )
-
-          declare -A PORTS=(
-            [pfnz]=8152 [pfid]=8159 [pfph]=8160 [pfth]=8161 [pfsg]=8162 [pfhk]=8163
-            [pfau]=8174 [pfbp]=8175 [omau]=8176 [pfgb]=8153 [pffi]=8154 [pfpt]=8168
-            [pfes]=8169 [pfra]=8167 [pffr]=8170 [pfde]=8171 [pfch]=8172 [pfit]=8173
-            [omca]=8151 [pfca]=8150 [pfco]=8155 [pfpr]=8156 [pfcl]=8157 [pfbr]=8158
-            [pfmx]=8164 [pfxu]=8165 [pfus]=8166
-          )
-
-          echo "adminuser=${ADMINUSERS[$ENV]}" >> "$GITHUB_OUTPUT"
-          echo "server=${SERVERS[$ENV]}" >> "$GITHUB_OUTPUT"
-          echo "port=${PORTS[$ENV]}" >> "$GITHUB_OUTPUT"
-
-      - name: Kill and Restart PAT Service
-        env:
-          ADMINUSER: ${{ steps.map.outputs.adminuser }}
-          SERVER: ${{ steps.map.outputs.server }}
-          PORT: ${{ steps.map.outputs.port }}
-          ENVNAME: ${{ github.event.inputs.prod_envi }}
-          SSH_KEY: ${{ secrets.SERVICE_SSH_KEY }}
+      - name: Extract build package
         run: |
-          echo "$SSH_KEY" > key.pem
-          chmod 600 key.pem
+          mkdir teradata_deploy
+          tar -xzf $PACKAGE_FILE -C teradata_deploy
+          echo "✅ Extracted contents:"
+          find teradata_deploy
 
-          ssh -i key.pem -o StrictHostKeyChecking=no "$ADMINUSER@$SERVER.enterprisenet.org" << EOF
-            echo "Checking for process on port $PORT..."
-            pid=\$(lsof -i :$PORT -sTCP:LISTEN -t)
-            if [ -n "\$pid" ]; then
-              echo "Found PID \$pid, killing..."
-              kill -9 \$pid || exit 1
-              echo "Killed PID \$pid successfully"
-            else
-              echo "No process found on port $PORT"
-            fi
+      - name: Install Teradata CLI tools (bteq)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget alien
+          wget https://downloads.teradata.com/download/cdn/tools/TeradataToolsAndUtilitiesBase__ubuntu16__x86_64.deb
+          sudo apt install ./TeradataToolsAndUtilitiesBase__ubuntu16__x86_64.deb || true
+          sudo apt-get install -y bteq || true
+          which bteq || echo " bteq not found — check Teradata CLI availability"
 
-            cd /$ENVNAME/bin || echo "Directory not found"
-            nohup ./startPATservice_$ENVNAME.sh > /dev/null 2>&1 &
-            echo "Service restarted"
+      - name: Deploy SQL files to Teradata
+        run: |
+          echo " Starting SQL deployment..."
+          for sql in $(find teradata_deploy/src -name '*.sql'); do
+            echo "▶️ Running: $sql"
+            bteq <<EOF
+            .logon ${TERADATA_HOST}/${TERADATA_USER},${TERADATA_PASSWORD};
+            .run file = "$sql";
+            .quit;
             EOF
+                      done
+
+      - name: Deployment completed
+        run: echo "🎉 Teradata deployment completed for version ${BUILD_VERSION}"
