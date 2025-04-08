@@ -10,10 +10,10 @@ jobs:
     env:
       GITHUB_ACTOR: ${{ github.actor }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      BUILD_VERSION: testing
       PACKAGE_FILE: odms-teradata-release.tgz
       GROUP_ID: com.zilvertonz.teradata
       ARTIFACT_ID: odms-teradata-release
+      BUILD_VERSION: v1.0.${{ github.run_number }}-${{ github.sha }}
 
     steps:
       - name: Checkout code
@@ -24,7 +24,7 @@ jobs:
           cp -rf GBS_DAE_OSS/* .
           chmod +x build_teradata_package.sh
           ./build_teradata_package.sh
-          echo "Package created:"
+          echo "📦 Package created:"
           ls -lh *.tgz
 
       - name: Generate Maven settings.xml for GitHub authentication
@@ -43,6 +43,7 @@ jobs:
 
       - name: Publish package to GitHub Maven Package
         run: |
+          echo "🚀 Publishing version: ${BUILD_VERSION}"
           mvn -s settings.xml \
             -Durl=https://maven.pkg.github.com/${{ github.repository }} \
             -DrepositoryId=github \
@@ -54,4 +55,6 @@ jobs:
             deploy:deploy-file
 
       - name: Confirm package deployment
-        run: echo "Uploaded to https://github.com/${{ github.repository }}/packages"
+        run: |
+          echo "✅ Package uploaded:"
+          echo "https://github.com/${{ github.repository }}/packages"
