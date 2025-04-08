@@ -1,64 +1,86 @@
-name: Restart PAT Services
+name: Prod PAT
 
 on:
   workflow_dispatch:
+    inputs:
+      pfnz: {description: 'pfnz', required: true, type: boolean}
+      pfid: {description: 'pfid', required: true, type: boolean}
+      pfph: {description: 'pfph', required: true, type: boolean}
+      pfth: {description: 'pfth', required: true, type: boolean}
+      pfsg: {description: 'pfsg', required: true, type: boolean}
+      pfhk: {description: 'pfhk', required: true, type: boolean}
+      pfau: {description: 'pfau', required: true, type: boolean}
+      pfbp: {description: 'pfbp', required: true, type: boolean}
+      omau: {description: 'omau', required: true, type: boolean}
+      pfgb: {description: 'pfgb', required: true, type: boolean}
+      pffi: {description: 'pffi', required: true, type: boolean}
+      pfra: {description: 'pfra', required: true, type: boolean}
+      pfpt: {description: 'pfpt', required: true, type: boolean}
+      pfes: {description: 'pfes', required: true, type: boolean}
+      pffr: {description: 'pffr', required: true, type: boolean}
+      pfde: {description: 'pfde', required: true, type: boolean}
+      pfch: {description: 'pfch', required: true, type: boolean}
+      pfit: {description: 'pfit', required: true, type: boolean}
+      omca: {description: 'omca', required: true, type: boolean}
+      pfca: {description: 'pfca', required: true, type: boolean}
+      pfcl: {description: 'pfcl', required: true, type: boolean}
+      pfco: {description: 'pfco', required: true, type: boolean}
+      pfpr: {description: 'pfpr', required: true, type: boolean}
+      pfbr: {description: 'pfbr', required: true, type: boolean}
+      pfmx: {description: 'pfmx', required: true, type: boolean}
+      pfxu: {description: 'pfxu', required: true, type: boolean}
+      pfus: {description: 'pfus', required: true, type: boolean}
 
 jobs:
-  restart-pat:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        envName: [pfnz, pfid, pfth, pfph, pfsg, pfhk, pfau, pfbp, omau, pfgb, pffi, pfpt, pfes, pfra, pffr, pfde, pfch, pfit, omca, pfca, pfco, pfpr, pfcl, pfbr, pfmx, pfxu, pfus]
-    if: ${{ github.event.inputs[matrix.envName] == 'true' }}
+  PAT:
+    runs-on: prod14-runner
     steps:
-      - name: Map admin user and environment info
-        id: map
-        run: |
-          declare -A ADMINS=(
-            [pfnz]=pfnzsup3 [pfid]=pfidsup3 [omca]=omcasup3 [pfhk]=pfhksup3 [pffi]=pffisup3 [pfco]=pfcosup3 [pfpr]=pfprsup3 [pfcl]=pfclsup3
-            [pfbr]=pfbrsup3 [pfca]=pfcasup3 [pfph]=pfphsup3 [pfth]=pfthsup3 [pfsg]=pfsgsup3 [pfmx]=pfmxsup3 [pfxu]=pfxusup3 [pfus]=pfussup3
-            [pfra]=pfrasup3 [pfgb]=pfgbsup3 [pfau]=pfausup3 [pfpt]=pfptsup3 [pfes]=pfessup3 [pffr]=pffrsup3 [pfde]=pfdesup3 [pfch]=pfchsup3
-            [pfit]=pfitsup3 [pfbp]=pfbpsup3 [omau]=omausup3
-          )
-          declare -A SERVERS=(
-            [pfnz]=daylnxcpsp023 [pfid]=daylnxcpsp023 [omca]=daylnxcpsp014 [pfhk]=daylnxcpsp023 [pffi]=daylnxcpsp022 [pfco]=daylnxcpsp014
-            [pfpr]=daylnxcpsp014 [pfcl]=daylnxcpsp014 [pfbr]=daylnxcpsp014 [pfca]=daylnxcpsp014 [pfph]=daylnxcpsp023 [pfth]=daylnxcpsp023
-            [pfsg]=daylnxcpsp023 [pfmx]=daylnxcpsp014 [pfxu]=daylnxcpsp014 [pfus]=daylnxcpsp014 [pfra]=daylnxcpsp022 [pfgb]=daylnxcpsp022
-            [pfau]=daylnxcpsp023 [pfpt]=daylnxcpsp022 [pfes]=daylnxcpsp022 [pffr]=daylnxcpsp022 [pfde]=daylnxcpsp022 [pfch]=daylnxcpsp022
-            [pfit]=daylnxcpsp022 [pfbp]=daylnxcpsp023 [omau]=daylnxcpsp023
-          )
-          declare -A PORTS=(
-            [pfnz]=8152 [pfid]=8159 [omca]=8151 [pfhk]=8163 [pffi]=8154 [pfco]=8155 [pfpr]=8156 [pfcl]=8157
-            [pfbr]=8158 [pfca]=8150 [pfph]=8160 [pfth]=8161 [pfsg]=8162 [pfmx]=8164 [pfxu]=8165 [pfus]=8166
-            [pfra]=8167 [pfgb]=8153 [pfau]=8174 [pfpt]=8168 [pfes]=8169 [pffr]=8170 [pfde]=8171 [pfch]=8172
-            [pfit]=8173 [pfbp]=8175 [omau]=8176
-          )
-          echo "adminuser=${ADMINS[${{ matrix.envName }}]}" >> $GITHUB_ENV
-          echo "server=${SERVERS[${{ matrix.envName }}]}" >> $GITHUB_ENV
-          echo "server_port=${PORTS[${{ matrix.envName }}]}" >> $GITHUB_ENV
+      - name: checkout repo
+        uses: actions/checkout@v3
 
-      - name: Kill and restart PAT service
+      - name: Kill and Restart PAT Services
         run: |
-          ssh -o StrictHostKeyChecking=no $adminuser@$server.enterprisenet.org << EOF
-          echo "Checking for process listening on port $server_port..."
-          pid=\$(lsof -i :$server_port -sTCP:LISTEN -t)
+          envs=()
+          [[ "${{ github.event.inputs.pfnz }}" == "true" ]] && envs+=("pfnz")
+          [[ "${{ github.event.inputs.pfid }}" == "true" ]] && envs+=("pfid")
+          [[ "${{ github.event.inputs.pfph }}" == "true" ]] && envs+=("pfph")
+          [[ "${{ github.event.inputs.pfth }}" == "true" ]] && envs+=("pfth")
+          [[ "${{ github.event.inputs.pfsg }}" == "true" ]] && envs+=("pfsg")
+          [[ "${{ github.event.inputs.pfhk }}" == "true" ]] && envs+=("pfhk")
+          [[ "${{ github.event.inputs.pfau }}" == "true" ]] && envs+=("pfau")
+          [[ "${{ github.event.inputs.pfbp }}" == "true" ]] && envs+=("pfbp")
+          [[ "${{ github.event.inputs.omau }}" == "true" ]] && envs+=("omau")
+          [[ "${{ github.event.inputs.pfgb }}" == "true" ]] && envs+=("pfgb")
+          [[ "${{ github.event.inputs.pffi }}" == "true" ]] && envs+=("pffi")
+          [[ "${{ github.event.inputs.pfra }}" == "true" ]] && envs+=("pfra")
+          [[ "${{ github.event.inputs.pfpt }}" == "true" ]] && envs+=("pfpt")
+          [[ "${{ github.event.inputs.pfes }}" == "true" ]] && envs+=("pfes")
+          [[ "${{ github.event.inputs.pffr }}" == "true" ]] && envs+=("pffr")
+          [[ "${{ github.event.inputs.pfde }}" == "true" ]] && envs+=("pfde")
+          [[ "${{ github.event.inputs.pfch }}" == "true" ]] && envs+=("pfch")
+          [[ "${{ github.event.inputs.pfit }}" == "true" ]] && envs+=("pfit")
+          [[ "${{ github.event.inputs.omca }}" == "true" ]] && envs+=("omca")
+          [[ "${{ github.event.inputs.pfca }}" == "true" ]] && envs+=("pfca")
+          [[ "${{ github.event.inputs.pfcl }}" == "true" ]] && envs+=("pfcl")
+          [[ "${{ github.event.inputs.pfco }}" == "true" ]] && envs+=("pfco")
+          [[ "${{ github.event.inputs.pfpr }}" == "true" ]] && envs+=("pfpr")
+          [[ "${{ github.event.inputs.pfbr }}" == "true" ]] && envs+=("pfbr")
+          [[ "${{ github.event.inputs.pfmx }}" == "true" ]] && envs+=("pfmx")
+          [[ "${{ github.event.inputs.pfxu }}" == "true" ]] && envs+=("pfxu")
+          [[ "${{ github.event.inputs.pfus }}" == "true" ]] && envs+=("pfus")
 
-          if [ -n "\$pid" ]; then
-            echo "Found PID: \$pid"
-            kill -9 \$pid
-            status=\$?
-            if [ \$status -eq 0 ]; then
-              echo "Killed PID \$pid successfully"
+          for ENV in "${envs[@]}"; do
+            echo "Restarting PAT service for: \$ENV"
+            ssh -o StrictHostKeyChecking=no \${ENV}sup3@daylnxcpsp023.enterprisenet.org << EOF
+            echo "Checking process on port for \$ENV..."
+            PORT=8152
+            pid=\$(lsof -i :\$PORT -sTCP:LISTEN -t)
+            if [ -n "\$pid" ]; then
+              kill -9 \$pid && echo "Killed PID \$pid"
             else
-              echo "Failed to kill PID \$pid (exit code \$status)"
-              exit 1
+              echo "No process found"
             fi
-          else
-            echo "No process found listening on port $server_port"
-          fi
-
-          pwd
-          whoami
-          cd /$envName/bin || echo "Directory not found"
-          nohup ./startPATservice_$envName.sh > /dev/null 2>&1 &
-          EOF
+            cd /\$ENV/bin || exit
+            nohup ./startPATservice_\$ENV.sh > /dev/null 2>&1 &
+            EOF
+          done
