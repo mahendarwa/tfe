@@ -1,12 +1,11 @@
-name: Kill and Restart PAT Services
-
 on:
   workflow_dispatch:
     inputs:
-      pfnz: { description: 'pfnz', required: true, type: boolean }
-      pfid: { description: 'pfid', required: true, type: boolean }
-      pfth: { description: 'pfth', required: true, type: boolean }
-      pfph: { description: 'pfph', required: true, type: boolean }
+      selected_flags:
+        description: 'JSON object of selected flags'
+        required: true
+        default: '{"pfnz":true,"pfid":false,"pfph":true,"pfth":false,"pfsg":true,"pfhk":false,"pfau":true,"pfbp":false,"omau":true,"pfra":false}'
+
 
 jobs:
   kill_and_restart:
