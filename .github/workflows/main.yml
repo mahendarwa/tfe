@@ -1,107 +1,116 @@
-name: Kill and Restart PAT Service
+name: Kill and Restart PAT Service (Multi-Env Boolean Inputs)
 
 on:
   workflow_dispatch:
     inputs:
-      prod_envi:
-        description: 'Select the production environment'
-        required: true
-        type: choice
-        options:
-          - pfnz
-          - pfid
-          - pfth
-          - pfph
-          - pfsg
-          - pfhk
-          - pfau
-          - pfbp
-          - omau
-          - pfgb
-          - pffi
-          - pfpt
-          - pfes
-          - pffr
-          - pfde
-          - pfch
-          - pfit
-          - omca
-          - pfca
-          - pfco
-          - pfpr
-          - pfcl
-          - pfbr
-          - pfmx
-          - pfxu
-          - pfus
+      pfnz: { description: 'pfnz', required: true, type: boolean }
+      pfid: { description: 'pfid', required: true, type: boolean }
+      pfth: { description: 'pfth', required: true, type: boolean }
+      pfph: { description: 'pfph', required: true, type: boolean }
+      pfsg: { description: 'pfsg', required: true, type: boolean }
+      pfhk: { description: 'pfhk', required: true, type: boolean }
+      pfau: { description: 'pfau', required: true, type: boolean }
+      pfbp: { description: 'pfbp', required: true, type: boolean }
+      omau: { description: 'omau', required: true, type: boolean }
+      pfgb: { description: 'pfgb', required: true, type: boolean }
+      pffi: { description: 'pffi', required: true, type: boolean }
+      pfpt: { description: 'pfpt', required: true, type: boolean }
+      pfes: { description: 'pfes', required: true, type: boolean }
+      pffr: { description: 'pffr', required: true, type: boolean }
+      pfde: { description: 'pfde', required: true, type: boolean }
+      pfch: { description: 'pfch', required: true, type: boolean }
+      pfit: { description: 'pfit', required: true, type: boolean }
+      omca: { description: 'omca', required: true, type: boolean }
+      pfca: { description: 'pfca', required: true, type: boolean }
+      pfco: { description: 'pfco', required: true, type: boolean }
+      pfpr: { description: 'pfpr', required: true, type: boolean }
+      pfcl: { description: 'pfcl', required: true, type: boolean }
+      pfbr: { description: 'pfbr', required: true, type: boolean }
+      pfmx: { description: 'pfmx', required: true, type: boolean }
+      pfxu: { description: 'pfxu', required: true, type: boolean }
+      pfus: { description: 'pfus', required: true, type: boolean }
 
 jobs:
   kill_and_restart:
     runs-on: ubuntu-latest
     steps:
-      - name: Map Environment Variables
-        id: mapenv
+      - name: Process selected environments
+        env:
+          PFNZ: ${{ github.event.inputs.pfnz }}
+          PFID: ${{ github.event.inputs.pfid }}
+          PFTH: ${{ github.event.inputs.pfth }}
+          PFPH: ${{ github.event.inputs.pfph }}
+          PFSG: ${{ github.event.inputs.pfsg }}
+          PFHK: ${{ github.event.inputs.pfhk }}
+          PFAU: ${{ github.event.inputs.pfau }}
+          PFBP: ${{ github.event.inputs.pfbp }}
+          OMAU: ${{ github.event.inputs.omau }}
+          PFGB: ${{ github.event.inputs.pfgb }}
+          PFFI: ${{ github.event.inputs.pffi }}
+          PFPT: ${{ github.event.inputs.pfpt }}
+          PFES: ${{ github.event.inputs.pfes }}
+          PFFR: ${{ github.event.inputs.pffr }}
+          PFDE: ${{ github.event.inputs.pfde }}
+          PFCH: ${{ github.event.inputs.pfch }}
+          PFIT: ${{ github.event.inputs.pfit }}
+          OMCA: ${{ github.event.inputs.omca }}
+          PFCA: ${{ github.event.inputs.pfca }}
+          PFCO: ${{ github.event.inputs.pfco }}
+          PFPR: ${{ github.event.inputs.pfpr }}
+          PFCL: ${{ github.event.inputs.pfcl }}
+          PFBR: ${{ github.event.inputs.pfbr }}
+          PFMX: ${{ github.event.inputs.pfmx }}
+          PFXU: ${{ github.event.inputs.pfxu }}
+          PFUS: ${{ github.event.inputs.pfus }}
         run: |
-          declare -A USERS=(
+          declare -A CONFIGS=(
             [pfnz]="pfnzsup3|daylnxcpsp023|8152"
             [pfid]="pfidsup3|daylnxcpsp023|8159"
-            [omca]="omcasup3|daylnxcpsp014|8151"
-            [pfhk]="pfhksup3|daylnxcpsp023|8163"
-            [pffi]="pffisup3|daylnxcpsp022|8154"
-            [pfco]="pfcosup3|daylnxcpsp014|8155"
-            [pfpr]="pfprsup3|daylnxcpsp014|8156"
-            [pfcl]="pfclsup3|daylnxcpsp014|8157"
-            [pfbr]="pfbrsup3|daylnxcpsp014|8158"
-            [pfca]="pfcasup3|daylnxcpsp014|8150"
-            [pfph]="pfphsup3|daylnxcpsp023|8160"
             [pfth]="pfthsup3|daylnxcpsp023|8161"
+            [pfph]="pfphsup3|daylnxcpsp023|8160"
             [pfsg]="pfsgsup3|daylnxcpsp023|8162"
-            [pfmx]="pfmxsup3|daylnxcpsp014|8164"
-            [pfxu]="pfxusup3|daylnxcpsp014|8165"
-            [pfus]="pfussup3|daylnxcpsp014|8166"
-            [pfra]="pfrasup3|daylnxcpsp022|8167"
-            [pfgb]="pfgbsup3|daylnxcpsp022|8153"
+            [pfhk]="pfhksup3|daylnxcpsp023|8163"
             [pfau]="pfausup3|daylnxcpsp023|8174"
+            [pfbp]="pfbpsup3|daylnxcpsp023|8175"
+            [omau]="omausup3|daylnxcpsp023|8176"
+            [pfgb]="pfgbsup3|daylnxcpsp022|8153"
+            [pffi]="pffisup3|daylnxcpsp022|8154"
             [pfpt]="pfptsup3|daylnxcpsp022|8168"
             [pfes]="pfessup3|daylnxcpsp022|8169"
             [pffr]="pffrsup3|daylnxcpsp022|8170"
             [pfde]="pfdesup3|daylnxcpsp022|8171"
             [pfch]="pfchsup3|daylnxcpsp022|8172"
             [pfit]="pfitsup3|daylnxcpsp022|8173"
-            [pfbp]="pfbpsup3|daylnxcpsp023|8175"
-            [omau]="omausup3|daylnxcpsp023|8176"
+            [omca]="omcasup3|daylnxcpsp014|8151"
+            [pfca]="pfcasup3|daylnxcpsp014|8150"
+            [pfco]="pfcosup3|daylnxcpsp014|8155"
+            [pfpr]="pfprsup3|daylnxcpsp014|8156"
+            [pfcl]="pfclsup3|daylnxcpsp014|8157"
+            [pfbr]="pfbrsup3|daylnxcpsp014|8158"
+            [pfmx]="pfmxsup3|daylnxcpsp014|8164"
+            [pfxu]="pfxusup3|daylnxcpsp014|8165"
+            [pfus]="pfussup3|daylnxcpsp014|8166"
           )
 
-          IFS='|' read -r adminuser server port <<< "${USERS[${{ github.event.inputs.prod_envi }}]}"
+          for env in "${!CONFIGS[@]}"; do
+            selected="${!env^^}"  # convert to uppercase env var name
+            if [[ "${!selected}" == "true" ]]; then
+              IFS='|' read -r adminuser server port <<< "${CONFIGS[$env]}"
+              echo "🔧 Running for $env on $server:$port"
 
-          if [ -z "$adminuser" ]; then
-            echo "Invalid environment value"
-            exit 1
-          fi
+              ssh -o StrictHostKeyChecking=no ${adminuser}@${server}.enterprisenet.org <<EOF
+              echo "Checking port ${port}..."
+              pid=\$(lsof -i :${port} -sTCP:LISTEN -t)
+              if [ -n "\$pid" ]; then
+                echo "Killing PID \$pid..."
+                kill -9 \$pid
+              else
+                echo "No process found on port ${port}"
+              fi
 
-          echo "adminuser=$adminuser" >> "$GITHUB_OUTPUT"
-          echo "server=$server" >> "$GITHUB_OUTPUT"
-          echo "port=$port" >> "$GITHUB_OUTPUT"
-
-      - name: SSH to Kill and Restart PAT Service
-        env:
-          ADMINUSER: ${{ steps.mapenv.outputs.adminuser }}
-          SERVER: ${{ steps.mapenv.outputs.server }}
-          PORT: ${{ steps.mapenv.outputs.port }}
-          PROD_ENVI: ${{ github.event.inputs.prod_envi }}
-        run: |
-          echo "Executing SSH operations on $SERVER:$PORT"
-
-          ssh -o StrictHostKeyChecking=no ${ADMINUSER}@${SERVER}.enterprisenet.org <<EOF
-          echo "Checking for process listening on port ${PORT}..."
-          pid=\$(lsof -i :${PORT} -sTCP:LISTEN -t)
-          if [ -n "\$pid" ]; then
-            echo "Found PID: \$pid"
-            kill -9 \$pid
-            echo "Killed PID \$pid"
-          else
-            echo "No process found on port ${PORT}"
-          fi
-          cd /${PROD_ENVI}/bin || echo "Directory not found"
-          nohup ./startPATservice_${PROD_ENVI}.sh > /dev/null 2>&1 &
-          EOF
+              cd /${env}/bin || echo "Directory /${env}/bin not found"
+              nohup ./startPATservice_${env}.sh > /dev/null 2>&1 &
+              echo "PAT service for ${env} restarted."
+EOF
+            fi
+          done
