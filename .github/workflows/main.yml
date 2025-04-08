@@ -34,34 +34,7 @@ jobs:
   kill_and_restart:
     runs-on: ubuntu-latest
     steps:
-      - name: Process selected environments
-        env:
-          PFNZ: ${{ github.event.inputs.pfnz }}
-          PFID: ${{ github.event.inputs.pfid }}
-          PFTH: ${{ github.event.inputs.pfth }}
-          PFPH: ${{ github.event.inputs.pfph }}
-          PFSG: ${{ github.event.inputs.pfsg }}
-          PFHK: ${{ github.event.inputs.pfhk }}
-          PFAU: ${{ github.event.inputs.pfau }}
-          PFBP: ${{ github.event.inputs.pfbp }}
-          OMAU: ${{ github.event.inputs.omau }}
-          PFGB: ${{ github.event.inputs.pfgb }}
-          PFFI: ${{ github.event.inputs.pffi }}
-          PFPT: ${{ github.event.inputs.pfpt }}
-          PFES: ${{ github.event.inputs.pfes }}
-          PFFR: ${{ github.event.inputs.pffr }}
-          PFDE: ${{ github.event.inputs.pfde }}
-          PFCH: ${{ github.event.inputs.pfch }}
-          PFIT: ${{ github.event.inputs.pfit }}
-          OMCA: ${{ github.event.inputs.omca }}
-          PFCA: ${{ github.event.inputs.pfca }}
-          PFCO: ${{ github.event.inputs.pfco }}
-          PFPR: ${{ github.event.inputs.pfpr }}
-          PFCL: ${{ github.event.inputs.pfcl }}
-          PFBR: ${{ github.event.inputs.pfbr }}
-          PFMX: ${{ github.event.inputs.pfmx }}
-          PFXU: ${{ github.event.inputs.pfxu }}
-          PFUS: ${{ github.event.inputs.pfus }}
+      - name: Run SSH actions for selected environments
         run: |
           declare -A CONFIGS=(
             [pfnz]="pfnzsup3|daylnxcpsp023|8152"
@@ -92,25 +65,28 @@ jobs:
             [pfus]="pfussup3|daylnxcpsp014|8166"
           )
 
-          for env in "${!CONFIGS[@]}"; do
-            selected="${!env^^}"  # convert to uppercase env var name
-            if [[ "${!selected}" == "true" ]]; then
-              IFS='|' read -r adminuser server port <<< "${CONFIGS[$env]}"
-              echo "🔧 Running for $env on $server:$port"
+          SELECTED_ENVS=()
 
-              ssh -o StrictHostKeyChecking=no ${adminuser}@${server}.enterprisenet.org <<EOF
-              echo "Checking port ${port}..."
+          for env in "${!CONFIGS[@]}"; do
+            input_var_name=$(echo "$env" | tr '[:lower:]' '[:upper:]')
+            if [ "${{ github.event.inputs[env] }}" = "true" ]; then
+              SELECTED_ENVS+=("$env")
+            fi
+          done
+
+          echo "Processing selected environments: ${SELECTED_ENVS[*]}"
+
+          for env in "${SELECTED_ENVS[@]}"; do
+            IFS='|' read -r adminuser server port <<< "${CONFIGS[$env]}"
+            echo "Running on $env -> $adminuser@$server:$port"
+
+            ssh -o StrictHostKeyChecking=no ${adminuser}@${server}.enterprisenet.org <<EOF
               pid=\$(lsof -i :${port} -sTCP:LISTEN -t)
               if [ -n "\$pid" ]; then
-                echo "Killing PID \$pid..."
                 kill -9 \$pid
-              else
-                echo "No process found on port ${port}"
               fi
-
-              cd /${env}/bin || echo "Directory /${env}/bin not found"
+              cd /${env}/bin || exit 1
               nohup ./startPATservice_${env}.sh > /dev/null 2>&1 &
-              echo "PAT service for ${env} restarted."
 EOF
-            fi
+
           done
