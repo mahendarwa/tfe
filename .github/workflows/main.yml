@@ -1,4 +1,4 @@
-name: Kill and Restart PAT Service (Multi-Env Boolean Inputs)
+name: Kill and Restart PAT Services
 
 on:
   workflow_dispatch:
@@ -7,86 +7,41 @@ on:
       pfid: { description: 'pfid', required: true, type: boolean }
       pfth: { description: 'pfth', required: true, type: boolean }
       pfph: { description: 'pfph', required: true, type: boolean }
-      pfsg: { description: 'pfsg', required: true, type: boolean }
-      pfhk: { description: 'pfhk', required: true, type: boolean }
-      pfau: { description: 'pfau', required: true, type: boolean }
-      pfbp: { description: 'pfbp', required: true, type: boolean }
-      omau: { description: 'omau', required: true, type: boolean }
-      pfgb: { description: 'pfgb', required: true, type: boolean }
-      pffi: { description: 'pffi', required: true, type: boolean }
-      pfpt: { description: 'pfpt', required: true, type: boolean }
-      pfes: { description: 'pfes', required: true, type: boolean }
-      pffr: { description: 'pffr', required: true, type: boolean }
-      pfde: { description: 'pfde', required: true, type: boolean }
-      pfch: { description: 'pfch', required: true, type: boolean }
-      pfit: { description: 'pfit', required: true, type: boolean }
-      omca: { description: 'omca', required: true, type: boolean }
-      pfca: { description: 'pfca', required: true, type: boolean }
-      pfco: { description: 'pfco', required: true, type: boolean }
-      pfpr: { description: 'pfpr', required: true, type: boolean }
-      pfcl: { description: 'pfcl', required: true, type: boolean }
-      pfbr: { description: 'pfbr', required: true, type: boolean }
-      pfmx: { description: 'pfmx', required: true, type: boolean }
-      pfxu: { description: 'pfxu', required: true, type: boolean }
-      pfus: { description: 'pfus', required: true, type: boolean }
 
 jobs:
   kill_and_restart:
     runs-on: ubuntu-latest
     steps:
-      - name: Run SSH actions for selected environments
+      - name: Run PAT restart for selected environments
+        env:
+          PFNZ: ${{ github.event.inputs.pfnz }}
+          PFID: ${{ github.event.inputs.pfid }}
+          PFTH: ${{ github.event.inputs.pfth }}
+          PFPH: ${{ github.event.inputs.pfph }}
         run: |
           declare -A CONFIGS=(
             [pfnz]="pfnzsup3|daylnxcpsp023|8152"
             [pfid]="pfidsup3|daylnxcpsp023|8159"
             [pfth]="pfthsup3|daylnxcpsp023|8161"
             [pfph]="pfphsup3|daylnxcpsp023|8160"
-            [pfsg]="pfsgsup3|daylnxcpsp023|8162"
-            [pfhk]="pfhksup3|daylnxcpsp023|8163"
-            [pfau]="pfausup3|daylnxcpsp023|8174"
-            [pfbp]="pfbpsup3|daylnxcpsp023|8175"
-            [omau]="omausup3|daylnxcpsp023|8176"
-            [pfgb]="pfgbsup3|daylnxcpsp022|8153"
-            [pffi]="pffisup3|daylnxcpsp022|8154"
-            [pfpt]="pfptsup3|daylnxcpsp022|8168"
-            [pfes]="pfessup3|daylnxcpsp022|8169"
-            [pffr]="pffrsup3|daylnxcpsp022|8170"
-            [pfde]="pfdesup3|daylnxcpsp022|8171"
-            [pfch]="pfchsup3|daylnxcpsp022|8172"
-            [pfit]="pfitsup3|daylnxcpsp022|8173"
-            [omca]="omcasup3|daylnxcpsp014|8151"
-            [pfca]="pfcasup3|daylnxcpsp014|8150"
-            [pfco]="pfcosup3|daylnxcpsp014|8155"
-            [pfpr]="pfprsup3|daylnxcpsp014|8156"
-            [pfcl]="pfclsup3|daylnxcpsp014|8157"
-            [pfbr]="pfbrsup3|daylnxcpsp014|8158"
-            [pfmx]="pfmxsup3|daylnxcpsp014|8164"
-            [pfxu]="pfxusup3|daylnxcpsp014|8165"
-            [pfus]="pfussup3|daylnxcpsp014|8166"
           )
 
-          SELECTED_ENVS=()
+          for ENV in "${!CONFIGS[@]}"; do
+            VAR_NAME=$(echo "$ENV" | tr '[:lower:]' '[:upper:]')
+            if [[ "${!VAR_NAME}" == "true" ]]; then
+              IFS='|' read -r ADMINUSER SERVER PORT <<< "${CONFIGS[$ENV]}"
 
-          for env in "${!CONFIGS[@]}"; do
-            input_var_name=$(echo "$env" | tr '[:lower:]' '[:upper:]')
-            if [ "${{ github.event.inputs[env] }}" = "true" ]; then
-              SELECTED_ENVS+=("$env")
-            fi
-          done
-
-          echo "Processing selected environments: ${SELECTED_ENVS[*]}"
-
-          for env in "${SELECTED_ENVS[@]}"; do
-            IFS='|' read -r adminuser server port <<< "${CONFIGS[$env]}"
-            echo "Running on $env -> $adminuser@$server:$port"
-
-            ssh -o StrictHostKeyChecking=no ${adminuser}@${server}.enterprisenet.org <<EOF
-              pid=\$(lsof -i :${port} -sTCP:LISTEN -t)
-              if [ -n "\$pid" ]; then
-                kill -9 \$pid
-              fi
-              cd /${env}/bin || exit 1
-              nohup ./startPATservice_${env}.sh > /dev/null 2>&1 &
+              ssh -o StrictHostKeyChecking=no ${ADMINUSER}@${SERVER}.enterprisenet.org <<EOF
+                pid=\$(lsof -i :${PORT} -sTCP:LISTEN -t)
+                if [ -n "\$pid" ]; then
+                  kill -9 \$pid
+                  status=\$?
+                  if [ \$status -ne 0 ]; then
+                    exit 1
+                  fi
+                fi
+                cd /${ENV}/bin || echo "Directory not found"
+                nohup ./startPATservice_${ENV}.sh > /dev/null 2>&1 &
 EOF
-
+            fi
           done
