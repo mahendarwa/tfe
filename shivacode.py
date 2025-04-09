@@ -8,9 +8,9 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      TD_HOST: HSTNTDDEV.HealthSpring.Inside
-      TD_USER: SVP_TDM_SVC_PROD_ROLE
-      TD_PASSWORD: yWSvEJ72mwbgVdUL
+      TERADATA_HOST: HSTNTDDEV.HealthSpring.Inside
+      TERADATA_USER: SVP_TDM_SVC_PROD_ROLE
+      TERADATA_PASSWORD: yWSvEJ72mwbgVdUL
       PACKAGE_FILE: odms-teradata-release.tgz
       BUILD_VERSION: v1.0.${{ github.run_number }}-${{ github.sha }}
 
@@ -27,20 +27,24 @@ jobs:
         run: |
           mkdir teradata_deploy
           tar -xzf $PACKAGE_FILE -C teradata_deploy
+          echo "📂 Extracted content:"
           find teradata_deploy
 
-      - name: Install teradatasql (Python CLI)
-        run: |
-          pip install teradatasql
+      - name: Install teradatasql (Python client)
+        run: pip install teradatasql
 
-      - name: Deploy SQL via teradatasql
+      - name: Run SQL files against Teradata
         run: |
-          echo "import os, glob
+          echo "🚀 Connecting to Teradata and executing .sql files..."
+          python3 <<EOF
+import os, glob
 import teradatasql
 
-conn = teradatasql.connect(host=os.environ['TD_HOST'],
-                           user=os.environ['TD_USER'],
-                           password=os.environ['TD_PASSWORD'])
+conn = teradatasql.connect(
+  host=os.environ['TERADATA_HOST'],
+  user=os.environ['TERADATA_USER'],
+  password=os.environ['TERADATA_PASSWORD']
+)
 
 cursor = conn.cursor()
 sql_files = glob.glob('teradata_deploy/src/**/*.sql', recursive=True)
@@ -57,9 +61,8 @@ for sql_file in sql_files:
             exit(1)
 
 conn.close()
-" > deploy.py
-
-          python3 deploy.py
+print("🎉 All SQL files executed successfully.")
+EOF
 
       - name: Done
-        run: echo "🎉 Deployment complete"
+        run: echo "✅ Deployment workflow completed"
