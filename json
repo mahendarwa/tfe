@@ -1,13 +1,8 @@
+As part of a recent non-compliance report, we have identified several IAM roles that have not been used for over 180 days and appear to be inactive.
+An Excel sheet is attached with the full list of impacted roles. Each team can refer to the "xxx" column to identify and review the roles relevant to them.
 
-Confirmation Required: Unused IAM Roles Identified for Potential Deletion
+Please review the roles under your respective ITEAM and let us know:
+If any of these roles are still required, we will retain them as-is.
+If they are no longer in use, kindly confirm so we can proceed with safe deletion.
 
-
-As part of our regular review of IAM resources, we have identified the following IAM roles that have not been used for over 180 days. These roles are linked to the athena service and appear to be inactive:
-
-
-Please review these roles and let us know:
-If these are still required, we will retain them as-is.
-If these are no longer in use, kindly confirm so we can proceed with safe deletion.
-
-
-Let us know your feedback as soon as possible
+Kindly share your feedback as soon as possible to help us move forward with cleanup.
