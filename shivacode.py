@@ -1,21 +1,21 @@
-name: Build & Deploy Teradata Package (DEV)
+name: Build & Deploy Teradata via Python
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     env:
-      TERADATA_HOST: HSTNTDDEV.HealthSpring.Inside
-      TERADATA_USER: SVP_TDM_SVC_PROD_ROLE
-      TERADATA_PASSWORD: yWSvEJ72mwbgVdUL
+      TD_HOST: HSTNTDDEV.HealthSpring.Inside
+      TD_USER: SVP_TDM_SVC_PROD_ROLE
+      TD_PASSWORD: yWSvEJ72mwbgVdUL
       PACKAGE_FILE: odms-teradata-release.tgz
       BUILD_VERSION: v1.0.${{ github.run_number }}-${{ github.sha }}
 
     steps:
-      - name: Checkout source
+      - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Build Teradata Package
@@ -27,29 +27,39 @@ jobs:
         run: |
           mkdir teradata_deploy
           tar -xzf $PACKAGE_FILE -C teradata_deploy
-          echo "Extracted contents:"
           find teradata_deploy
 
-      - name: Install Teradata CLI tools (bteq)
+      - name: Install teradatasql (Python CLI)
         run: |
-          sudo apt-get update
-          sudo apt-get install -y wget alien
-          wget https://downloads.teradata.com/download/cdn/tools/TeradataToolsAndUtilitiesBase__ubuntu16__x86_64.deb
-          sudo apt install ./TeradataToolsAndUtilitiesBase__ubuntu16__x86_64.deb || true
-          sudo apt-get install -y bteq || true
-          which bteq || echo " bteq not found — check Teradata CLI availability"
+          pip install teradatasql
 
-      - name: Deploy SQL files to Teradata
+      - name: Deploy SQL via teradatasql
         run: |
-          echo "🚀 Starting SQL deployment to $TERADATA_HOST ..."
-          for sql in $(find teradata_deploy/src -name '*.sql'); do
-            echo " Running: $sql"
-            bteq <<EOF
-.logon ${TERADATA_HOST}/${TERADATA_USER},${TERADATA_PASSWORD};
-.run file = "$sql";
-.quit;
-EOF
-          done
+          echo "import os, glob
+import teradatasql
 
-      - name: Deployment completed
-        run: echo "🎉 Teradata deployment completed for version ${BUILD_VERSION}"
+conn = teradatasql.connect(host=os.environ['TD_HOST'],
+                           user=os.environ['TD_USER'],
+                           password=os.environ['TD_PASSWORD'])
+
+cursor = conn.cursor()
+sql_files = glob.glob('teradata_deploy/src/**/*.sql', recursive=True)
+
+for sql_file in sql_files:
+    print(f'▶️ Executing: {sql_file}')
+    with open(sql_file, 'r') as f:
+        sql = f.read()
+        try:
+            cursor.execute(sql)
+            print(f'✅ Success: {sql_file}')
+        except Exception as e:
+            print(f'❌ Failed: {sql_file} — {e}')
+            exit(1)
+
+conn.close()
+" > deploy.py
+
+          python3 deploy.py
+
+      - name: Done
+        run: echo "🎉 Deployment complete"
