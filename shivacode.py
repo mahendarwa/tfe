@@ -1,62 +1,55 @@
-#!/bin/bash
+name: Build & Deploy Teradata Package (DEV)
 
-set -e
+on:
+  workflow_dispatch:
 
-BUILD="$1"
-WORKSPACE=$(pwd)
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
 
-echo "Reading update.xml"
-updatexmlresults=$(cat ./Teradata/src/update.xml)
-folders=$(ls -d ./Teradata/src/*/)
-deployfiles=()
+    env:
+      TERADATA_HOST: HSTNTDDEV.HealthSpring.Inside
+      TERADATA_USER: SVP_TDM_SVC_PROD_ROLE
+      TERADATA_PASSWORD: yWSvEJ72mwbgVdUL
+      PACKAGE_FILE: odms-teradata-release.tgz
+      BUILD_VERSION: v1.0.${{ github.run_number }}-${{ github.sha }}
 
-while IFS= read -r line; do
-  if [[ "$line" == *"<include"* ]]; then
-    deployfile=$(echo "$line" | sed -e "s/.*file=//g" -e "s/[\"']//g" -e "s/>.*//g" -e "s/relativeToChangelogFile=true//g" | tr -d '<>/')
-    deployfiles+=("$deployfile")
-  fi
-done <<< "$updatexmlresults"
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
 
-rm -rf "${WORKSPACE}/PACKAGE"
-for folder in $folders; do
-  foldername=$(basename "$folder")
-  mkdir -p "${WORKSPACE}/PACKAGE/src/${foldername}"
-done
+      - name: Build Teradata Package
+        run: |
+          chmod +x build_teradata_package.sh
+          ./build_teradata_package.sh
 
-cp ./Teradata/pom.xml "${WORKSPACE}/PACKAGE/pom.xml"
-cp ./Teradata/src/update.xml "${WORKSPACE}/PACKAGE/src/update.xml"
+      - name: Extract build package
+        run: |
+          mkdir teradata_deploy
+          tar -xzf $PACKAGE_FILE -C teradata_deploy
+          echo "Extracted contents:"
+          find teradata_deploy
 
-echo "Total include files: ${#deployfiles[@]}"
+      - name: Install Teradata CLI tools (bteq)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget alien
+          wget https://downloads.teradata.com/download/cdn/tools/TeradataToolsAndUtilitiesBase__ubuntu16__x86_64.deb
+          sudo apt install ./TeradataToolsAndUtilitiesBase__ubuntu16__x86_64.deb || true
+          sudo apt-get install -y bteq || true
+          which bteq || echo " bteq not found — check Teradata CLI availability"
 
-for file in "${deployfiles[@]}"; do
-  if [[ "$file" != *"REPLACE WITH"* ]]; then
-    dir=$(dirname "$file")
-    mkdir -p "${WORKSPACE}/PACKAGE/src/${dir}"
-    cp "./Teradata/src/${file}" "${WORKSPACE}/PACKAGE/src/${file}"
-  else
-    echo "Error: update.xml contains invalid file path: $file"
-    exit 1
-  fi
-done
+      - name: Deploy SQL files to Teradata
+        run: |
+          echo "🚀 Starting SQL deployment to $TERADATA_HOST ..."
+          for sql in $(find teradata_deploy/src -name '*.sql'); do
+            echo " Running: $sql"
+            bteq <<EOF
+.logon ${TERADATA_HOST}/${TERADATA_USER},${TERADATA_PASSWORD};
+.run file = "$sql";
+.quit;
+EOF
+          done
 
-if grep -q -E "(PROC|Views)" <<< "${deployfiles[*]}"; then
-  mkdir -p "${WORKSPACE}/PACKAGE/src/PVS"
-  cp ./Teradata/src/PVS/pvs.sql "${WORKSPACE}/PACKAGE/src/PVS/pvs.sql"
-fi
-
-cp ./TD_INFA_CONTROL_FILE.Properties "${WORKSPACE}/PACKAGE/src/TD_INFA_CONTROL_FILE.Properties"
-
-tar --exclude='.git' -czvf odms-teradata-release.tgz -C "${WORKSPACE}/PACKAGE" .
-
-mvn -s /opt/jenkins/tools/apache-maven-3.3.9/conf/settings_https_artifactory.xml \
-  -Durl=${ARTIFACTORY_URL} \
-  -DgeneratePom=true \
-  -Dfile=./odms-teradata-release.tgz \
-  -DgroupId=com.cigna.healthspring.teradata \
-  -DrepositoryId=Release \
-  -Dversion=${BUILD} \
-  -DartifactId=odms-teradata-release \
-  deploy:deploy-file || echo "Ignore mvn exit code"
-
-echo "Build uploaded: ${BUILD}"
-echo "${ARTIFACTORY_URL}/com/cigna/healthspring/teradata/odms-teradata-release/${BUILD}"
+      - name: Deployment completed
+        run: echo "🎉 Teradata deployment completed for version ${BUILD_VERSION}"
