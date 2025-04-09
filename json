@@ -1,0 +1,13 @@
+
+Confirmation Required: Unused IAM Roles Identified for Potential Deletion
+
+
+As part of our regular review of IAM resources, we have identified the following IAM roles that have not been used for over 180 days. These roles are linked to the athena service and appear to be inactive:
+
+
+Please review these roles and let us know:
+If these are still required, we will retain them as-is.
+If these are no longer in use, kindly confirm so we can proceed with safe deletion.
+
+
+Let us know your feedback as soon as possible
