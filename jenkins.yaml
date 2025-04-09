@@ -1,40 +1,33 @@
-name: Merge Feature Branch to Develop
-
-on:
-  push:
-    branches:
-      - feature/test-develop
-
-permissions:
-  contents: write
-  pull-requests: write
-
-jobs:
-  merge-to-develop:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Configure Git
-        run: |
-          git config --global user.email "balaji.seetharman@cignahealthcare.com"
-          git config --global user.name "C8X6K9_Zilver"
-
-      - name: Create Pull Request
-        id: create_pr
-        uses: peter-evans/create-pull-request@v5
-        with:
-          base: develop
-          branch: feature/test-develop
-          title: "Auto Merge feature/test-develop into develop"
-          body: "This PR was created automatically via GitHub Actions."
-          labels: automated-merge
-          draft: false
-
-      - name: Auto-Merge Pull Request
-        if: steps.create_pr.outputs.pull-request-number
-        run: |
-          gh pr merge ${{ steps.create_pr.outputs.pull-request-number }} --squash --auto
+      - name: Kill and Restart PAT Service
         env:
-          GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+          ADMINUSER: ${{ steps.map.outputs.adminuser }}
+          SERVER: ${{ steps.map.outputs.server }}
+          PORT: ${{ steps.map.outputs.port }}
+          ENVNAME: ${{ github.event.inputs.prod_envi }}
+        run: |
+          echo "Resolved values:"
+          echo "ADMINUSER=$ADMINUSER"
+          echo "SERVER=$SERVER"
+          echo "PORT=$PORT"
+          echo "ENVNAME=$ENVNAME"
+
+          if [ -z "$PORT" ]; then
+            echo "PORT is not set. Exiting..."
+            exit 1
+          fi
+
+          ssh -o StrictHostKeyChecking=no "$ADMINUSER@$SERVER.enterprisenet.org" bash <<EOSSH
+          echo "Checking for process on port $PORT..."
+          pid=\$(lsof -i :$PORT -sTCP:LISTEN -t)
+          if [ -n "\$pid" ]; then
+            echo "Found PID \$pid, killing..."
+            kill -9 \$pid || exit 1
+            echo "Killed PID \$pid successfully"
+          else
+            echo "No process found on port $PORT"
+          fi
+          
+          cd /$ENVNAME/bin || echo "Directory not found"
+          nohup ./startPATservice_$ENVNAME.sh > /dev/null 2>&1 &
+          echo "Service restarted"
+          EOSSH
