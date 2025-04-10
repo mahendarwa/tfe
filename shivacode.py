@@ -11,6 +11,8 @@ jobs:
       TERADATA_HOST: HSTNTDDEV.HealthSpring.Inside
       TERADATA_USER: SVP_TDM_SVC_PROD_ROLE
       TERADATA_PASSWORD: yWSvEJ72mwbgVdUL
+      # Optional: uncomment if your Teradata requires this
+      # TERADATA_ACCOUNT: ACCOUNT123
       PACKAGE_FILE: odms-teradata-release.tgz
       BUILD_VERSION: v1.0.${{ github.run_number }}-${{ github.sha }}
 
@@ -40,9 +42,19 @@ jobs:
 import os, glob
 import teradatasql
 
+# Debug print to verify passed credentials
+print("🔍 Verifying connection values...")
+print(f"HOST = {os.environ['TERADATA_HOST']}")
+print(f"USER = {os.environ['TERADATA_USER']}")
+print(f"PASS LEN = {len(os.environ['TERADATA_PASSWORD'])} characters")
+
+# Optional: If account string is needed, append after username
+# user_str = f"{os.environ['TERADATA_USER']},{os.environ['TERADATA_ACCOUNT']}"
+user_str = os.environ['TERADATA_USER']
+
 conn = teradatasql.connect(
   host=os.environ['TERADATA_HOST'],
-  user=os.environ['TERADATA_USER'],
+  user=user_str,
   password=os.environ['TERADATA_PASSWORD']
 )
 
