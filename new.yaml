@@ -1,14 +1,7 @@
-package wiz
-
-default result = "pass"
-
 deny[reason] {
   input.type == "CONTAINER_REGISTRY"
+  input.properties.hasIAMAccessFromExternalSubscription != null
   some perm
   perm := input.properties.hasIAMAccessFromExternalSubscription[_]
   reason := sprintf("GAR is externally accessible with '%s' permission", [perm])
-}
-
-result := "fail" {
-  deny[_]
 }
