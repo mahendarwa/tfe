@@ -1,14 +1,17 @@
-- name: Validate Actor
-  run: |
-    echo "GitHub actor: '${{ github.actor }}'"
-    IFS=',' read -ra USERS <<< "${{ vars.USERS }}"
-    for u in "${USERS[@]}"; do
-      CLEAN_USER=$(echo "$u" | xargs)  # Trim spaces
-      echo "Comparing: CLEAN_USER='$CLEAN_USER' vs github.actor='${{ github.actor }}'"
-      if [[ "$CLEAN_USER" == "${{ github.actor }}" ]]; then
-        echo "✅ Authorized actor: $CLEAN_USER"
-        exit 0
-      fi
-    done
-    echo "❌ Unauthorized actor: ${{ github.actor }}"
-    exit 1
+
+jobs:
+  validate-actor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print GitHub Actor
+        run: echo "GitHub actor: '${{ github.actor }}'"
+
+      - name: Validate Actor
+        run: |
+          echo "🧾 Comparing: input.user='${{ github.event.inputs.user }}' vs actor='${{ github.actor }}'"
+          if [ "${{ github.event.inputs.user }}" != "${{ github.actor }}" ]; then
+            echo "❌ Unauthorized actor: ${{ github.actor }}"
+            exit 1
+          else
+            echo "✅ Authorized actor: ${{ github.actor }}"
+          fi
