@@ -1,16 +1,12 @@
-jobs:
-  validate-actor:
-    runs-on: self-hosted
-    steps:
-      - name: Validate Actor
-        run: |
-          IFS=',' read -ra USERS <<< "${{ vars.USERS }}"
-          for u in "${USERS[@]}"; do
-            CLEAN_USER=$(echo "$u" | xargs)  # Trim spaces
-            if [[ "${{ github.actor }}" == "$CLEAN_USER" ]]; then
-              echo "Authorized actor: $CLEAN_USER"
-              exit 0
-            fi
-          done
-          echo "Unauthorized actor: ${{ github.actor }}"
-          exit 1
+- name: Validate Actor
+  run: |
+    IFS=',' read -ra USERS <<< "${{ vars.USERS }}"
+    for u in "${USERS[@]}"; do
+      CLEAN_USER=$(echo "$u" | xargs)  # Trim spaces
+      if [[ "${{ github.actor }}" == "$CLEAN_USER" ]]; then
+        echo "Authorized actor: $CLEAN_USER"
+        exit 0
+      fi
+    done
+    echo "Unauthorized actor: ${{ github.actor }}"
+    exit 1
