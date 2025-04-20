@@ -1,58 +1,7 @@
-name: Sync from Cigna Repo to Zilverton
-
-on:
-  schedule:
-    - cron: '0 0 * * *' # Runs once daily at midnight
-  workflow_dispatch:
-
-permissions:
-  contents: write
-  actions: write
 
 jobs:
-  sync:
-    runs-on: zilverton-private-x64-ubuntu
+  print-actor:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout Zilverton Repo
-        uses: actions/checkout@v2
-        with:
-          ref: main
-
-      - name: Backup Workflows Folder
-        run: |
-          mkdir backup
-          cp -R .github/workflows backup/
-
-      - name: Disable SSL verification for git
-        run: git config --global http."https://github.sys.cigna.com".sslVerify false
-
-      - name: Add Cigna Remote and Fetch
-        run: |
-          git remote add cigna https://${{ secrets.CIGNA_PAT }}@github.sys.cigna.com/cigna/GBS_DAE_Python_ETL.git
-          git fetch cigna
-
-      - name: Replace Zilverton main with Cigna master
-        run: |
-          git checkout main
-          git reset --hard cigna/master
-
-      - name: Restore Workflows Folder
-        run: |
-          mkdir -p .github/workflows
-          cp -R backup/workflows/* .github/workflows || true
-
-      - name: Configure Git Identity
-        run: |
-          git config --global user.name "GitHub Sync Bot"
-          git config --global user.email "syncbot@example.com"
-
-      - name: Commit Workflow Restoration
-        run: |
-          git add .github/workflows
-          git commit -m "Restore workflows after syncing from Cigna" || echo "No changes to commit"
-
-      - name: Push to Zilverton Repo
-        run: |
-          git remote remove origin || true
-          git remote add origin https://${{ secrets.GITHUB_TOEN }}@github.com/zilvertonz/GBS_DAE_Python_ETL.git
-          git push origin main --force
+      - name: Print GitHub Actor
+        run: echo "Triggered by: ${{ github.actor }}"
