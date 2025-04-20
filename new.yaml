@@ -16,7 +16,7 @@ jobs:
       - name: Checkout Zilverton Repo
         uses: actions/checkout@v2
         with:
-          ref: master
+          ref: main
 
       - name: Backup Workflows Folder
         run: |
@@ -31,9 +31,9 @@ jobs:
           git remote add cigna https://${{ secrets.CIGNA_PAT }}@github.sys.cigna.com/cigna/GBS_DAE_Python_ETL.git
           git fetch cigna
 
-      - name: Replace Zilverton master with Cigna master
+      - name: Replace Zilverton main with Cigna master
         run: |
-          git checkout master
+          git checkout main
           git reset --hard cigna/master
 
       - name: Restore Workflows Folder
@@ -55,4 +55,4 @@ jobs:
         run: |
           git remote remove origin || true
           git remote add origin https://${{ secrets.GITHUB_TOEN }}@github.com/zilvertonz/GBS_DAE_Python_ETL.git
-          git push origin master --force
+          git push origin main --force
