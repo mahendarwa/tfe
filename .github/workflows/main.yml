@@ -1,55 +1,37 @@
-name: Build & Deploy Teradata Package
+name: Print Actor
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-
+  validate-actor:
+    runs-on: qa14-runner
     env:
-      BUILD_VERSION: v1.0.${{ github.run_number }}-${{ github.sha }}
-      TERADATA_HOST: ${{ secrets.TD_HOST }}
-      TERADATA_USER: ${{ secrets.TD_USER }}
-      TERADATA_PASSWORD: ${{ secrets.TD_PASSWORD }}
-      PACKAGE_FILE: odms-teradata-release.tgz
-
+      USERS: ${{ vars.USERS }}
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
-
-      - name: Build Teradata Package
+      - name: Print GitHub Actor
         run: |
-          chmod +x build_teradata_package.sh
-          ./build_teradata_package.sh
+          echo "Triggered by: ${{ github.actor }}"
 
-      - name: Extract build package
+      - name: Check if actor is in USERS list
         run: |
-          mkdir teradata_deploy
-          tar -xzf $PACKAGE_FILE -C teradata_deploy
-          echo "✅ Extracted contents:"
-          find teradata_deploy
+          ACTOR="${{ github.actor }}"
+          USER_LIST="${USERS}"
+          echo "User list: $USER_LIST"
+          echo "Actor: $ACTOR"
 
-      - name: Install Teradata CLI tools (bteq)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget alien
-          wget https://downloads.teradata.com/download/cdn/tools/TeradataToolsAndUtilitiesBase__ubuntu16__x86_64.deb
-          sudo apt install ./TeradataToolsAndUtilitiesBase__ubuntu16__x86_64.deb || true
-          sudo apt-get install -y bteq || true
-          which bteq || echo " bteq not found — check Teradata CLI availability"
+          IFS=',' read -ra USERS_ARRAY <<< "$USER_LIST"
+          FOUND=false
+          for user in "${USERS_ARRAY[@]}"; do
+            if [[ "$user" == "$ACTOR" ]]; then
+              FOUND=true
+              break
+            fi
+          done
 
-      - name: Deploy SQL files to Teradata
-        run: |
-          echo " Starting SQL deployment..."
-          for sql in $(find teradata_deploy/src -name '*.sql'); do
-            echo "▶️ Running: $sql"
-            bteq <<EOF
-            .logon ${TERADATA_HOST}/${TERADATA_USER},${TERADATA_PASSWORD};
-            .run file = "$sql";
-            .quit;
-            EOF
-                      done
-
-      - name: Deployment completed
-        run: echo "🎉 Teradata deployment completed for version ${BUILD_VERSION}"
+          if [[ "$FOUND" == "true" ]]; then
+            echo "$ACTOR is authorized"
+          else
+            echo "$ACTOR is NOT authorized"
+            exit 1
+          fi
