@@ -1,7 +1,3 @@
-
-jobs:
-  print-actor:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Print GitHub Actor
-        run: echo "Triggered by: ${{ github.actor }}"
+scp pythondev@hdclappxp064:/usr/bin/bteq /tmp/
+sudo mv /tmp/bteq /usr/bin/
+sudo chmod +x /usr/bin/bteq
