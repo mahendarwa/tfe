@@ -1,11 +1,17 @@
-cd /tmp/teradata-ttu
+# Create a working directory
+mkdir -p ~/teradata-ttu && cd ~/teradata-ttu
 
-# List available RPMs to confirm what can be installed
-ls -lh *.rpm
+# Download the required RPMs
+wget https://downloads.teradata.com/download/cdn/ttu/17.20/linux/teradata-client/teradata-libs-17.20.15.00-1.noarch.rpm
+wget https://downloads.teradata.com/download/cdn/ttu/17.20/linux/teradata-client/tdicu-17.20.15.00-1.noarch.rpm
+wget https://downloads.teradata.com/download/cdn/ttu/17.20/linux/teradata-client/cliv2-17.20.15.00-1.noarch.rpm
+wget https://downloads.teradata.com/download/cdn/ttu/17.20/linux/teradata-client/bteq-17.20.15.00-1.noarch.rpm
 
-# Install all RPMs found in the current directory
+# Verify files
+ls -lh
+
+# Install all downloaded RPMs
 sudo dnf install ./*.rpm -y
-sudo dnf install ./teradata-libs-17.20.00.00-1.noarch.rpm \
-                 ./tdicu-17.20.00.00-1.noarch.rpm \
-                 ./cliv2-17.20.00.00-1.noarch.rpm \
-                 ./bteq-17.20.00.00-1.noarch.rpm -y
+
+# Test bteq
+bteq
