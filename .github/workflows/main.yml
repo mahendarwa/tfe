@@ -1,37 +1,23 @@
-name: Print Actor
+name: Delete Branch
 
 on:
   workflow_dispatch:
+    inputs:
+      branch_name:
+        description: 'Name of the branch to delete'
+        required: true
+        type: string
 
 jobs:
-  validate-actor:
-    runs-on: qa14-runner
-    env:
-      USERS: ${{ vars.USERS }}
+  delete_branch:
+    runs-on: ubuntu-latest
     steps:
-      - name: Print GitHub Actor
+      - name: Checkout default branch
+        uses: actions/checkout@v3
+
+      - name: Delete branch
         run: |
-          echo "Triggered by: ${{ github.actor }}"
-
-      - name: Check if actor is in USERS list
-        run: |
-          ACTOR="${{ github.actor }}"
-          USER_LIST="${USERS}"
-          echo "User list: $USER_LIST"
-          echo "Actor: $ACTOR"
-
-          IFS=',' read -ra USERS_ARRAY <<< "$USER_LIST"
-          FOUND=false
-          for user in "${USERS_ARRAY[@]}"; do
-            if [[ "$user" == "$ACTOR" ]]; then
-              FOUND=true
-              break
-            fi
-          done
-
-          if [[ "$FOUND" == "true" ]]; then
-            echo "$ACTOR is authorized"
-          else
-            echo "$ACTOR is NOT authorized"
-            exit 1
-          fi
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git fetch origin ${{ inputs.branch_name }}
+          git push origin --delete ${{ inputs.branch_name }}
