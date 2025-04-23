@@ -1,26 +1,32 @@
-name: Delete Branch
+name: Delete Branches
 
 on:
   workflow_dispatch:
     inputs:
       branch_name:
-        description: 'Name of the branch to delete'
+        description: 'Comma-separated branch names to delete (e.g., branch1,branch2)'
         required: true
         type: string
 
 jobs:
-  delete_branch:
+  delete_branches:
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-      - name: Delete branch using GitHub token
+      - name: Delete multiple branches using GitHub token
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_LIST: ${{ inputs.branch_name }}
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
           git clone https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} repo
           cd repo
-          git push origin --delete ${{ inputs.branch_name }}
+
+          IFS=',' read -ra BRANCHES <<< "$BRANCH_LIST"
+          for branch in "${BRANCHES[@]}"; do
+            echo "Deleting branch: $branch"
+            git push origin --delete "$branch" || echo "Failed to delete branch: $branch"
+          done
