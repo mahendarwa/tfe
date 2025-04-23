@@ -1,1 +1,1 @@
-sudo bash -c 'echo "<IP> HSTNTDDEV.healthspring.inside" >> /etc/hosts'
+scp -r /tmp/tt/teradata pythonprod@hdclappxp064:/tmp/
