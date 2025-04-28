@@ -1,29 +1,15 @@
-package gcp.firewall
+package firewall.deny_all
 
-default result = "pass"
+default compliant = false
 
-deny_reason[reason] {
-  input.kind == "compute#firewall"
-  input.direction == "EGRESS"
-  not input.disabled
-  input.destinationRanges[_] == "0.0.0.0/0"
-
-  some i
-  input.allowed[i].IPProtocol == "all"
-  reason := "Firewall rule allows all protocols to 0.0.0.0/0"
+compliant {
+    input.direction == "EGRESS"
+    input.denied[_].IPProtocol == "all"
+    input.destinationRanges[_] == "0.0.0.0/0"
 }
 
-deny_reason[reason] {
-  input.kind == "compute#firewall"
-  input.direction == "EGRESS"
-  not input.disabled
-  input.destinationRanges[_] == "0.0.0.0/0"
-
-  some i
-  input.allowed[i].ports[_] == "0-65535"
-  reason := "Firewall rule allows full port range to 0.0.0.0/0"
-}
-
-result := "fail" {
-  deny_reason[_]
+compliant {
+    input.direction == "INGRESS"
+    input.denied[_].IPProtocol == "all"
+    input.sourceRanges[_] == "0.0.0.0/0"
 }
