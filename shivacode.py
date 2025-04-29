@@ -10,7 +10,7 @@ Our Current Process/deployment:
   - wedsday: Second drop with regression testing.
   - Fridy: Final drop for confirmation before production.
   - All three drops happen as part of a fixed process, even if earlier ones are successful.
-- Production**: Deployed only after the full staging cycle is completed.
+- Production: Deployed only after the full staging cycle is completed.
 
 ---
 
