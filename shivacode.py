@@ -4,7 +4,7 @@ The matrix-based setup automatically deploys to all environments (development, s
 
 Our Current Process/deployment:
 
-- Development**: Frequent deployments with regular testing and fixes. It's an ongoing cycle, not a one-time pipeline.
+- Development-- Frequent deployments with regular testing and fixes. It's an ongoing cycle, not a one-time pipeline.
 - Staging:
   - Monday: First drop for initial testing.
   - wedsday: Second drop with regression testing.
