@@ -1,3 +1,2 @@
-scp pythondev@hdclappxp064:/usr/bin/bteq /tmp/
-sudo mv /tmp/bteq /usr/bin/
-sudo chmod +x /usr/bin/bteq
+  - select_data
+  - execute_view_script
