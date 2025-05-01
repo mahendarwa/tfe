@@ -1,2 +1,1 @@
-git remote set-url origin https://x-access-token:<your-token>@github.com/zilvertonz/GBS_DAE_Python_ETL.git
-git push origin feature-2025-05-01
+git remote set-url origin https://x-access-token:${{ secrets.MY_GITHUB_TOKEN }}@github.com/zilvertonz/GBS_DAE_Python_ETL.git
