@@ -1,34 +1,9 @@
-package wiz
+USE [RENUP_View];
 
-default result = "fail"
+DROP VIEW [RENUP_View].[dbo].[MEMB_COMPANY];
 
-disallowed_ranges := {"/0", "0.0.0.0", "0.0.0.0/0", "::/0"}
+SET ANSI_NULLS ON;
 
-has_disallowed_range {
-    some i, j
-    input.direction == "EGRESS"
-    input.destinationRanges[i] == disallowed_ranges[j]
-}
+SET QUOTED_IDENTIFIER ON;
 
-has_disallowed_range {
-    some i, j
-    input.direction == "INGRESS"
-    input.sourceRanges[i] == disallowed_ranges[j]
-}
-
-is_deny_all {
-    input.denied[_].IPProtocol == "all"
-}
-
-result = "pass" {
-    input.kind == "compute#firewall"
-    has_disallowed_range
-    is_deny_all
-}
-
-result = "pass" {
-    input.kind != "compute#firewall"
-}
-
-currentConfiguration := sprintf("Firewall rule '%s' missing DENY ALL on 0.0.0.0/0 for %s direction", [input.name, input.direction])
-expectedConfiguration := "A DENY ALL rule to 0.0.0.0/0 should be present for at least one direction (ingress or egress)"
+CREATE VIEW [dbo].[MEMB_COMPANY] AS SELECT * FROM [RENUP].[dbo].[MEMB_COMPANY];
