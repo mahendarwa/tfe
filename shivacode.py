@@ -1,8 +1,2 @@
-DROP VIEW [dbo].[MEMB_COMPANY];
-
-SET ANSI_NULLS ON;
-
-SET QUOTED_IDENTIFIER ON;
-
-CREATE VIEW [dbo].[MEMB_COMPANY] AS
-SELECT * FROM [RENUP].[dbo].[MEMB_COMPANY];
+git remote set-url origin https://x-access-token:<your-token>@github.com/zilvertonz/GBS_DAE_Python_ETL.git
+git push origin feature-2025-05-01
