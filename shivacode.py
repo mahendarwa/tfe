@@ -1,3 +1,1 @@
-git fetch origin
-git merge origin/develop --strategy=ours --no-edit --allow-unrelated-histories
-git push https://x-access-token:${{ secrets.MY_GITHUB_TOKEN }}@github.com/zilvertonz/GBS_DAE_Python_ETL.git HEAD:${Branch} --force
+sudo su -c 'curl -s https://packages.microsoft.com/config/rhel/7/prod.repo > /etc/yum.repos.d/msprod.repo && ACCEPT_EULA=Y yum install -y msodbcsql17'
