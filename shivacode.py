@@ -6,5 +6,5 @@
     git fetch origin develop
     git fetch origin ${Branch}
     git checkout -b develop origin/develop
-    git merge origin/${Branch} --strategy=theirs --no-edit --allow-unrelated-histories
+    git merge origin/${Branch} --strategy=ours --no-edit --allow-unrelated-histories
     git push https://x-access-token:${{ secrets.MY_GITHUB_TOKEN }}@github.com/zilvertonz/GBS_DAE_Python_ETL.git develop --force
