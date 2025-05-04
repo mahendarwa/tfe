@@ -3,8 +3,11 @@
     Branch=${{ github.event.inputs.feature_branch }}
     git config --global user.email "balaji.seetharaman@cignahealthcare.com"
     git config --global user.name "C8X6K9_Zilver"
-    git fetch origin develop
-    git fetch origin $Branch
-    git checkout develop || git checkout -t origin/develop
-    git merge origin/$Branch --strategy=ours --no-edit --allow-unrelated-histories
+    git fetch origin
+    git checkout develop
+    git reset --hard origin/develop
+    git merge origin/$Branch --no-edit --allow-unrelated-histories || true
+    git checkout --theirs .
+    git add .
+    git commit -m "Merge feature branch ($Branch) into develop, using theirs strategy"
     git push https://${{ secrets.MY_GITHUB_TOKEN }}@github.com/zilvertonz/GBS_DAE_Python_ETL.git develop --force
