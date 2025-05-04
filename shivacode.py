@@ -6,15 +6,15 @@ CREATE TABLE [dbo].[authservice_audit] (
     [sequence] int NOT NULL,
     [globaltemplate] char(1) NOT NULL,
     [operation] char(15) NOT NULL,
-    [op_columns] varbinary(256) NULL,
-    [op_date] datetime(2) NOT NULL,
+    [op_columns] varbinary(256) NOT NULL,
+    [op_date] datetime2(7) NOT NULL,
     [op_user] varchar(120) NULL,
     [op_app] varchar(512) NULL,
     [op_host] varchar(512) NULL,
     [codeid] char(15) NULL,
     [catid] char(15) NULL,
     [subcatid] char(15) NULL,
-    [svcgroupid] char(15) NULL,
+    [svcgrouid] char(15) NULL,
     [totalunits] int NULL,
     [actualunits] int NULL,
     [modcode] char(2) NULL,
@@ -41,8 +41,6 @@ CREATE TABLE [dbo].[authservice_audit] (
     [DosTo] smalldatetime NULL,
     [StatusOverride] char(1) NULL,
     [SvcFrequency] varchar(10) NULL
-)
-ON [PRIMARY]
-WITH (DATA_COMPRESSION = NONE);
+) WITH (DATA_COMPRESSION = NONE);
 
 ALTER TABLE [dbo].[authservice_audit] SET (LOCK_ESCALATION = TABLE);
