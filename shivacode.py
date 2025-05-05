@@ -1,46 +1,16 @@
-SET ANSI_NULLS ON;
-SET QUOTED_IDENTIFIER ON;
+- name: Merge Feature to Develop Branch
+  run: |
+    Branch=${{ github.event.inputs.feature_branch }}
+    git config --global user.email "balaji.seetharaman@cignahealthcare.com"
+    git config --global user.name "C8X6K9_Zilver"
 
-CREATE TABLE [dbo].[authservice_audit] (
-    [referralid] char(15) NOT NULL,
-    [sequence] int NOT NULL,
-    [globaltemplate] char(1) NOT NULL,
-    [operation] char(15) NOT NULL,
-    [op_columns] varbinary(256) NOT NULL,
-    [op_date] datetime2(7) NOT NULL,
-    [op_user] varchar(120) NULL,
-    [op_app] varchar(512) NULL,
-    [op_host] varchar(512) NULL,
-    [codeid] char(15) NULL,
-    [catid] char(15) NULL,
-    [subcatid] char(15) NULL,
-    [svcgrouid] char(15) NULL,
-    [totalunits] int NULL,
-    [actualunits] int NULL,
-    [modcode] char(2) NULL,
-    [modcode2] char(2) NULL,
-    [modcode3] char(2) NULL,
-    [modcode4] char(2) NULL,
-    [modcode5] char(2) NULL,
-    [negotiatedcontract] char(15) NULL,
-    [negotiatedterm] char(15) NULL,
-    [negotiatedvalue] money NULL,
-    [status] char(10) NULL,
-    [DeterminationDate] smalldatetime NULL,
-    [IcdVersion] char(1) NULL,
-    [PrinDiag] varchar(8) NULL,
-    [Diag1] char(2) NULL,
-    [Diag2] char(2) NULL,
-    [Diag3] char(2) NULL,
-    [Diag4] char(2) NULL,
-    [Diag5] char(2) NULL,
-    [Diag6] char(2) NULL,
-    [Diag7] char(2) NULL,
-    [Diag8] char(2) NULL,
-    [dosdate] smalldatetime NULL,
-    [DosTo] smalldatetime NULL,
-    [StatusOverride] char(1) NULL,
-    [SvcFrequency] varchar(10) NULL
-) WITH (DATA_COMPRESSION = NONE);
+    git fetch origin
+    git checkout develop
+    git reset --hard origin/develop
 
-ALTER TABLE [dbo].[authservice_audit] SET (LOCK_ESCALATION = TABLE);
+    git merge origin/$Branch --strategy=ours --no-edit --allow-unrelated-histories || true
+
+    git checkout $Branch -- .
+    git add .
+    git commit -m "Merge feature branch ($Branch) into develop, preferring feature changes"
+    git push https://x-access-token:${{ secrets.MY_GITHUB_TOKEN }}@github.com/zilvertonz/GBS_DAE_Python_ETL.git develop --force
