@@ -2,17 +2,20 @@ package wiz
 
 default result := "pass"
 
-is_nat_gateway := input.WizMetadata.nativeType == "compute#natGateway"
-
 result := "fail" {
-  is_nat_gateway
-  input.type != "PRIVATE"
+	input.properties.type == "artifactregistry#repository"
+	input.properties.hasIAMAccessFromOutsideOrganization
+	not input.properties.hasIAMAccessFromExternalSubscription
 }
 
 currentConfiguration := {
-  "type": input.type
+	"type": input.properties.type,
+	"hasIAMAccessFromOutsideOrganization": input.properties.hasIAMAccessFromOutsideOrganization,
+	"hasIAMAccessFromExternalSubscription": input.properties.hasIAMAccessFromExternalSubscription
 }
 
 expectedConfiguration := {
-  "type": "PRIVATE"
+	"type": "artifactregistry#repository",
+	"hasIAMAccessFromOutsideOrganization": false,
+	"hasIAMAccessFromExternalSubscription": true
 }
