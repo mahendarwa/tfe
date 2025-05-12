@@ -2,10 +2,17 @@ package wiz
 
 default result := "pass"
 
+is_nat_gateway := input.WizMetadata.nativeType == "compute#natGateway"
+
 result := "fail" {
-  input["kind"] == "compute#natGateway"
-  input["type"] != "PRIVATE"
+  is_nat_gateway
+  input.type != "PRIVATE"
 }
 
-currentConfiguration := sprintf("kind: %v, type: %v", [input.kind, input.type])
-expectedConfiguration := "kind: compute#natGateway, type: PRIVATE"
+currentConfiguration := {
+  "type": input.type
+}
+
+expectedConfiguration := {
+  "type": "PRIVATE"
+}
