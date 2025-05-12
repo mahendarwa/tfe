@@ -9,13 +9,11 @@ result := "fail" {
 }
 
 currentConfiguration := {
-	"type": input.properties.type,
 	"hasIAMAccessFromOutsideOrganization": input.properties.hasIAMAccessFromOutsideOrganization,
 	"hasIAMAccessFromExternalSubscription": input.properties.hasIAMAccessFromExternalSubscription
 }
 
 expectedConfiguration := {
-	"type": "artifactregistry#repository",
 	"hasIAMAccessFromOutsideOrganization": false,
 	"hasIAMAccessFromExternalSubscription": true
 }
