@@ -1,5 +1,1 @@
-result := "fail" {
-	input.properties.type == "artifactregistry#repository"
-	count(input.properties.hasIAMAccessFromOutsideOrganization) > 0
-	count(input.properties.hasIAMAccessFromExternalSubscription) == 0
-}
+ansible-playbook -i inventory.ini ansible/ping.yml -e 'ansible_remote_tmp=/tmp'
