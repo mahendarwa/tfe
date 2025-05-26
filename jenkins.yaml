@@ -1,5 +1,11 @@
-- name: Extract branch suffix
+- name: Clone external repo
   run: |
+    git clone https://x-access-token:${{ secrets.WORKFLOW_TOKEN }}@github.com/niq-enterprise/panel-pod-aks-deploy.git
+    cd panel-pod-aks-deploy
     BRANCH_NAME=${GITHUB_REF##*/}
     SUFFIX=${BRANCH_NAME#*/}
     echo "Branch suffix is: $SUFFIX"
+
+    cd deployment/aks/chart
+    sed -i "s/^tag: .*/tag: $SUFFIX/" usdev.values.yaml
+    ls
