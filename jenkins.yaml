@@ -1,3 +1,5 @@
-- name: Clone external repo
+- name: Extract branch suffix
   run: |
-    git clone https://x-access-token:${{ secrets.WORKFLOW_TOKEN }}@github.com/niq-enterprise/panel-pod-aks-deploy.git
+    BRANCH_NAME=${GITHUB_REF##*/}
+    SUFFIX=${BRANCH_NAME#*/}
+    echo "Branch suffix is: $SUFFIX"
