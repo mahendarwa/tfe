@@ -1,60 +1,28 @@
-name: Publish Teradata Package
+name: "Aggeng Build"
 
 on:
   workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag to apply to the latest commit'
+        required: false
+        type: string
 
 jobs:
-  build-and-publish:
-    runs-on: ubuntu-latest
-
-    env:
-      GITHUB_ACTOR: ${{ github.actor }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      PACKAGE_FILE: odms-teradata-release.tgz
-      GROUP_ID: com.zilvertonz.teradata
-      ARTIFACT_ID: odms-teradata-release
-      BUILD_VERSION: v1.0.${{ github.run_number }}-${{ github.sha }}
-
+  testing:
+    name: testing-git clone
+    runs-on: self-hosted
     steps:
-      - name: Checkout code
+      - name: Checkout current repo
         uses: actions/checkout@v4
 
-      - name: Build Teradata Package
+      - name: Clone external repo
         run: |
-          cp -rf GBS_DAE_OSS/* .
-          chmod +x build_teradata_package.sh
-          ./build_teradata_package.sh
-          echo "📦 Package created:"
-          ls -lh *.tgz
-
-      - name: Generate Maven settings.xml for GitHub authentication
-        run: |
-          cat <<EOF > settings.xml
-          <settings>
-            <servers>
-              <server>
-                <id>github</id>
-                <username>${GITHUB_ACTOR}</username>
-                <password>${GITHUB_TOKEN}</password>
-              </server>
-            </servers>
-          </settings>
-          EOF
-
-      - name: Publish package to GitHub Maven Package
-        run: |
-          echo "🚀 Publishing version: ${BUILD_VERSION}"
-          mvn -s settings.xml \
-            -Durl=https://maven.pkg.github.com/${{ github.repository }} \
-            -DrepositoryId=github \
-            -DgroupId=${GROUP_ID} \
-            -DartifactId=${ARTIFACT_ID} \
-            -Dversion=${BUILD_VERSION} \
-            -Dfile=${PACKAGE_FILE} \
-            -DgeneratePom=true \
-            deploy:deploy-file
-
-      - name: Confirm package deployment
-        run: |
-          echo "✅ Package uploaded:"
-          echo "https://github.com/${{ github.repository }}/packages"
+          git clone https://github.com/niq-enterprise/panel-pod-aks-deploy.git
+          cd panel-pod-aks-deploy
+          echo "test-change" >> dummy.txt  # replace with actual edit logic
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add dummy.txt
+          git commit -m "Auto commit from workflow"
+          git push https://x-access-token:${{ secrets.WORKFLOW_TOKEN }}@github.com/niq-enterprise/panel-pod-aks-deploy.git HEAD:main
