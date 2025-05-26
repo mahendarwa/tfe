@@ -1,1 +1,26 @@
-sed -i "s/^[[:space:]]*tag:[[:space:]]*.*/    tag: $SUFFIX/" usdev.values.yaml
+- name: Trigger Main Workflow in External Repository
+  uses: actions/github-script@v6
+  with:
+    github-token: ${{ secrets.WORKFLOW_TOKEN }}
+    script: |
+      const owner = "niq-enterprise";
+      const repo = "panel-pod-aks-deploy";
+      const workflow_id = "main.yml";
+      const ref = "main";
+
+      const branch = process.env.GITHUB_REF.replace("refs/heads/", "");
+      const suffix = branch.includes("/") ? branch.split("/")[1] : branch;
+
+      const inputs = {
+        releasename: "usdev-deploy",
+        releaseversion: suffix,
+        operation: "deploy"
+      };
+
+      await github.rest.actions.createWorkflowDispatch({
+        owner,
+        repo,
+        workflow_id,
+        ref,
+        inputs
+      });
