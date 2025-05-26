@@ -1,28 +1,3 @@
-name: "Aggeng Build"
-
-on:
-  workflow_dispatch:
-    inputs:
-      tag_name:
-        description: 'Tag to apply to the latest commit'
-        required: false
-        type: string
-
-jobs:
-  testing:
-    name: testing-git clone
-    runs-on: self-hosted
-    steps:
-      - name: Checkout current repo
-        uses: actions/checkout@v4
-
-      - name: Clone external repo
-        run: |
-          git clone https://github.com/niq-enterprise/panel-pod-aks-deploy.git
-          cd panel-pod-aks-deploy
-          echo "test-change" >> dummy.txt  # replace with actual edit logic
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add dummy.txt
-          git commit -m "Auto commit from workflow"
-          git push https://x-access-token:${{ secrets.WORKFLOW_TOKEN }}@github.com/niq-enterprise/panel-pod-aks-deploy.git HEAD:main
+- name: Clone external repo
+  run: |
+    git clone https://x-access-token:${{ secrets.WORKFLOW_TOKEN }}@github.com/niq-enterprise/panel-pod-aks-deploy.git
