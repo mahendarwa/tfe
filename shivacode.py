@@ -1,2 +1,6 @@
-currentConfiguration := sprintf("loadBalancingScheme: %v", [input.loadBalancingScheme])
-expectedConfiguration := "loadBalancingScheme must not be EXTERNAL or EXTERNAL_MANAGED"
+currentConfiguration := sprintf(
+  "canIpForward: %v, natIP: %v",
+  [input.canIpForward, input.networkInterfaces[_].accessConfigs[_].natIP]
+)
+
+expectedConfiguration := "VM must not have a public IP (natIP) and canIpForward must be false"
