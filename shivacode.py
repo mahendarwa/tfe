@@ -1,1 +1,2 @@
-ansible-playbook -i inventory.ini ansible/ping.yml -e 'ansible_remote_tmp=/tmp'
+currentConfiguration := sprintf("loadBalancingScheme: %v", [input.loadBalancingScheme])
+expectedConfiguration := "loadBalancingScheme must not be EXTERNAL or EXTERNAL_MANAGED"
