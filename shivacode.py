@@ -8,7 +8,12 @@
 
     cd GBS_DAE_OSS
     git fetch origin
+
     git checkout -b "$feature_branch"
+
+
+    git config pull.rebase false
+    git config pull.ff false
 
     git pull origin "$feature_branch" --allow-unrelated-histories
 
