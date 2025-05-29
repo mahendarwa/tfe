@@ -1,25 +1,27 @@
-- name: Configure Git
+- name: Create teradata module
   run: |
-    release_branch="${{ github.event.inputs.release_branch }}"
-    feature_branch="${{ github.event.inputs.feature_branch }}"
-
-    git config --global user.email "Basireddygari.Manvitha@cignahealthcare.com"
-    git config --global user.name "C8Z3Q5_Zilver"
+    set -e
+    set -x
 
     cd GBS_DAE_OSS
     git fetch origin
 
-    git checkout -b "$feature_branch"
+    if git ls-remote --exit-code --heads origin "$feature_branch"; then
+      git checkout "$feature_branch"
 
-    git config pull.rebase false
-    git config pull.ff false
+      git config pull.rebase false
+      git config pull.ff false
 
-    git pull origin "$feature_branch" --allow-unrelated-histories || {
-      echo "⚠️ Merge conflict detected. Resolving by preferring incoming branch (theirs)..."
-      git checkout --theirs .
-      git add .
-      git commit -m "🔧 Auto-resolved merge conflicts using remote branch (theirs)"
-    }
 
-    echo "feature_branch=$feature_branch" >> $GITHUB_ENV
-    echo "release_branch=$release_branch" >> $GITHUB_ENV
+      git pull origin "$feature_branch" --allow-unrelated-histories || {
+        echo "⚠️ Merge conflict detected. Auto-resolving using remote branch..."
+        git checkout --theirs .
+        git add .
+        git commit -m "🔧 Auto-resolved merge conflicts using remote branch (theirs)"
+      }
+    else
+      echo "❌ Branch $feature_branch not found in remote."
+      exit 1
+    fi
+
+    ls -l
