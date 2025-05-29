@@ -8,14 +8,18 @@
 
     cd GBS_DAE_OSS
     git fetch origin
-
     git checkout -b "$feature_branch"
-
 
     git config pull.rebase false
     git config pull.ff false
 
-    git pull origin "$feature_branch" --allow-unrelated-histories
+
+    git pull origin "$feature_branch" --allow-unrelated-histories || {
+      echo "Conflict detected, resolving using incoming branch (theirs)..."
+      git checkout --theirs .
+      git add .
+      git commit -m "Auto-resolved merge conflicts using incoming branch"
+    }
 
     echo "feature_branch=$feature_branch" >> $GITHUB_ENV
     echo "release_branch=$release_branch" >> $GITHUB_ENV
