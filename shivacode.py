@@ -27,7 +27,7 @@ if not sql_files:
 
 print("✅ SQLs to execute:")
 for f in sql_files:
-    print(f"  - {f}")
+    print(f" - {f}")
 
 try:
     with teradatasql.connect(host=host, user=user, password=pwd) as conn:
@@ -42,12 +42,21 @@ try:
             with open(full_path, "r") as f:
                 sql = f.read()
 
-            # Replace all env placeholders
+            # Debug log raw SQL
+            print("📄 Final SQL:")
+            print(sql)
+
+            # Clean up Liquibase formatting & comments
+            sql = "\n".join([
+                line for line in sql.splitlines()
+                if not line.strip().startswith("--liquibase")
+                and not line.strip().startswith("--changeset")
+                and not line.strip().startswith("--")
+            ])
+
             sql = sql.replace("${env.id.upper}", env_id.upper())
             sql = sql.replace("${env.id.lower}", env_id.lower())
             sql = sql.replace("${env.id}", env_id)
-
-            print("📄 Final SQL:\n", sql)  # Debugging
 
             try:
                 with conn.cursor() as cur:
@@ -56,7 +65,13 @@ try:
             except Exception as e:
                 print(f"❌ SQL Error in {sql_file}:\n{e}")
                 exit(1)
-
 except Exception as e:
     print(f"❌ Connection failed:\n{e}")
     exit(1)
+
+
+
+
+- name: Run Python script
+  run: python3 execute.py
+  shell: bash
