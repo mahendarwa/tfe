@@ -2,10 +2,10 @@ import os
 import xml.etree.ElementTree as ET
 import teradatasql
 
-host = os.environ.get("TERADATA_HOST")
-user = os.environ.get("TERADATA_USER")
-pwd = os.environ.get("TERADATA_PASSWORD")
-env_id = os.environ.get("ENV_ID", "DEV")
+host = os.getenv("TERADATA_HOST")
+user = os.getenv("TERADATA_USER")
+pwd = os.getenv("TERADATA_PASSWORD")
+env_id = os.getenv("ENV_ID", "DEV")
 
 if not host or not user or not pwd:
     print("❌ Missing TERADATA_HOST, USER, or PASSWORD.")
@@ -27,7 +27,7 @@ if not sql_files:
 
 print("✅ SQLs to execute:")
 for f in sql_files:
-    print(f" - {f}")
+    print(f"  - {f}")
 
 try:
     with teradatasql.connect(host=host, user=user, password=pwd) as conn:
@@ -42,10 +42,12 @@ try:
             with open(full_path, "r") as f:
                 sql = f.read()
 
-            # Replace tokens
+            # Replace all env placeholders
             sql = sql.replace("${env.id.upper}", env_id.upper())
             sql = sql.replace("${env.id.lower}", env_id.lower())
             sql = sql.replace("${env.id}", env_id)
+
+            print("📄 Final SQL:\n", sql)  # Debugging
 
             try:
                 with conn.cursor() as cur:
@@ -54,6 +56,7 @@ try:
             except Exception as e:
                 print(f"❌ SQL Error in {sql_file}:\n{e}")
                 exit(1)
+
 except Exception as e:
     print(f"❌ Connection failed:\n{e}")
     exit(1)
