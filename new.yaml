@@ -1,2 +1,10 @@
-  - select_data
-  - execute_view_script
+- name: 📦 Install dependencies
+  run: pip install teradatasql
+
+- name: 🧪 Execute SQLs from update.xml
+  run: python3 execute.py
+  env:
+    TERADATA_HOST: ${{ secrets.TERADATA_HOST }}
+    TERADATA_USER: ${{ secrets.TERADATA_USER }}
+    TERADATA_PASSWORD: ${{ secrets.TERADATA_PASSWORD }}
+    ENV_ID: DEV # or set dynamically via earlier step
