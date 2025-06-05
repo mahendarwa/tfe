@@ -40,12 +40,20 @@ sql = re.sub(r"\$\{env\.id\.upper\}", env_id.upper(), sql)
 print("📄 Final SQL:")
 print(sql)
 
-# Connect and execute
+# Connect and execute each statement
 try:
     with teradatasql.connect(host=host, user=user, password=pwd) as conn:
-        with conn.cursor() as cur:
-            cur.execute(sql)
-            print("✅ SQL executed successfully.")
+        for statement in sql.split(";"):
+            statement = statement.strip()
+            if not statement:
+                continue
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(statement)
+                    print(f"✅ Executed:\n{statement}\n")
+            except Exception as e:
+                print(f"❌ SQL Error:\n{statement}\n{e}")
+                exit(1)
 except Exception as e:
-    print(f"❌ Execution failed:\n{e}")
+    print(f"❌ Connection failed:\n{e}")
     exit(1)
