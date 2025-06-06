@@ -1,218 +1,118 @@
-name: AKS Deploy
+- name: Trigger Main Workflow in External Repository and Monitor Result
+  uses: actions/github-script@v6
+  with:
+    github-token: ${{ secrets.WORKFLOW_TOKEN }}
+    script: |
+      const owner = "niq-enterprise";
+      const repo = "panel-pod-aks-deploy";
+      const workflow_id = "main.yml";
+      const ref = "feature/jun05";
 
-on:
-  workflow_dispatch:
-    inputs:
-      releasename:
-        description: 'Select the Environment'
-        required: true
-        type: choice
-        options:
-          - usdev-deploy
-          - usqa-deploy
-          - uat-deploy
-          - ushotfix-deploy
-          - euperf-deploy
-          - usprod-deploy
-          - euprod-deploy
-          - calatam-deploy
-          - apac-deploy
-      releaseversion:
-        description: 'Chart version' 
-        required: true
-        type: string
-      operation:
-        description: 'Operation to be carried out using deployment tool'
-        required: true
-        type: choice
-        options:
-          - deploy
-          - deployuninstall
+      const now = new Date();
+      const pad = n => n.toString().padStart(2, '0');
+      const day = pad(now.getDate());
+      const month = pad(now.getMonth() + 1);
+      const year = now.getFullYear().toString().slice(-2);
+      const hour = now.getHours();
+      const versionString = `${day}.${month}.${year}.${hour}`;
 
-jobs:
-  validate-actor:
-    runs-on: self-hosted
-    steps:
-      - name: Validate Actor
-        env:
-          USER1: ${{ secrets.USER1_TOKEN }}
-          USER2: ${{ secrets.USER2_TOKEN }}
-          USER3: ${{ secrets.USER3_TOKEN }}
-          USER4: ${{ secrets.USER4_TOKEN }}
-          USER5: ${{ secrets.USER5_TOKEN }}
-          USER6: ${{ secrets.USER6_TOKEN }}
-          USER7: ${{ secrets.USER7_TOKEN }}
-          USER8: ${{ secrets.USER8_TOKEN }}
-        run: |
-          if [[ "${{ github.actor }}" != "$USER1" && \
-                "${{ github.actor }}" != "$USER2" && \
-                "${{ github.actor }}" != "$USER3" && \
-                "${{ github.actor }}" != "$USER4" && \
-                "${{ github.actor }}" != "$USER5" && \
-                "${{ github.actor }}" != "$USER6" && \
-                "${{ github.actor }}" != "$USER7" && \
-                "${{ github.actor }}" != "$USER8" ]]; then
-            echo "Unauthorized actor: ${{ github.actor }}"
-            exit 1
-          fi
-          echo "Authorized actor: ${{ github.actor }}"
+      const inputs = {
+        releasename: "uat-deploy",
+        releaseversion: versionString,
+        operation: "deploy"
+      };
 
-  usdev:
-    if: ${{ inputs.releasename == 'usdev-deploy' }}
-    uses: niq-actions/aks/.github/workflows/helm.yaml@main
-    secrets: inherit
-    with:
-      cluster: SC-02-NONPROD-EASTUS2
-      namespace: omni2-dev-us-eastus2
-      releasename: ${{ inputs.releasename }}
-      releaseversion: ${{ inputs.releaseversion }}
-      tool: helm
-      operation: ${{ inputs.operation }}
-      serviceprincipal: OMNSHO-SP-NP
+      await github.rest.actions.createWorkflowDispatch({
+        owner,
+        repo,
+        workflow_id,
+        ref,
+        inputs
+      });
 
-  usqa:
-    if: ${{ inputs.releasename == 'usqa-deploy' }}
-    uses: niq-actions/aks/.github/workflows/helm.yaml@main
-    secrets: inherit
-    with:
-      cluster: SC-02-NONPROD-EASTUS2
-      namespace: omni2-qa-us-eastus2
-      releasename: ${{ inputs.releasename }}
-      releaseversion: ${{ inputs.releaseversion }}
-      tool: helm
-      operation: ${{ inputs.operation }}
-      serviceprincipal: OMNSHO-SP-NP
+      const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+      let runId;
+      let runFound = false;
+      let attempt = 0;
 
-  usuat:
-    if: ${{ always() && github.event.inputs.releasename == 'uat-deploy' }}
-    needs: validate-actor
-    uses: niq-actions/aks/.github/workflows/helm.yaml@main
-    secrets: inherit
-    with:
-      cluster: SC-02-NONPROD-EASTUS2
-      namespace: omni2-uat-us-eastus2
-      releasename: usuat-deploy
-      releaseversion: ${{ inputs.releaseversion }}
-      tool: helm
-      operation: ${{ inputs.operation }}
-      serviceprincipal: OMNSHO-SP-NP
+      console.log("Waiting for workflow run to start...");
+      while (!runFound && attempt < 20) {
+        const { data: runs } = await github.rest.actions.listWorkflowRuns({
+          owner,
+          repo,
+          workflow_id,
+          branch: ref,
+          event: "workflow_dispatch"
+        });
 
-  euuat:
-    if: ${{ always() && github.event.inputs.releasename == 'uat-deploy' }}
-    needs: validate-actor
-    uses: niq-actions/aks/.github/workflows/helm.yaml@main
-    secrets: inherit
-    with:
-      cluster: SC-02-NONPROD-WESTEUROPE
-      namespace: omni2-uat-eu-westeurope
-      releasename: euuat-deploy
-      releaseversion: ${{ inputs.releaseversion }}
-      tool: helm
-      operation: ${{ inputs.operation }}
-      serviceprincipal: CSASECD-SP-NP
+        const matchingRun = runs.workflow_runs.find(run =>
+          run.head_branch === ref && run.status !== "completed"
+        );
 
-  usperf:
-    if: ${{ always() && github.event.inputs.releasename == 'uat-deploy' }}
-    needs: validate-actor
-    uses: niq-actions/aks/.github/workflows/helm.yaml@main
-    secrets: inherit
-    with:
-      cluster: SC-02-NONPROD-EASTUS2
-      namespace: omni2-perf-us-eastus2
-      releasename: usperf-deploy
-      releaseversion: ${{ inputs.releaseversion }}
-      tool: helm
-      operation: ${{ inputs.operation }}
-      serviceprincipal: OMNSHO-SP-NP
+        if (matchingRun) {
+          runId = matchingRun.id;
+          runFound = true;
+          console.log(`Found workflow run with ID: ${runId}`);
+        } else {
+          await sleep(15000);
+          attempt++;
+        }
+      }
 
-  uat-deploy:
-    if: ${{ inputs.releasename == 'uat-deploy' }}
-    needs: [validate-actor, usuat, euuat, usperf]
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "✅ UAT deployment triggered for usuat, euuat, and usperf."
+      if (!runFound) {
+        throw new Error("Remote workflow run not found.");
+      }
 
-  ushotfix:
-    if: ${{ inputs.releasename == 'ushotfix-deploy' }}
-    needs: validate-actor
-    uses: niq-actions/aks/.github/workflows/helm.yaml@main
-    secrets: inherit
-    with:
-      cluster: SC-02-NONPROD-EASTUS2
-      namespace: omni2-perf-us-eastus2
-      releasename: ${{ inputs.releasename }}
-      releaseversion: ${{ inputs.releaseversion }}
-      tool: helm
-      operation: ${{ inputs.operation }}
-      serviceprincipal: OMNSHO-SP-NP
-      overridetargetconfig: ushotfix
+      let status = "in_progress";
+      let conclusion = null;
 
-  euperf:
-    if: ${{ inputs.releasename == 'euperf-deploy' }}
-    needs: validate-actor
-    uses: niq-actions/aks/.github/workflows/helm.yaml@main
-    secrets: inherit
-    with:
-      cluster: SC-02-NONPROD-WESTEUROPE
-      namespace: omni2-perf-eu-westeurope
-      releasename: ${{ inputs.releasename }}
-      releaseversion: ${{ inputs.releaseversion }}
-      tool: helm
-      operation: ${{ inputs.operation }}
-      serviceprincipal: CSASECD-SP-NP
+      while (status !== "completed") {
+        const { data: run } = await github.rest.actions.getWorkflowRun({
+          owner,
+          repo,
+          run_id: runId
+        });
 
-  usprod:
-    if: ${{ inputs.releasename == 'usprod-deploy' }}
-    needs: validate-actor
-    uses: niq-actions/aks/.github/workflows/helm.yaml@main
-    secrets: inherit
-    with:
-      cluster: SC-02-PROD-EASTUS2
-      namespace: omni2-prod-us-eastus2
-      releasename: ${{ inputs.releasename }}
-      releaseversion: ${{ inputs.releaseversion }}
-      tool: helm
-      operation: ${{ inputs.operation }}
-      serviceprincipal: OMNSHO-SP-PROD
+        status = run.status;
+        conclusion = run.conclusion;
+        console.log(`Workflow run status: ${status}`);
 
-  euprod:
-    if: ${{ inputs.releasename == 'euprod-deploy' }}
-    needs: validate-actor
-    uses: niq-actions/aks/.github/workflows/helm.yaml@main
-    secrets: inherit
-    with:
-      cluster: SC-02-PROD-WESTEUROPE
-      namespace: omni2-prod-eu-westeurope
-      releasename: ${{ inputs.releasename }}
-      releaseversion: ${{ inputs.releaseversion }}
-      tool: helm
-      operation: ${{ inputs.operation }}
-      serviceprincipal: CSASECD-SP-PROD
+        if (status !== "completed") {
+          await sleep(15000);
+        }
+      }
 
-  calatamprod:
-    if: ${{ inputs.releasename == 'calatam-deploy' }}
-    needs: validate-actor
-    uses: niq-actions/aks/.github/workflows/helm.yaml@main
-    secrets: inherit
-    with:
-      cluster: SC-02-PROD-EASTUS2
-      namespace: omni2-prod-calatam-eastus2
-      releasename: ${{ inputs.releasename }}
-      releaseversion: ${{ inputs.releaseversion }}
-      tool: helm
-      operation: ${{ inputs.operation }}
-      serviceprincipal: DISHSC-SP-PROD
+      console.log(`Workflow run completed with conclusion: ${conclusion}`);
+      if (conclusion !== "success") {
+        throw new Error(`Remote workflow failed with status: ${conclusion}`);
+      }
 
-  apacprod:
-    if: ${{ inputs.releasename == 'apac-deploy' }}
-    needs: validate-actor
-    uses: niq-actions/aks/.github/workflows/helm.yaml@main
-    secrets: inherit
-    with:
-      cluster: SC-02-PROD-SOUTHEASTASIA
-      namespace: omni2-prod-ap-southeastasia
-      releasename: ${{ inputs.releasename }}
-      releaseversion: ${{ inputs.releaseversion }}
-      tool: helm
-      operation: ${{ inputs.operation }}
-      serviceprincipal: PODAP-SP-PROD
+      // ✅ SUCCESS: Now check if Swagger URLs return 200
+      const execSync = require('child_process').execSync;
+      const environments = ['usuat', 'euuat', 'usperf'];
+      const baseUrls = {
+        usuat: 'http://aggengapi-usuat',
+        euuat: 'https://aggengapi-euuat',
+        usperf: 'http://aggengapi-usperf',
+      };
+      const domains = {
+        usuat: '.azure-omnsho-np.nielsencsp.net',
+        euuat: '.azure-csasecd-eu-np.nielsencsp.net',
+        usperf: '.azure-omnsho-np.nielsencsp.net',
+      };
+
+      for (const env of environments) {
+        const swaggerUrl = `${baseUrls[env]}-${versionString}${domains[env]}/ae/swagger-ui/index.html`;
+        console.log(`🔍 Checking Swagger URL: ${swaggerUrl}`);
+        try {
+          const statusCode = execSync(`curl -s -o /dev/null -w "%{http_code}" "${swaggerUrl}"`).toString().trim();
+          console.log(`Status code: ${statusCode}`);
+          if (statusCode !== "200") {
+            throw new Error(`❌ ${env.toUpperCase()} URL is not accessible (status ${statusCode})`);
+          } else {
+            console.log(`✅ ${env.toUpperCase()} Swagger URL is accessible`);
+          }
+        } catch (err) {
+          throw new Error(`Swagger URL check failed for ${env.toUpperCase()}: ${err.message}`);
+        }
+      }
