@@ -1,3 +1,77 @@
-- name: 📄 Execute SQL scripts using Python
-  run: python3 execute.py
-  shell: bash
+import os
+import re
+import xml.etree.ElementTree as ET
+import subprocess
+
+# Hardcoded environment
+executionenv = "QA"
+env_id = f"_{executionenv}" if executionenv.upper() in ('DEV2', 'DEV', 'INT', 'QA') else ""
+
+# Teradata credentials
+host = os.getenv("TERADATA_HOST")
+user = os.getenv("TERADATA_USER")
+pwd = os.getenv("TERADATA_PASSWORD")
+
+if not all([host, user, pwd]):
+    print("❌ Missing TERADATA environment variables")
+    exit(1)
+
+# Paths
+base_path = "Teradata/src"
+update_xml_path = os.path.join(base_path, "update.xml")
+
+# Parse update.xml
+tree = ET.parse(update_xml_path)
+root = tree.getroot()
+
+# Fix: handle namespace-aware tags
+ns = {"db": "http://www.liquibase.org/xml/ns/dbchangelog"}
+sql_files = [elem.attrib["file"] for elem in root.findall("db:include", ns)]
+
+if not sql_files:
+    print("⚠️  No SQL files found in update.xml")
+    exit(0)
+
+print("📂 SQL files to execute:")
+for file in sql_files:
+    print(f"  • {file}")
+
+for sql_file in sql_files:
+    full_path = os.path.join(base_path, sql_file)
+    if not os.path.exists(full_path):
+        print(f"⚠️  Skipping missing SQL file: {full_path}")
+        continue
+
+    print("\n" + "=" * 80)
+    print(f"# Processing: {sql_file}")
+    print("-" * 80)
+
+    # Replace placeholder
+    with open(full_path, "r") as f:
+        content = f.read()
+        final_sql = re.sub(r"\$\{env\.id\.upper\}", env_id.upper(), content)
+
+    print(f"📄 Final SQL content:\n{final_sql}\n")
+
+    # Write to temp script
+    with open("final_script.sql", "w") as f:
+        f.write(final_sql)
+
+    # Run BTEQ
+    bteq_cmd = f"""
+bteq <<EOF
+.logon {host}/{user},{pwd};
+.run file=final_script.sql;
+.logoff;
+.quit;
+EOF
+"""
+
+    result = subprocess.run(bteq_cmd, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    print("🧾 BTEQ Output:\n", result.stdout)
+    if result.returncode != 0:
+        print("❌ BTEQ failed:", result.stderr)
+        exit(result.returncode)
+
+print("\n✅ All SQLs executed successfully.")
