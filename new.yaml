@@ -1,6 +1,14 @@
-- name: Install GitHub CLI 
+- name: 📄 Replace env.id.upper with _QA and run SQL via BTEQ
   run: |
-    sudo dnf install -y dnf-plugins-core
-    sudo dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
-    sudo dnf install -y gh
+    export ENV_ID_UPPER=QA
+
+    sed "s/\${env.id.upper}/_${ENV_ID_UPPER}/g" \
+      Teradata/src/DDL/SDO_EDI_834_MBR_PCP_HIST_20250709.sql > final_script.sql
+
+    bteq <<EOF
+    .logon ${TERADATA_HOST}/${TERADATA_USER},${TERADATA_PASSWORD};
+    .run file=final_script.sql;
+    .logoff;
+    .quit;
+EOF
   shell: bash
