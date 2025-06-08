@@ -1,12 +1,3 @@
-# Update system and install required dependencies
-sudo apt-get update
-sudo apt-get install -y wget alien libncurses6 rpm
-
-# Download the BTEQ CLI RPM package (version 17.20.15.00 as example)
-wget https://downloads.teradata.com/download/cdn/tools/teradata-client/17.20.15.00/el7/bteq-17.20.15.00-1.noarch.rpm
-
-# Convert RPM to DEB and install
-sudo alien -i bteq-17.20.15.00-1.noarch.rpm
-
-# Verify installation
-bteq -v || echo "❌ BTEQ installation failed or not in PATH"
+- name:  Install Maven
+  run: sudo dnf install -y maven
+  shell: bash
