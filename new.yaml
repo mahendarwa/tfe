@@ -67,7 +67,7 @@ bteq <<EOF
 EOF
 """
 
-    result = subprocess.run(bteq_cmd, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    result = subprocess.run(bteq_cmd, shell=True, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     print("🧾 BTEQ Output:\n", result.stdout)
     if result.returncode != 0:
