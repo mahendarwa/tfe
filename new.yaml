@@ -1,1 +1,7 @@
-metadata.annotations.networking.gke.io/load-balancer-type == "Internal"
+package wiz
+
+default result = "pass"
+
+result = "fail" {
+  not input.metadata.annotations["networking.gke.io/load-balancer-type"] == "Internal"
+}
