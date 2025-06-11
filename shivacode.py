@@ -1,6 +1,9 @@
-- name: Set ENV_ID from input
-  run: echo "ENV_ID=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
+  if: ${{ github.event.inputs.environment == 'uat-deploy' }}
 
-
-
-executionenv = os.getenv("ENV_ID", "")
+      environment:
+        description: 'Choose the deployment environment'
+        required: true
+        type: choice
+        options:
+          - uat-deploy
+          - ushotfix-deploy
