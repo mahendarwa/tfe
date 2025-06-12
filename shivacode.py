@@ -1,9 +1,4 @@
-  if: ${{ github.event.inputs.environment == 'uat-deploy' }}
-
-      environment:
-        description: 'Choose the deployment environment'
-        required: true
-        type: choice
-        options:
-          - uat-deploy
-          - ushotfix-deploy
+print(f"Debug: ENV_ID = {executionenv}")
+print(f"Debug: Host = {host}")
+print(f"Debug: User = {user}")
+print(f"Debug: Password Length = {len(pwd)}")
