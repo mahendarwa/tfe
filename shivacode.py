@@ -1,6 +1,5 @@
-- name: Debug secret length
-  run: |
-    echo "User length: ${#TERADATA_USER}"
-    echo "Password length: ${#TERADATA_PASSWORD}"
-    echo "Raw password for validation: [$TERADATA_PASSWORD]"
-  shell: bash
+echo "TERADATA_PASSWORD=\"${{ secrets.PRD_PASSWORD }}\"" >> $GITHUB_ENV
+
+echo "Raw password: [$TERADATA_PASSWORD]"
+echo "Password length: ${#TERADATA_PASSWORD}"
+
