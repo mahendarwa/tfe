@@ -1,7 +1,6 @@
-- name: Print length of PROD credentials
+- name: Debug secret length
   run: |
-    user="${{ secrets.PROD_USER }}"
-    password="${{ secrets.PROD_PASSWORD }}"
-    echo "PROD_USER length: ${#user}"
-    echo "PROD_PASSWORD length: ${#password}"
+    echo "User length: ${#TERADATA_USER}"
+    echo "Password length: ${#TERADATA_PASSWORD}"
+    echo "Raw password for validation: [$TERADATA_PASSWORD]"
   shell: bash
