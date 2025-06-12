@@ -1,4 +1,7 @@
-print(f"Debug: ENV_ID = {executionenv}")
-print(f"Debug: Host = {host}")
-print(f"Debug: User = {user}")
-print(f"Debug: Password Length = {len(pwd)}")
+- name: Print length of PROD credentials
+  run: |
+    user="${{ secrets.PROD_USER }}"
+    password="${{ secrets.PROD_PASSWORD }}"
+    echo "PROD_USER length: ${#user}"
+    echo "PROD_PASSWORD length: ${#password}"
+  shell: bash
