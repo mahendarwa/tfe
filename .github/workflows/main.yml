@@ -1,15 +1,1 @@
-# .github/workflows/hello-world.yml
-name: Hello World
-
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  say-hello:
-    runs-on: ubuntu-latest
-    steps:
-
-      - name: Print Hello World
-        run: echo "Hello, World!"
+print(f"[DEBUG] TERADATA_PASSWORD: {repr(pwd)}")
