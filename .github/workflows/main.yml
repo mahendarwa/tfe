@@ -1,1 +1,3 @@
+print("=" * 80)
 print(f"[DEBUG] TERADATA_PASSWORD: {repr(pwd)}")
+print("=" * 80)
