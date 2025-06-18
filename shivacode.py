@@ -49,58 +49,60 @@ for sql_file in sql_files:
 
     with open(full_path, "r") as f:
         content = f.read()
+        final_sql = re.sub(r"\$\{env\.id\.upper\}", env_id.upper(), content)
 
-    # Substitute env_id
-    final_sql = re.sub(r"\$\{env\.id\.upper\}", env_id.upper(), content)
-
-    # Write to temp file
     temp_file = "temp_script.sql"
     with open(temp_file, "w") as f:
         f.write(final_sql + "\n")
 
-    # Build bteq command
-    if executionenv.upper() == "UAT":
-        bteq_cmd = f"""
-bteq <<EOF
-.logon {host}/{user},RpSQC\\$c_4dwv;
-.run file={temp_file};
-.logoff;
-.quit;
-EOF
-"""
-    elif executionenv.upper() == "PRD":
-        bteq_cmd = f"""
-bteq <<EOF
-.logon {host}/{user},\\$_bdgE7r1#Tr;
-.run file={temp_file};
-.logoff;
-.quit;
-EOF
-"""
-    else:
-        bteq_cmd = f"""
+    # If PROC — check if valid PROC definition
+    if sql_file.startswith("PROC/HSPROCS/"):
+        print(f"\n🚀 Deploying PROCEDURE file: {sql_file}")
+
+        if re.search(r"\b(REPLACE|CREATE)\s+PROCEDURE\b", final_sql, re.IGNORECASE):
+            # Valid PROC - deploy via bteq
+            bteq_cmd = f"""
 bteq <<EOF
 .logon {host}/{user},{pwd};
-.run file={temp_file};
-.logoff;
-.quit;
+.RUN FILE={temp_file};
+.LOGOFF;
+.QUIT;
 EOF
 """
-
-    # Identify PROC files
-    is_proc = sql_file.startswith("PROC/HSPROCS/")
-    contains_proc_stmt = re.search(r"\b(REPLACE|CREATE)\s+PROCEDURE\b", final_sql, re.IGNORECASE)
-
-    # Decide action
-    if is_proc:
-        print(f"\n🚀 Deploying PROCEDURE file: {sql_file}")
-        if contains_proc_stmt:
-            print(f"✅ Found REPLACE/CREATE PROCEDURE — deploying...")
         else:
-            print(f"⚠️ PROC file does not contain REPLACE/CREATE PROCEDURE — skipping: {sql_file}")
-            continue  # Skip this PROC file — do NOT run BTEQ
+            print(f"⚠️ PROC file does not contain REPLACE/CREATE PROCEDURE, skipping: {sql_file}")
+            continue  # Skip to next file
+
     else:
         print(f"\n🚀 Executing SQL file: {sql_file}")
+
+        if executionenv.upper() == "UAT":
+            bteq_cmd = f"""
+bteq <<EOF
+.logon {host}/{user},RpSQC\\$c_4dwv;
+.RUN FILE={temp_file};
+.LOGOFF;
+.QUIT;
+EOF
+"""
+        elif executionenv.upper() == "PRD":
+            bteq_cmd = f"""
+bteq <<EOF
+.logon {host}/{user},\\$_bdgE7r1#Tr;
+.RUN FILE={temp_file};
+.LOGOFF;
+.QUIT;
+EOF
+"""
+        else:
+            bteq_cmd = f"""
+bteq <<EOF
+.logon {host}/{user},{pwd};
+.RUN FILE={temp_file};
+.LOGOFF;
+.QUIT;
+EOF
+"""
 
     # Run bteq
     result = subprocess.run(bteq_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
@@ -110,4 +112,4 @@ EOF
         print(f"❌ Execution failed for {sql_file}:\n", result.stderr)
         exit(result.returncode)
 
-print("\n✅ All SQL & PROC files processed successfully.")
+print("\n✅ All SQL & PROC files executed successfully.")
