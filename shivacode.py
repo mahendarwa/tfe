@@ -51,13 +51,46 @@ for sql_file in sql_files:
         content = f.read()
         final_sql = re.sub(r"\$\{env\.id\.upper\}", env_id.upper(), content)
 
-    temp_file = "temp_script.sql"
-    with open(temp_file, "w") as f:
-        f.write(final_sql + "\n")
+    # If PROC — deploy directly via osql (inline), do not .run file
+    if sql_file.startswith("PROC/HSPROCS/"):
+        print(f"\n🚀 Deploying PROCEDURE file: {sql_file}")
 
-    # Build bteq command
-    if executionenv.upper() == "UAT":
-        bteq_cmd = f"""
+        if executionenv.upper() == "UAT":
+            bteq_cmd = f"""
+bteq <<EOF
+.logon {host}/{user},RpSQC\\$c_4dwv;
+{final_sql}
+.logoff;
+.quit;
+EOF
+"""
+        elif executionenv.upper() == "PRD":
+            bteq_cmd = f"""
+bteq <<EOF
+.logon {host}/{user},\\$_bdgE7r1#Tr;
+{final_sql}
+.logoff;
+.quit;
+EOF
+"""
+        else:
+            bteq_cmd = f"""
+bteq <<EOF
+.logon {host}/{user},{pwd};
+{final_sql}
+.logoff;
+.quit;
+EOF
+"""
+    else:
+        print(f"\n🚀 Executing SQL file: {sql_file}")
+
+        temp_file = "temp_script.sql"
+        with open(temp_file, "w") as f:
+            f.write(final_sql + "\n")
+
+        if executionenv.upper() == "UAT":
+            bteq_cmd = f"""
 bteq <<EOF
 .logon {host}/{user},RpSQC\\$c_4dwv;
 .run file={temp_file};
@@ -65,8 +98,8 @@ bteq <<EOF
 .quit;
 EOF
 """
-    elif executionenv.upper() == "PRD":
-        bteq_cmd = f"""
+        elif executionenv.upper() == "PRD":
+            bteq_cmd = f"""
 bteq <<EOF
 .logon {host}/{user},\\$_bdgE7r1#Tr;
 .run file={temp_file};
@@ -74,8 +107,8 @@ bteq <<EOF
 .quit;
 EOF
 """
-    else:
-        bteq_cmd = f"""
+        else:
+            bteq_cmd = f"""
 bteq <<EOF
 .logon {host}/{user},{pwd};
 .run file={temp_file};
@@ -83,12 +116,6 @@ bteq <<EOF
 .quit;
 EOF
 """
-
-    # If PROC — print special message (still bteq executes normally)
-    if sql_file.startswith("PROC/HSPROCS/"):
-        print(f"\n🚀 Deploying PROCEDURE file: {sql_file}")
-    else:
-        print(f"\n🚀 Executing SQL file: {sql_file}")
 
     # Run bteq
     result = subprocess.run(bteq_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
