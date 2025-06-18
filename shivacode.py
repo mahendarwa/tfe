@@ -51,67 +51,66 @@ for sql_file in sql_files:
         content = f.read()
         final_sql = re.sub(r"\$\{env\.id\.upper\}", env_id.upper(), content)
 
-    # If PROC — deploy directly via osql (inline), do not .run file
-    if sql_file.startswith("PROC/HSPROCS/"):
+    is_proc = sql_file.startswith("PROC/HSPROCS/")
+
+    if is_proc:
         print(f"\n🚀 Deploying PROCEDURE file: {sql_file}")
 
-        if executionenv.upper() == "UAT":
-            bteq_cmd = f"""
+        # Strip liquibase comments (robust)
+        proc_body = []
+        skip = False
+        for line in final_sql.splitlines():
+            if line.strip().startswith('--liquibase'):
+                continue
+            if line.strip().startswith('--changeset'):
+                continue
+            proc_body.append(line)
+
+        proc_sql_text = '\n'.join(proc_body).strip()
+
+        if not proc_sql_text.lower().startswith("replace procedure") and not proc_sql_text.lower().startswith("create procedure"):
+            print(f"⚠️ PROC file does not contain REPLACE/CREATE PROCEDURE, skipping: {sql_file}")
+            continue
+
+        # Write to temp
+        temp_proc_file = "temp_proc_script.sql"
+        with open(temp_proc_file, "w") as f:
+            f.write(proc_sql_text + "\n")
+
+        run_file = temp_proc_file
+    else:
+        print(f"\n🚀 Executing SQL file: {sql_file}")
+
+        temp_sql_file = "temp_script.sql"
+        with open(temp_sql_file, "w") as f:
+            f.write(final_sql + "\n")
+
+        run_file = temp_sql_file
+
+    # Build bteq command
+    if executionenv.upper() == "UAT":
+        bteq_cmd = f"""
 bteq <<EOF
 .logon {host}/{user},RpSQC\\$c_4dwv;
-{final_sql}
+.osource {run_file};
 .logoff;
 .quit;
 EOF
 """
-        elif executionenv.upper() == "PRD":
-            bteq_cmd = f"""
+    elif executionenv.upper() == "PRD":
+        bteq_cmd = f"""
 bteq <<EOF
 .logon {host}/{user},\\$_bdgE7r1#Tr;
-{final_sql}
-.logoff;
-.quit;
-EOF
-"""
-        else:
-            bteq_cmd = f"""
-bteq <<EOF
-.logon {host}/{user},{pwd};
-{final_sql}
+.osource {run_file};
 .logoff;
 .quit;
 EOF
 """
     else:
-        print(f"\n🚀 Executing SQL file: {sql_file}")
-
-        temp_file = "temp_script.sql"
-        with open(temp_file, "w") as f:
-            f.write(final_sql + "\n")
-
-        if executionenv.upper() == "UAT":
-            bteq_cmd = f"""
-bteq <<EOF
-.logon {host}/{user},RpSQC\\$c_4dwv;
-.run file={temp_file};
-.logoff;
-.quit;
-EOF
-"""
-        elif executionenv.upper() == "PRD":
-            bteq_cmd = f"""
-bteq <<EOF
-.logon {host}/{user},\\$_bdgE7r1#Tr;
-.run file={temp_file};
-.logoff;
-.quit;
-EOF
-"""
-        else:
-            bteq_cmd = f"""
+        bteq_cmd = f"""
 bteq <<EOF
 .logon {host}/{user},{pwd};
-.run file={temp_file};
+.osource {run_file};
 .logoff;
 .quit;
 EOF
