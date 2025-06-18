@@ -59,7 +59,7 @@ for sql_file in sql_files:
     if executionenv.upper() == "UAT":
         bteq_cmd = f"""
 bteq <<EOF
-.logon {host}/{user},RpSQC\$c_4dwv;
+.logon {host}/{user},RpSQC\\$c_4dwv;
 .run file={temp_file};
 .logoff;
 .quit;
