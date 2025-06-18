@@ -49,50 +49,21 @@ for sql_file in sql_files:
 
     with open(full_path, "r") as f:
         content = f.read()
-        final_sql = re.sub(r"\$\{env\.id\.upper\}", env_id.upper(), content)
 
-    is_proc = sql_file.startswith("PROC/HSPROCS/")
+    # Substitute env_id
+    final_sql = re.sub(r"\$\{env\.id\.upper\}", env_id.upper(), content)
 
-    if is_proc:
-        print(f"\n🚀 Deploying PROCEDURE file: {sql_file}")
-
-        # Strip liquibase comments (robust)
-        proc_body = []
-        skip = False
-        for line in final_sql.splitlines():
-            if line.strip().startswith('--liquibase'):
-                continue
-            if line.strip().startswith('--changeset'):
-                continue
-            proc_body.append(line)
-
-        proc_sql_text = '\n'.join(proc_body).strip()
-
-        if not proc_sql_text.lower().startswith("replace procedure") and not proc_sql_text.lower().startswith("create procedure"):
-            print(f"⚠️ PROC file does not contain REPLACE/CREATE PROCEDURE, skipping: {sql_file}")
-            continue
-
-        # Write to temp
-        temp_proc_file = "temp_proc_script.sql"
-        with open(temp_proc_file, "w") as f:
-            f.write(proc_sql_text + "\n")
-
-        run_file = temp_proc_file
-    else:
-        print(f"\n🚀 Executing SQL file: {sql_file}")
-
-        temp_sql_file = "temp_script.sql"
-        with open(temp_sql_file, "w") as f:
-            f.write(final_sql + "\n")
-
-        run_file = temp_sql_file
+    # Write to temp file
+    temp_file = "temp_script.sql"
+    with open(temp_file, "w") as f:
+        f.write(final_sql + "\n")
 
     # Build bteq command
     if executionenv.upper() == "UAT":
         bteq_cmd = f"""
 bteq <<EOF
 .logon {host}/{user},RpSQC\\$c_4dwv;
-.osource {run_file};
+.run file={temp_file};
 .logoff;
 .quit;
 EOF
@@ -101,7 +72,7 @@ EOF
         bteq_cmd = f"""
 bteq <<EOF
 .logon {host}/{user},\\$_bdgE7r1#Tr;
-.osource {run_file};
+.run file={temp_file};
 .logoff;
 .quit;
 EOF
@@ -110,11 +81,26 @@ EOF
         bteq_cmd = f"""
 bteq <<EOF
 .logon {host}/{user},{pwd};
-.osource {run_file};
+.run file={temp_file};
 .logoff;
 .quit;
 EOF
 """
+
+    # Identify PROC files
+    is_proc = sql_file.startswith("PROC/HSPROCS/")
+    contains_proc_stmt = re.search(r"\b(REPLACE|CREATE)\s+PROCEDURE\b", final_sql, re.IGNORECASE)
+
+    # Decide action
+    if is_proc:
+        print(f"\n🚀 Deploying PROCEDURE file: {sql_file}")
+        if contains_proc_stmt:
+            print(f"✅ Found REPLACE/CREATE PROCEDURE — deploying...")
+        else:
+            print(f"⚠️ PROC file does not contain REPLACE/CREATE PROCEDURE — skipping: {sql_file}")
+            continue  # Skip this PROC file — do NOT run BTEQ
+    else:
+        print(f"\n🚀 Executing SQL file: {sql_file}")
 
     # Run bteq
     result = subprocess.run(bteq_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
@@ -124,4 +110,4 @@ EOF
         print(f"❌ Execution failed for {sql_file}:\n", result.stderr)
         exit(result.returncode)
 
-print("\n✅ All SQL & PROC files executed successfully.")
+print("\n✅ All SQL & PROC files processed successfully.")
