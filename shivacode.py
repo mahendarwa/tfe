@@ -51,56 +51,44 @@ for sql_file in sql_files:
         content = f.read()
         final_sql = re.sub(r"\$\{env\.id\.upper\}", env_id.upper(), content)
 
+    # PROC detection
+    is_proc = sql_file.startswith("PROC/HSPROCS/")
+
     temp_file = "temp_script.sql"
     with open(temp_file, "w") as f:
+        if is_proc:
+            f.write(".SET SESSION SQLFLAG = TERADATA;\n\n")
+            print(f"\n🚀 Deploying PROCEDURE file: {sql_file}")
+        else:
+            print(f"\n🚀 Executing SQL file: {sql_file}")
         f.write(final_sql + "\n")
 
-    # If PROC — check if valid PROC definition
-    if sql_file.startswith("PROC/HSPROCS/"):
-        print(f"\n🚀 Deploying PROCEDURE file: {sql_file}")
-
-        if re.search(r"\b(REPLACE|CREATE)\s+PROCEDURE\b", final_sql, re.IGNORECASE):
-            # Valid PROC - deploy via bteq
-            bteq_cmd = f"""
-bteq <<EOF
-.logon {host}/{user},{pwd};
-.RUN FILE={temp_file};
-.LOGOFF;
-.QUIT;
-EOF
-"""
-        else:
-            print(f"⚠️ PROC file does not contain REPLACE/CREATE PROCEDURE, skipping: {sql_file}")
-            continue  # Skip to next file
-
-    else:
-        print(f"\n🚀 Executing SQL file: {sql_file}")
-
-        if executionenv.upper() == "UAT":
-            bteq_cmd = f"""
+    # Build bteq command
+    if executionenv.upper() == "UAT":
+        bteq_cmd = f"""
 bteq <<EOF
 .logon {host}/{user},RpSQC\\$c_4dwv;
-.RUN FILE={temp_file};
-.LOGOFF;
-.QUIT;
+.run file={temp_file};
+.logoff;
+.quit;
 EOF
 """
-        elif executionenv.upper() == "PRD":
-            bteq_cmd = f"""
+    elif executionenv.upper() == "PRD":
+        bteq_cmd = f"""
 bteq <<EOF
 .logon {host}/{user},\\$_bdgE7r1#Tr;
-.RUN FILE={temp_file};
-.LOGOFF;
-.QUIT;
+.run file={temp_file};
+.logoff;
+.quit;
 EOF
 """
-        else:
-            bteq_cmd = f"""
+    else:
+        bteq_cmd = f"""
 bteq <<EOF
 .logon {host}/{user},{pwd};
-.RUN FILE={temp_file};
-.LOGOFF;
-.QUIT;
+.run file={temp_file};
+.logoff;
+.quit;
 EOF
 """
 
