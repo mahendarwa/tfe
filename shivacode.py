@@ -1,3 +1,13 @@
-valid_new_pattern = "ge[0-9]+-gke-[a-z0-9]+"
-if (workload_pool == null) or 
-   (not workload_pool contains "prj" and not regex.match(valid_new_pattern, workload_pool)) { ... }
+package wiz
+
+default result = "pass"
+
+result = "fail" {
+    input.spec.type == "LoadBalancer"
+    not input.metadata.annotations["service.beta.kubernetes.io/azure-load-balancer-internal"] == "true"
+}
+
+currentConfiguration := sprintf("LB annotation: '%v'", [input.metadata.annotations["service.beta.kubernetes.io/azure-load-balancer-internal"]])
+expectedConfiguration := "LoadBalancer must be internal (azure-load-balancer-internal: true)"
+
+
