@@ -4,7 +4,7 @@
 # (old: contains "prj", or new: matches ge[0-9]+-gke-[a-z0-9]+)
 
 # Import common-functions/tfplan-functions.sentinel
-# with alias "plan"
+# with alias "plan".
 import "tfplan-functions" as plan
 
 metadata = {
