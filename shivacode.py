@@ -1,6 +1,7 @@
 # This policy uses the tfplan/v2 import to get the Terraform plan data and checks if
 # workload_metadata_config is set to GKE_METADATA for all node pools.
-# it will also validate that workload_identity_config has a project name that follows new convention
+# It will also validate that workload_identity_config has a project name that follows allowed naming convention
+# (old: contains "prj", or new: matches ge[0-9]+-gke-[a-z0-9]+)
 
 # Import common-functions/tfplan-functions.sentinel
 # with alias "plan"
@@ -36,10 +37,12 @@ for allGKEClusters as address, r {
         workload_pool = workload_identity_config.workload_pool else null
 
         # New regex pattern for project names (matches ge4105-gke-eed6 style)
-        valid_project_name_pattern = "ge[0-9]+-gke-[a-z0-9]+"
+        valid_new_pattern = "ge[0-9]+-gke-[a-z0-9]+"
 
-        if workload_pool == null or not regex.match(valid_project_name_pattern, workload_pool) {
-            print("invalid", r.address, "workload_pool does not match new project naming convention, received:", workload_pool)
+        # Check: old OR new naming passes
+        if (workload_pool == null) or 
+           (not workload_pool contains "prj" and not regex.match(valid_new_pattern, workload_pool)) {
+            print("invalid", r.address, "workload_pool does not match allowed naming convention, received:", workload_pool)
             violating_clusters += 1
         }
     }
