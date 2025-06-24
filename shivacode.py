@@ -1,4 +1,4 @@
-name: Prod PAT
+name: Restart PAT Service
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ on:
 
 jobs:
   validate-actor:
-    runs-on: prod-runner
+    runs-on: prod14-runner
     steps:
       - name: validate Actor
         run: |
@@ -31,121 +31,84 @@ jobs:
           echo "❌ Unauthorized actor: ${{ github.actor }}"
           exit 1
 
-  PAT:
+  Patservice-restart:
     needs: validate-actor
-    runs-on: prod-runner
+    runs-on: prod14-runner
     steps:
       - name: Select environments for group
         id: select_group
         run: |
           if [[ "${{ github.event.inputs.Group }}" == "group1" ]]; then
-            GROUP_ENVIRONMENTS=(pfnz pfid pfph pfth pfsg pfhk pfau pfbp omau)
+            GROUP_ENVIRONMENTS=(pfnz pfid pfth pfph pfsg pfhk pfau pfbp omau)
           elif [[ "${{ github.event.inputs.Group }}" == "group2" ]]; then
-            GROUP_ENVIRONMENTS=(pfgb pffi pfra pfpt pfes pffr pfde pfch pfit)
+            GROUP_ENVIRONMENTS=(pfgb pffi pfpt pfes pfra pffr pfde pfch pfit)
           elif [[ "${{ github.event.inputs.Group }}" == "group3" ]]; then
-            GROUP_ENVIRONMENTS=(omca pfca pfcl pfco pfpr pfbr pfmx pfxu pfus)
+            GROUP_ENVIRONMENTS=(omca pfca pfco pfpr pfcl pfbr pfmx pfxu pfus)
           else
             echo "Invalid group selection"
             exit 1
           fi
-
           echo "GROUP_ENVIRONMENTS=${GROUP_ENVIRONMENTS[@]}" >> $GITHUB_ENV
 
-      - name: Checkout repo
-        uses: actions/checkout@v3
-
-      - name: Run PAT steps for each environment
+      - name: Run Restart PAT Service for each environment
         run: |
+          declare -A ADMINUSERS=(
+            [pfnz]=pfnzsup3 [pfid]=pfidsup3 [pfph]=pfphsup3 [pfth]=pfthsup3 [pfsg]=pfsgsup3
+            [pfhk]=pfhksup3 [pfau]=pfausup3 [pfbp]=pfbpsup3 [omau]=omausup3 [pfgb]=pfgbsup3
+            [pffi]=pffisup3 [pfpt]=pfptsup3 [pfes]=pfessup3 [pfra]=pfrasup3 [pffr]=pffrsup3
+            [pfde]=pfdesup3 [pfch]=pfchsup3 [pfit]=pfitsup3 [omca]=omcasup3 [pfca]=pfcasup3
+            [pfco]=pfcosup3 [pfpr]=pfprsup3 [pfcl]=pfclsup3 [pfbr]=pfbrsup3 [pfmx]=pfmxsup3
+            [pfxu]=pfxusup3 [pfus]=pfussup3
+          )
+          declare -A SERVERS=(
+            [pfnz]=daylnxcpsp023 [pfid]=daylnxcpsp023 [pfph]=daylnxcpsp023 [pfth]=daylnxcpsp023
+            [pfsg]=daylnxcpsp023 [pfhk]=daylnxcpsp023 [pfau]=daylnxcpsp023 [pfbp]=daylnxcpsp023
+            [omau]=daylnxcpsp023 [pfgb]=daylnxcpsp022 [pffi]=daylnxcpsp022 [pfpt]=daylnxcpsp022
+            [pfes]=daylnxcpsp022 [pfra]=daylnxcpsp022 [pffr]=daylnxcpsp022 [pfde]=daylnxcpsp022
+            [pfch]=daylnxcpsp022 [pfit]=daylnxcpsp022 [omca]=daylnxcpsp014 [pfca]=daylnxcpsp014
+            [pfco]=daylnxcpsp014 [pfpr]=daylnxcpsp014 [pfcl]=daylnxcpsp014 [pfbr]=daylnxcpsp014
+            [pfmx]=daylnxcpsp014 [pfxu]=daylnxcpsp014 [pfus]=daylnxcpsp014
+          )
+          declare -A PORTS=(
+            [pfnz]=8198 [pfid]=8196 [pfph]=8195 [pfth]=8197 [pfsg]=8199 [pfhk]=8200
+            [pfau]=8201 [pfbp]=8203 [omau]=8202 [pfgb]=8186 [pffi]=8187 [pfpt]=8189
+            [pfes]=8190 [pfra]=8188 [pffr]=8191 [pfde]=8192 [pfch]=8193 [pfit]=8194
+            [omca]=8178 [pfca]=8177 [pfco]=8182 [pfpr]=8179 [pfcl]=8181 [pfbr]=8180
+            [pfmx]=8183 [pfxu]=8185 [pfus]=8184
+          )
+
           for ENV in ${GROUP_ENVIRONMENTS}; do
+            ADMINUSER=${ADMINUSERS[$ENV]}
+            SERVER=${SERVERS[$ENV]}
+            PORT=${PORTS[$ENV]}
+
             echo "==============================="
-            echo "Processing environment: $ENV"
+            echo "Processing ENV: $ENV"
+            echo "ADMINUSER: $ADMINUSER"
+            echo "SERVER: $SERVER"
+            echo "PORT: $PORT"
             echo "==============================="
 
-            # Set ADMIN_USR
-            case "$ENV" in
-              pfnz|pfid|pfph|pfth|pfsg|pfhk|pfau|pfbp|omau)
-                ADMIN_USR=pfmgrap
-                ;;
-              pfca|omca|pfcl|pfco|pfpr|pfbr|pfmx|pfxu|pfus)
-                ADMIN_USR=pfmgram
-                ;;
-              pffi|pfra|pfgb|pfpt|pfes|pffr|pfde|pfch|pfit)
-                ADMIN_USR=pfmgreu
-                ;;
-              *)
-                echo "Invalid environment: $ENV"
-                exit 1
-                ;;
-            esac
+            if [ -z "$PORT" ]; then
+              echo "PORT is not set for $ENV. Skipping..."
+              continue
+            fi
 
-            # Set PATH_ENV
-            case "$ENV" in
-              pfnz) PATH_ENV=AP_Region/NZ/ ;;
-              pfid) PATH_ENV=AP_Region/ID/ ;;
-              pfph) PATH_ENV=AP_Region/PH/ ;;
-              pfth) PATH_ENV=AP_Region/TH/ ;;
-              pfsg) PATH_ENV=AP_Region/SG/ ;;
-              pfhk) PATH_ENV=AP_Region/HK/ ;;
-              pfau) PATH_ENV=AP_Region/AU/ ;;
-              pfbp) PATH_ENV=AP_Region/BP/ ;;
-              omau) PATH_ENV=AP_Region/OMAU/ ;;
-              pfca) PATH_ENV=CA_Region/CA/ ;;
-              omca) PATH_ENV=CA_Region/OMCA/ ;;
-              pfcl) PATH_ENV=LatAm_Region/CL/ ;;
-              pfco) PATH_ENV=LatAm_Region/CO/ ;;
-              pfpr) PATH_ENV=LatAm_Region/PR/ ;;
-              pfbr) PATH_ENV=LatAm_Region/BR/ ;;
-              pfmx) PATH_ENV=LatAm_Region/MX/ ;;
-              pfxu) PATH_ENV=US_Region/USXU/ ;;
-              pfus) PATH_ENV=US_Region/US/ ;;
-              pffi) PATH_ENV=EURO_Region/FI/ ;;
-              pfra) PATH_ENV=EURO_Region/RA/ ;;
-              pfgb) PATH_ENV=EURO_Region/GB/ ;;
-              pfpt) PATH_ENV=EURO_Region/PT/ ;;
-              pfes) PATH_ENV=EURO_Region/ES/ ;;
-              pffr) PATH_ENV=EURO_Region/FR/ ;;
-              pfde) PATH_ENV=EURO_Region/DE/ ;;
-              pfch) PATH_ENV=EURO_Region/CH/ ;;
-              pfit) PATH_ENV=EURO_Region/IT/ ;;
-              *)
-                echo "Invalid environment: $ENV"
-                exit 1
-                ;;
-            esac
+            ssh -o StrictHostKeyChecking=no "$ADMINUSER@$SERVER.enterprisenet.org" bash <<EOSSH
+            echo "Checking for process on port $PORT..."
+            pid=\$(lsof -i :$PORT -sTCP:LISTEN -t)
+            if [ -n "\$pid" ]; then
+              echo "Found PID \$pid, killing..."
+              kill -9 \$pid || exit 1
+              echo "Killed PID \$pid successfully"
+            else
+              echo "No process found on port $PORT"
+            fi
 
-            echo "Admin User: $ADMIN_USR"
-            echo "PATH_ENV: $PATH_ENV"
-
-            ORG_PATH="/home/jenscm1/actions-runner/_work/bcc-pat/bcc-pat/"
-            TMP_PATH=/tmp/pat/
-            chmod -R 755 $TMP_PATH
-
-            REMOTE_PATHS=(
-              /home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/dataimport_pat_pg/opt_64/dataimport_pat_pg
-              /home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/plsegfix_pat_pg/opt_64/plsegfix_pat_pg
-              /home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/plsegchk_pat_pg/opt_64/plsegchk_pat_pg
-              /home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/plstatus_pat_pg/opt_64/plstatus_pat_pg
-              /home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/validator_pat_pg/opt_64/validator_pat_pg
-              /home/bambdev1/actions-runner/_work/bcc-pat/bcc-pat/unix/PFW_UNIX/lz4Compress/opt_64/lz4Compress
-            )
-            LOCAL_PATH=/tmp/actions/
-
-            for REMOTE in "${REMOTE_PATHS[@]}"; do
-              scp -r -o StrictHostKeyChecking=no -i ~/.ssh/vscode bambdev1@daylnxcpsd004:$REMOTE $LOCAL_PATH || echo "Skipping $REMOTE due to permission error"
-            done
-
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsp014.enterprisenet.org" "chmod 750 /$ENV/bin"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsp014.enterprisenet.org" "chmod -R 750 /$ENV/bin/* || true"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsp014.enterprisenet.org" "cp /tmp/actions/* /$ENV/bin/"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsp014.enterprisenet.org" "find ${ORG_PATH}ETL/config_pg/Production/${PATH_ENV} -type f -exec cp {} /$ENV/bin/etl/config_pg/ \;"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsp014.enterprisenet.org" "cp -rf ${ORG_PATH}ETL/scripts_pg/* /$ENV/bin/etl/scripts_pg/"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsp014.enterprisenet.org" "cp -rf ${ORG_PATH}ETL/sql_pg/* /$ENV/bin/etl/sql_pg/"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsp014.enterprisenet.org" "cp -rf ${ORG_PATH}ETL/ref_pg/* /$ENV/bin/etl/ref_pg/"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsp014.enterprisenet.org" "cp -rf ${ORG_PATH}unix/PFW_UNIX/shellscripts_pg/* /$ENV/bin/"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsp014.enterprisenet.org" "chmod -R 750 /$ENV/bin/* || true"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsp014.enterprisenet.org" "chmod -R 550 /$ENV/bin/* || true"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsp014.enterprisenet.org" "chgrp -R $ENV /$ENV/bin/* || true"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}@daylnxcpsp014.enterprisenet.org" "chmod -R 550 /$ENV/bin || true"
+            cd /$ENV/bin || echo "Directory not found"
+            nohup ./startPGPATservice_$ENV.sh > /dev/null 2>&1 &
+            echo "Service restarted for $ENV"
+            EOSSH
 
             echo "✅ Completed environment: $ENV"
             echo "==============================="
