@@ -2,6 +2,7 @@ import os
 import re
 import xml.etree.ElementTree as ET
 import subprocess
+import uuid
 
 # Get execution environment
 executionenv = os.getenv("ENV_ID", "")
@@ -34,13 +35,12 @@ if not sql_files:
     print("⚠️ No SQL files found in update.xml")
     exit(0)
 
-# Track printed files to avoid duplicates
+# Process only PROC/HSPROCS files
 printed = set()
-valid_files = []
+valid_proc_files = []
 
-# Print and collect valid non-proc files
 for sql_file in sql_files:
-    if sql_file.startswith("PROC/HSPROCS/"):
+    if not sql_file.startswith("PROC/HSPROCS/"):
         continue
     if sql_file in printed:
         continue
@@ -48,63 +48,66 @@ for sql_file in sql_files:
     full_path = os.path.join(base_path, sql_file)
     if os.path.exists(full_path):
         print(f"✅ {full_path}")
-        valid_files.append(full_path)
+        valid_proc_files.append(full_path)
     else:
         print(f"❌ Missing: {full_path}")
 
-# 🔁 Process and execute each valid SQL file
-for sql_file in valid_files:
-    with open(sql_file, "r") as f:
+# Run BTEQ for each valid PROC file using COMPILE FILE
+for proc_file in valid_proc_files:
+    with open(proc_file, "r") as f:
         content = f.read()
-        final_sql = re.sub(r"\$\{env\.id\.upper\}", env_id.upper(), content)
 
-    temp_file = "temp_script.sql"
-    with open(temp_file, "w") as f:
-        f.write(final_sql + "\n")
+    content = content.replace("${env.id.upper}", env_id.upper())
 
-    # BTEQ logic based on environment
+    # Prepare temp files
+    temp_proc_path = f"{base_path}/{uuid.uuid4()}_proc.sql"
+    temp_btq_path  = f"{base_path}/{uuid.uuid4()}_proc.btq"
+    log_path       = f"{temp_btq_path}.log"
+
+    # Write PROC to temp file
+    with open(temp_proc_path, "w") as f:
+        f.write(content)
+
+    # Build BTEQ content
     if executionenv.upper() == "UAT":
-        bteq_cmd = f"""
-bteq <<EOF
-.logon {host}/{user},RpSQC\\\\$c_4dwv;
-.run file={temp_file};
-.logoff;
-.quit;
-EOF
+        bteq_content = f"""
+.LOGON {host}/{user},RpSQC\\\\$c_4dwv;
+COMPILE FILE = {temp_proc_path};
+.LOGOFF;
+.QUIT;
 """
     elif executionenv.upper() == "PRD":
-        bteq_cmd = f"""
-bteq <<EOF
-.logon {host}/{user},\\$_bdgE7r1#Tr;
-.run file={temp_file};
-.logoff;
-.quit;
-EOF
+        bteq_content = f"""
+.LOGON {host}/{user},\\$_bdgE7r1#Tr;
+COMPILE FILE = {temp_proc_path};
+.LOGOFF;
+.QUIT;
 """
     else:
-        bteq_cmd = f"""
-bteq <<EOF
-.logon {host}/{user},{pwd};
-.run file={temp_file};
-.logoff;
-.quit;
-EOF
+        bteq_content = f"""
+.LOGON {host}/{user},{pwd};
+COMPILE FILE = {temp_proc_path};
+.LOGOFF;
+.QUIT;
 """
 
-    print(f"\n🚀 Executing: {sql_file}")
-    result = subprocess.run(bteq_cmd, shell=True,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            universal_newlines=True)
+    # Save BTEQ script
+    with open(temp_btq_path, "w") as f:
+        f.write(bteq_content)
 
-    print("📤 BTEQ Output:\n", result.stdout)
+    # Run BTEQ
+    run_cmd = f"bteq < {temp_btq_path} > {log_path}"
+    print(f"\n🚀 Executing PROC file: {proc_file}")
+    print(f"Running: {run_cmd}")
+
+    result = subprocess.run(run_cmd, shell=True, check=False)
     if result.returncode != 0:
-        print(f"❌ Execution failed for {sql_file}:\n", result.stderr)
+        print(f"❌ Failed executing {proc_file}. Check log: {log_path}")
         exit(result.returncode)
+    else:
+        print(f"✅ Completed. See log: {log_path}")
 
-print("\n✅ All SQL files executed successfully.")
-
-# ✅ Delete update.xml after everything
+# ✅ Delete update.xml at the end
 try:
     os.remove(update_xml_path)
     print(f"\n🗑️ Deleted update.xml after processing: {update_xml_path}")
