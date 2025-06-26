@@ -19,6 +19,22 @@ if not all([host, user, pwd]):
 base_path = "Teradata/src"
 update_xml_path = os.path.join(base_path, "update.xml")
 
+# ✅ Delete old update.xml if exists
+if os.path.exists(update_xml_path):
+    try:
+        os.remove(update_xml_path)
+        print(f"🗑️ Deleted old update.xml: {update_xml_path}")
+    except Exception as e:
+        print(f"❌ Failed to delete update.xml: {e}")
+        exit(1)
+else:
+    print(f"ℹ️ No update.xml file found at: {update_xml_path} (nothing to delete)")
+
+# Re-check if update.xml still needed to be parsed
+if not os.path.exists(update_xml_path):
+    print("⚠️ Skipping XML parse — update.xml no longer exists.")
+    exit(0)
+
 # Parse update.xml
 tree = ET.parse(update_xml_path)
 root = tree.getroot()
