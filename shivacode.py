@@ -45,9 +45,18 @@ if not sql_files:
     print("⚠️ No SQL files found in update.xml")
     exit(0)
 
-# Print resolved full paths
-print("📄 SQL file full paths:")
+# Track printed files to avoid duplicates
+printed = set()
+
+# Print resolved full paths (skip PROC/HSPROCS)
 for sql_file in sql_files:
+    if sql_file.startswith("PROC/HSPROCS/"):
+        continue  # skip these
+
+    if sql_file in printed:
+        continue  # skip duplicates
+
+    printed.add(sql_file)
     full_path = os.path.join(base_path, sql_file)
     if os.path.exists(full_path):
         print(f"✅ {full_path}")
