@@ -1,8 +1,9 @@
 cd ~/actions-runner
-sudo ./svc.sh install
+./svc.sh stop
+sudo ./svc.sh uninstall
 
-sudo systemctl daemon-reload
+./config.sh remove --token <TOKEN>
+./config.sh --url https://github.com/zilvertonz/GBS_DAE_Devops_Automation --token <TOKEN>
+sudo ./svc.sh install
 sudo systemctl start actions.runner.zilvertonz-GBS_DAE_Devops_Automation.hdclappxd135.service
 sudo systemctl enable actions.runner.zilvertonz-GBS_DAE_Devops_Automation.hdclappxd135.service
-sudo systemctl status actions.runner.zilvertonz-GBS_DAE_Devops_Automation.hdclappxd135.service
-journalctl -u actions.runner.zilvertonz-GBS_DAE_Devops_Automation.hdclappxd135.service -f
