@@ -1,12 +1,3 @@
-cd ~/actions-runner
+Just to confirm — should all GKE clusters be configured with the maintenance window 2:00–4:00 AM UTC, weekly on Saturday?
 
-# Stop and uninstall old runner
-sudo ./svc.sh stop
-sudo ./svc.sh uninstall
-
-# Delete the old config (skip `config.sh remove`)
-rm -rf .runner
-./config.sh --url https://github.com/zilvertonz/GBS_DAE_Devops_Automation --token <new_token>
-sudo ./svc.sh install
-sudo systemctl start actions.runner.zilvertonz-GBS_DAE_Devops_Automation.hdclappxd135.service
-sudo systemctl enable actions.runner.zilvertonz-GBS_DAE_Devops_Automation.hdclappxd135.service
+Also, should the Rego policy match this exact window, or is some variation acceptable?
