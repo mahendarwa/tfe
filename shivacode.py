@@ -1,15 +1,20 @@
 package wiz
 
-default result := "pass"
+default result := "fail"
 
-result := "fail" {
-  not input.maintenancePolicy.window.recurringWindow
+result := "pass" {
+  input.maintenancePolicy.window.recurringWindow.window.startTime
+  input.maintenancePolicy.window.recurringWindow.window.endTime
 }
-result := "fail" {
-  not input.maintenancePolicy.window.recurringWindow.window.startTime
+
+result := "pass" {
+  input.maintenancePolicy.window.dailyMaintenanceWindow.startTime
+  input.maintenancePolicy.window.dailyMaintenanceWindow.duration
 }
-result := "fail" {
-  not input.maintenancePolicy.window.recurringWindow.window.endTime
-}
-currentConfiguration := sprintf("recurringWindow: %v", [input.maintenancePolicy.window.recurringWindow])
-expectedConfiguration := "recurringWindow with startTime  and endTime should be  set"
+
+currentConfiguration := sprintf("recurringWindow: %v, dailyMaintenanceWindow: %v", [
+  input.maintenancePolicy.window.recurringWindow,
+  input.maintenancePolicy.window.dailyMaintenanceWindow
+])
+
+expectedConfiguration := "Either recurringWindow (with startTime and endTime) OR dailyMaintenanceWindow (with startTime and duration) should be set"
