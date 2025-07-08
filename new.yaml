@@ -1,2 +1,8 @@
 echo 'RpSQC\$c_4dwv' > /home/pythondev/actions-runner/_work/pass
 chmod 600 /home/pythondev/actions-runner/_work/pass
+
+
+with open("/home/pythondev/actions-runner/_work/pass", "r") as f:
+    password = f.read().strip()
+
+.logon {host}/{user},{password};
