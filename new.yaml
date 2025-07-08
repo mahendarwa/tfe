@@ -1,6 +1,2 @@
-bteq <<EOF
-.LOGON <TERADATA_HOST>/<USERNAME>,<PASSWORD>;
-SELECT DATE;
-.LOGOFF;
-.QUIT;
-EOF
+echo 'RpSQC\$c_4dwv' > /home/pythondev/actions-runner/_work/pass
+chmod 600 /home/pythondev/actions-runner/_work/pass
