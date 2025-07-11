@@ -1,8 +1,76 @@
-echo 'RpSQC\$c_4dwv' > /home/pythondev/actions-runner/_work/pass
-chmod 600 /home/pythondev/actions-runner/_work/pass
+The **Payment Card Industry (PCI) Security Standards Council (SSC)** is a global consortium established in 2006 by major card brands—Visa, Mastercard, American Express, Discover, and JCB—to develop, maintain, and promote payment security standards ([Wikipedia][1]).
 
+---
 
-with open("/home/pythondev/actions-runner/_work/pass", "r") as f:
-    password = f.read().strip()
+### 🔐 What is PCI DSS?
 
-.logon {host}/{user},{password};
+The **PCI Data Security Standard (PCI DSS)** is a comprehensive set of requirements aimed at securing credit and debit card data during storage, processing, and transmission. It’s mandatory for any organization handling cardholder data and includes validation methods like Self‑Assessment Questionnaires (SAQs) or Qualified Security Assessor (QSA) audits ([Wikipedia][2]).
+
+#### 📋 The 12 Core Requirements:
+
+1. Install and maintain a firewall.
+2. Change vendor-default passwords.
+3. Protect stored cardholder data.
+4. Encrypt transmitted data over public networks.
+5. Use and regularly update anti-malware.
+6. Maintain secure systems and software.
+7. Restrict access to need-to-know.
+8. Assign unique IDs to users.
+9. Restrict physical access to data.
+10. Log and monitor access.
+11. Test security systems and processes.
+12. Maintain an information security policy ([Wikipedia][2], [TechTarget][3]).
+
+---
+
+### 🧾 Compliance Levels
+
+Merchants are classified into **four levels** based on transaction volume:
+
+| Level | Annual Transactions |          Validation Required         |                                   |
+| :---: | :-----------------: | :----------------------------------: | --------------------------------- |
+|   1   |      >6 million     | QSA-led Assessment + Quarterly Scans |                                   |
+|   2   |     1–6 million     |        Annual SAQ, maybe Scan        |                                   |
+|   3   |    20k–1 million    |        Annual SAQ + maybe Scan       |                                   |
+|   4   |         <20k        |      Annual SAQ (Scan optional)      | ([Wikipedia][2], [TechTarget][3]) |
+
+---
+
+### 🎯 Purpose & Benefits
+
+* **Protects sensitive cardholder data** and reduces fraud risk.
+* **Builds trust** with customers, partners, and regulators.
+* **Fosters consistent industry-wide security practices** ([TechTarget][3]).
+
+---
+
+### ⚠️ Challenges & Limitations
+
+* Compliance is **periodic**, not continuous—vulnerabilities may emerge post-audit ([WIRED][4]).
+* Implementation costs, especially for smaller organizations.
+* **Breach still possible despite compliance**, as seen in past incidents .
+
+---
+
+### 🧩 Related Standards by PCI SSC
+
+* **PCI P2PE (Point-to-Point Encryption):** Encrypts card data at the point of swipe, reducing PCI scope for merchants ([Wikipedia][5]).
+* **Qualification Programs:**
+
+  * QSA (Qualified Security Assessor) for external audits ([Wikipedia][6]).
+  * ISA (Internal Security Assessor) for self-assessment within organizations ([Wikipedia][2]).
+
+---
+
+### ✅ Summary
+
+The PCI framework is designed to enforce robust **data protection** through 12 requirements, tailored validation levels, and evolving standards like P2PE. However, compliance is not a panacea and must be paired with continuous security efforts to truly safeguard payment ecosystems.
+
+Let me know if you’d like to explore PCI DSS version 4.0.1 updates, deeper technical guidance, or validation processes.
+
+[1]: https://en.wikipedia.org/wiki/Payment_Card_Industry_Security_Standards_Council?utm_source=chatgpt.com "Payment Card Industry Security Standards Council"
+[2]: https://en.wikipedia.org/wiki/Payment_Card_Industry_Data_Security_Standard?utm_source=chatgpt.com "Payment Card Industry Data Security Standard"
+[3]: https://www.techtarget.com/searchsecurity/definition/PCI-DSS-Payment-Card-Industry-Data-Security-Standard?utm_source=chatgpt.com "What is PCI DSS (Payment Card Industry Data Security Standard)? By"
+[4]: https://www.wired.com/2014/01/target-hack?utm_source=chatgpt.com "Target Got Hacked Hard in 2005. Here's Why They Let It Happen Again"
+[5]: https://en.wikipedia.org/wiki/Point-to-point_encryption?utm_source=chatgpt.com "Point-to-point encryption"
+[6]: https://en.wikipedia.org/wiki/Qualified_Security_Assessor?utm_source=chatgpt.com "Qualified Security Assessor"
