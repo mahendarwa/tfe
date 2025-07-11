@@ -1,3 +1,8 @@
-Thanks for the quick response and for escalating this to the Product team. I’ll wait to hear back on any updates or next steps from your end.
-
-Please do keep me posted if anything further is required from my side.
+result := "skip" {
+  not input.object.kind == "EnvoyFilter"
+} else := "skip" {
+  not contains(input.object.apiVersion, "istio.io")
+} else := "fail" {
+  input.object.kind == "EnvoyFilter"
+  input.object.metadata.namespace != "istio-system"
+}
