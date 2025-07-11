@@ -1,7 +1,3 @@
-Unable to Create Automation Rule – "Add Action" is Blank, Integrations Missing
+Thanks for the quick response and for escalating this to the Product team. I’ll wait to hear back on any updates or next steps from your end.
 
-While attempting to create an automation rule for policy update notifications (CCR, Graph Q, and new releases), the “Add Action” section appears blank. We are unable to see existing integrations like Splunk HEC and Email in the dropdown.
-
-Additionally, the message "Preview is not available" appears when using the Release after filter, which might be contributing to the issue.
-No actions are displayed. Can’t complete rule creation.
-We expect to see available integrations such as Email and Splunk HEC in the Add Action section.
+Please do keep me posted if anything further is required from my side.
