@@ -1,4 +1,4 @@
-name: Sync from Cigna GBS_DAE_OSS to Zilverton GBS_DAE_OSS
+name: Sync from Cigna GBS_DAE_OSS to Zilverton GBS_DAE_OSS (Excluding ETL_LZ)
 
 on:
   workflow_dispatch:
@@ -19,10 +19,11 @@ jobs:
           token: ${{ secrets.zilverton_token }}
           ref: master
 
-      - name: Backup Workflows
+      - name: Backup Workflows & ETL_LZ
         run: |
           mkdir -p backup
           cp -R .github/workflows backup/ || true
+          cp -R ETL_LZ backup/ETL_LZ || true
 
       - name: Disable SSL Verification for Git
         run: git config --global http."https://github.sys.cigna.com".sslVerify false
@@ -37,20 +38,21 @@ jobs:
           git checkout master
           git reset --hard cigna/master
 
-      - name: Restore Workflows
+      - name: Restore Workflows and ETL_LZ
         run: |
           mkdir -p .github/workflows
           cp -R backup/workflows/* .github/workflows || true
+          cp -R backup/ETL_LZ ./ETL_LZ || true
 
       - name: Set Git Identity
         run: |
           git config --global user.name "GitHub Sync Bot"
           git config --global user.email "syncbot@example.com"
 
-      - name: Commit Workflow Restoration
+      - name: Commit Restored Folders
         run: |
-          git add .github/workflows
-          git commit -m "Restore workflows after syncing from Cigna" || echo "No changes to commit"
+          git add .github/workflows ETL_LZ
+          git commit -m "Restore workflows and ETL_LZ after syncing from Cigna" || echo "No changes to commit"
 
       - name: Push to Zilverton Repo
         run: |
