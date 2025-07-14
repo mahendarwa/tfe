@@ -1,20 +1,59 @@
-package wiz
+name: Sync from Cigna GBS_DAE_OSS to Zilverton GBS_DAE_OSS
 
-default result := "fail"
+on:
+  workflow_dispatch:
 
-result := "pass" {
-  input.maintenancePolicy.window.recurringWindow.window.startTime
-  input.maintenancePolicy.window.recurringWindow.window.endTime
-}
+permissions:
+  contents: write
+  actions: write
 
-result := "pass" {
-  input.maintenancePolicy.window.dailyMaintenanceWindow.startTime
-  input.maintenancePolicy.window.dailyMaintenanceWindow.duration
-}
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
 
-currentConfiguration := sprintf("recurringWindow: %v, dailyMaintenanceWindow: %v", [
-  input.maintenancePolicy.window.recurringWindow,
-  input.maintenancePolicy.window.dailyMaintenanceWindow
-])
+      - name: Checkout Zilverton GBS_DAE_OSS Repo
+        uses: actions/checkout@v2
+        with:
+          repository: zilvertonz/GBS_DAE_OSS
+          token: ${{ secrets.zilverton_token }}
+          ref: master
 
-expectedConfiguration := "Either recurringWindow (with startTime and endTime) OR dailyMaintenanceWindow (with startTime and duration) should be set"
+      - name: Backup Workflows
+        run: |
+          mkdir -p backup
+          cp -R .github/workflows backup/ || true
+
+      - name: Disable SSL Verification for Git
+        run: git config --global http."https://github.sys.cigna.com".sslVerify false
+
+      - name: Add and Fetch Cigna GBS_DAE_OSS Remote
+        run: |
+          git remote add cigna https://${{ github.token }}@github.sys.cigna.com/cigna/GBS_DAE_OSS.git
+          git fetch cigna
+
+      - name: Replace with Cigna Master
+        run: |
+          git checkout master
+          git reset --hard cigna/master
+
+      - name: Restore Workflows
+        run: |
+          mkdir -p .github/workflows
+          cp -R backup/workflows/* .github/workflows || true
+
+      - name: Set Git Identity
+        run: |
+          git config --global user.name "GitHub Sync Bot"
+          git config --global user.email "syncbot@example.com"
+
+      - name: Commit Workflow Restoration
+        run: |
+          git add .github/workflows
+          git commit -m "Restore workflows after syncing from Cigna" || echo "No changes to commit"
+
+      - name: Push to Zilverton Repo
+        run: |
+          git remote remove origin || true
+          git remote add origin https://${{ secrets.zilverton_token }}@github.com/zilvertonz/GBS_DAE_OSS.git
+          git push origin master --force
