@@ -7,3 +7,35 @@ remediation_steps or remediation_summary
 security_tool_finding_remediation (if specific to tool findings)
 
 affected_package_name / affected_version
+
+
+attack complexity (cvss v2)
+attack complexity (cvss v3)
+availability impact (effective)
+component name
+confidentiality impact (cvss v3)
+data source
+dependency type
+description
+detection method
+exploitation probability (epss)
+exploitation probability percentile (epss)
+exploitation probability severity (epss)
+first seen
+fixed version
+initial access vulnerability
+integrity impact (effective)
+is base image vulnerability
+last seen
+layer build command
+link
+nvd score
+privileges required (cvss v2)
+privileges required (cvss v3)
+references
+related issues
+scan source
+score
+status
+version
+vulnerability categories
