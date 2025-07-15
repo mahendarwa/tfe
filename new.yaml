@@ -39,3 +39,18 @@ score
 status
 version
 vulnerability categories
+
+
+Recommended Version – Not found in Excel
+
+Fix Date – Not present in Excel
+
+Fixed Version – Not found in Excel (even though CVE version info exists, this field is explicit)
+
+Is Base Image Vulnerability – Already identified as missing earlier
+
+Project – Already known as missing
+
+Status, First seen, Last seen – Already flagged
+
+Component name, Version, Layer Build Command, Data Source, Detection Method, Scan Source – Already flagged
