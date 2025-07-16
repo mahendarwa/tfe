@@ -1,4 +1,1 @@
-Field_Name	Value	Issue_Description
-container_image_name	quay-registry.aetna.com/opensource/jetstack/cert-manager-webhook@sha256...	Likely an external ID or URL
-container_nativetype	cert-manager-webhook	Actual value looks like a component name
-security_tool_finding_validatedinruntime	TRUE	Expected ID format (UUID or alphanum)
+Until the root cause is clearly identified, and given that this sudden spike appears to be linked to a recent change in Wiz’s detection logic (starting July 14th), can we temporarily suppress or disable this specific container policy? Since the vendor themselves are still investigating and believe this should have been detected from Day 1, a temporary action will help reduce alert noise and avoid false positives while the issue is under review.
