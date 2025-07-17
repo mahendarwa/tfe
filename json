@@ -1,8 +1,19 @@
-As part of a recent non-compliance report, we have identified several IAM roles that have not been used for over 180 days and appear to be inactive.
-An Excel sheet is attached with the full list of impacted roles. Each team can refer to the "xxx" column to identify and review the roles relevant to them.
+Successfully onboarded multiple cloud accounts (AWS, Azure, GCP) into Wiz by configuring secure cloud connectors and validating integration health across environments.
 
-Please review the roles under your respective ITEAM and let us know:
-If any of these roles are still required, we will retain them as-is.
-If they are no longer in use, kindly confirm so we can proceed with safe deletion.
+Created, maintained, and continuously monitored cloud connectors, ensuring seamless data ingestion and resolving any connector health issues proactively.
 
-Kindly share your feedback as soon as possible to help us move forward with cleanup.
+Designed and developed custom dashboards and executive-level reports in Wiz based on leadership requirements, providing actionable insights into cloud security posture.
+
+Built and managed Cloud Configuration Rules (CCRs) and Security Graph queries to detect policy violations, misconfigurations, and risky resource relationships across cloud assets.
+
+Executed test cases for newly created cloud resources, ensuring alignment with organizational security policies and compliance benchmarks.
+
+Managed subscription-level onboarding, tagging resources to the appropriate Wiz projects and ensuring accurate scoping of visibility and enforcement.
+
+Created and governed Wiz roles and group policies, implementing least-privilege access and RBAC to align with enterprise security standards.
+
+Generated and analyzed vulnerability and misconfiguration reports, coordinated with relevant teams for remediation, and ensured timely resolution of critical findings.
+
+Actively collaborated with cross-functional teams to improve policy effectiveness and implement custom guardrails and enforcement workflows using Wiz capabilities.
+
+Contributed to the continuous improvement of the Wiz implementation, staying current with platform updates, new features, and best practices.
