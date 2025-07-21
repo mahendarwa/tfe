@@ -12,3 +12,6 @@ This functionality would be helpful for enforcing stricter governance over board
 ====
 I looked into the Wiz documentation regarding restricting board visibility (i.e., allowing users to create only private, public, or org-wide boards). Based on the current documentation, there doesn’t seem to be a way to enforce this level of control via RBAC or permissions.
 I’ve drafted a message to Wiz Support to confirm this and to check if we can raise it as a formal feature request. Let me know if you’re okay with me proceeding.
+
+
+This means that if a user has permission to create boards, they have access to all visibility options (private, public, organization) and you cannot restrict them to only certain visibility levels through the current permission system.
