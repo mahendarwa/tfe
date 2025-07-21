@@ -1,1 +1,14 @@
-You're right—it is technically still a violation. However, since Wiz only started detecting this due to a recent backend change (July 14th), and the vendor themselves are still investigating why it wasn't flagged earlier, there's a chance it could be an issue with detection logic or severity classification. The idea behind temporary suppression is just to reduce unnecessary alert noise until we confirm whether this is something we truly need to act on. We can always re-enable once there’s clarity.
+Hi Team,
+
+Could you please confirm if there is currently a way in Wiz to restrict board visibility options—specifically, to allow users to create only private, only public, or only organization-wide boards—using RBAC or any other permission settings?
+
+From what I found in the Wiz documentation, it appears that this level of granular control is not currently supported. If that’s the case, could you confirm and let us know if we can raise this as a formal feature request?
+
+This functionality would be helpful for enforcing stricter governance over board usage within our environment.
+
+
+
+
+====
+I looked into the Wiz documentation regarding restricting board visibility (i.e., allowing users to create only private, public, or org-wide boards). Based on the current documentation, there doesn’t seem to be a way to enforce this level of control via RBAC or permissions.
+I’ve drafted a message to Wiz Support to confirm this and to check if we can raise it as a formal feature request. Let me know if you’re okay with me proceeding.
