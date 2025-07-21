@@ -1,5 +1,21 @@
-While running a Teradata SQL script (SPAYER_OTS.sql) from our pipeline, the execution failed with the following error:
-Failure 3134 – The request was aborted by an ABORT SESSION command
-Return Code: 8
+package wiz
 
-Can you please help check on the DB side why the session was aborted?
+default result := "pass"
+
+result := "fail" {
+  input.kind == "Pod"
+  val := input.metadata.labels["sidecar.istio.io/inject"]
+  val == "false"
+}
+
+result := "fail" {
+  input.kind == "Pod"
+  val := input.metadata.annotations["sidecar.istio.io/inject"]
+  val == "false"
+}
+
+currentConfiguration := sprintf("sidecar.istio.io/inject: %v", [
+  input.metadata.labels["sidecar.istio.io/inject"]
+])
+
+expectedConfiguration := "sidecar.istio.io/inject: true"
