@@ -1,7 +1,7 @@
 import pyodbc
 import re
 
-# SQL Server connection string (working one)
+# Connection string (DO NOT CHANGE — WORKING)
 connection_string = (
     r'DRIVER={ODBC Driver 18 for SQL Server};'
     r'SERVER=HSTNCMRSRD1QA02.healthspring.inside;'
@@ -13,19 +13,34 @@ connection_string = (
     r'PWD=Dev3s@mpath;'
 )
 
-# Path to your SQL file (update this per deployment)
+# Path to your SQL file (update per deployment)
 sql_file_path = "query.sql"
 
 try:
-    with open(sql_file_path, 'r') as file:
-        sql_script = file.read()
-
-    # Split SQL script into batches on GO
-    batches = re.split(r'(?i)^\s*GO\s*$', sql_script, flags=re.MULTILINE)
-
+    # Step 1: Try to connect to SQL Server
     connection = pyodbc.connect(connection_string, timeout=10)
     cursor = connection.cursor()
     print("✅ Connected to SQL Server")
+
+    # Step 2: Execute table check (from your original script)
+    check_table_query = """
+        SELECT 1
+        FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = 'Export_CIOX';
+    """
+    cursor.execute(check_table_query)
+    exists = cursor.fetchone()
+
+    if exists:
+        print("✅ Table dbo.Export_CIOX exists in Staging database.")
+    else:
+        print("❌ Table dbo.Export_CIOX does NOT exist in Staging database.")
+
+    # Step 3: Load and execute batches from query.sql
+    with open(sql_file_path, 'r') as file:
+        sql_script = file.read()
+
+    batches = re.split(r'(?i)^\s*GO\s*$', sql_script, flags=re.MULTILINE)
 
     for batch in batches:
         batch = batch.strip()
