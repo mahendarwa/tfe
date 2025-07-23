@@ -1,8 +1,34 @@
-Join Zoom Meeting
-https://us04web.zoom.us/j/76644730315?pwd=LWSYO5bjgiF1nmMKM7tVtJ2v3bY2vm.1
+import pyodbc
 
-Meeting ID:  766 4473 0315
-Passcode: sDu8uY
+# Connection string
+connection_string = (
+    r'DRIVER={ODBC Driver 18 for SQL Server};'
+    r'SERVER=HSTNCMRSRDIQA02.healthspring.inside;'
+    r'Trusted_connection=yes;'
+    r'TrustServerCertificate=yes;'
+    r'DATABASE=Plandata_prod;'
+    r'DOMAIN=INTERNAL;'
+    r'UID=C8X6K9;'
+    r'PWD=Dev3s@mpath;'
+)
 
+try:
+    connection = pyodbc.connect(connection_string)
+    cursor = connection.cursor()
+    print("✅ Connected to SQL Server")
 
+    # Read and execute the SQL script
+    with open("query.sql", "r") as file:
+        sql_script = file.read()
+        cursor.execute(sql_script)
+        connection.commit()
+        print("✅ SQL script executed successfully")
 
+except Exception as e:
+    print(f"❌ Error: {e}")
+
+finally:
+    if 'cursor' in locals():
+        cursor.close()
+    if 'connection' in locals():
+        connection.close()
