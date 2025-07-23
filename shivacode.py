@@ -17,12 +17,18 @@ try:
     cursor = connection.cursor()
     print("✅ Connected to SQL Server")
 
-    # Read and execute the SQL script
+    # Read and split the SQL script
     with open("query.sql", "r") as file:
         sql_script = file.read()
-        cursor.execute(sql_script)
+
+    # Split using GO (case-insensitive + strip leading/trailing whitespace)
+    commands = [cmd.strip() for cmd in sql_script.split('GO') if cmd.strip()]
+
+    for command in commands:
+        cursor.execute(command)
         connection.commit()
-        print("✅ SQL script executed successfully")
+
+    print("✅ SQL script executed successfully")
 
 except Exception as e:
     print(f"❌ Error: {e}")
