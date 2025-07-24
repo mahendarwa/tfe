@@ -1,7 +1,8 @@
-Without assigning project/global/org dashboard permissions, the user inherits only Private scope for dashboard creation.
+Project Dashboards:
+Allows users to create dashboards visible to all users with inherited project-level access.
 
-Create dashboards with only Private visibility
+Global Users Only Dashboards:
+Enables dashboard visibility to users with global roles (not limited to private/project scopes).
 
-View and manage only their own private dashboards
-
-Cannot create dashboards visible to Projects, Global Users, or the Organization
+Org Dashboards:
+Grants ability to create dashboards visible to all users across the entire organization.
