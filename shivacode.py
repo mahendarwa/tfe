@@ -1,54 +1,69 @@
-$accessToken = "YOUR_ACCESS_TOKEN"
-
+# Auth headers
 $headers = @{
-    "Authorization" = "bearer $accessToken"
+    "Authorization" = "Bearer $accessToken"
     "Content-Type"  = "application/json"
 }
 
-$firstRun = $true
-$endCursor = $null
+$first = 100
+$afterDate = "2024-06-02"
+$orderBy = "DESC"
+
+$SendCursor = $null
 $hasNextPage = $true
-$sendCursorVal = 0
+$allResults = @()
 
 do {
-    # Format the GraphQL query properly
-    if ($null -eq $endCursor) {
+    # Format cursor
+    if ($null -eq $SendCursor) {
         $cursorValue = "null"
     } else {
-        $cursorValue = "`"$endCursor`""
+        $cursorValue = "`"$SendCursor`""
     }
 
+    # GraphQL query
     $query = @"
 query {
-  vulnerabilityFindings(first: 5, after: $cursorValue) {
+  vulnerabilityFindings(first: $first, after: $cursorValue, orderBy: { field: CREATED_AT, direction: $orderBy }, filter: { createdAt: { gt: "$afterDate" }}) {
     pageInfo {
       endCursor
       hasNextPage
     }
     nodes {
       id
+      name
       severity
-      resource {
-        name
-      }
+      createdAt
     }
   }
 }
 "@
 
-    # Convert to JSON format for GraphQL
+    # Build JSON body
     $queryBody = @{ query = $query } | ConvertTo-Json -Compress
 
-    # Call API
+    # Call Wiz GraphQL API
     $response = Invoke-RestMethod 'https://api.us81.app.wiz.io/graphql' `
-        -Method POST -Headers $headers -Body $queryBody
+        -Method 'POST' `
+        -Headers $headers `
+        -Body $queryBody
 
-    $endCursor = $response.data.vulnerabilityFindings.pageInfo.endCursor
+    # Update pagination vars
+    $SendCursor = $response.data.vulnerabilityFindings.pageInfo.endCursor
     $hasNextPage = $response.data.vulnerabilityFindings.pageInfo.hasNextPage
 
-    $results = $response.data.vulnerabilityFindings.nodes
+    # Store results only if present
+    if ($response.data.vulnerabilityFindings.nodes) {
+        $allResults += $response.data.vulnerabilityFindings.nodes
+    }
 
-    # Append to CSV
-    $results | Export-Csv -Path "E:\ETL\Wiz\Findings\WizCloudRes.csv" -NoTypeInformation -Append
+    Write-Host "Fetched $($allResults.Count) so far..."
 
-} while ($hasNextPage -eq $true)
+} while ($hasNextPage -and $null -ne $SendCursor)
+
+# Export once at the end
+if ($allResults.Count -gt 0) {
+    $allResults | Export-Csv -Path "C:\Users\C880938\Downloads\wizcloudRes.csv" -NoTypeInformation
+    Write-Host "Export complete: $($allResults.Count) records saved."
+} else {
+    Write-Host "No results found."
+}
