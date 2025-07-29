@@ -1,60 +1,54 @@
-# Authentication headers
+$accessToken = "YOUR_ACCESS_TOKEN"
+
 $headers = @{
-    "Authorization" = "Bearer $accessToken"
+    "Authorization" = "bearer $accessToken"
     "Content-Type"  = "application/json"
 }
 
-# Query parameters
-$first = 100
-$afterDate = "2024-06-02"
-$orderBy = "DESC"
-
-# Variables
-$response = $null
-$SendCursor = $null
+$firstRun = $true
+$endCursor = $null
 $hasNextPage = $true
+$sendCursorVal = 0
 
-Do {
-    # Set cursor value for GraphQL query
-    if ($null -eq $SendCursor) {
+do {
+    # Format the GraphQL query properly
+    if ($null -eq $endCursor) {
         $cursorValue = "null"
     } else {
-        $cursorValue = "`"$SendCursor`""
+        $cursorValue = "`"$endCursor`""
     }
 
-    # Build GraphQL query string
     $query = @"
 query {
-  vulnerabilityFindings(first: $first, after: $cursorValue, orderBy: { field: "CREATED_AT", direction: $orderBy }, filter: { createdAt: { gt: "$afterDate" }}) {
+  vulnerabilityFindings(first: 5, after: $cursorValue) {
     pageInfo {
       endCursor
       hasNextPage
     }
     nodes {
       id
-      name
       severity
-      createdAt
+      resource {
+        name
+      }
     }
   }
 }
 "@
 
-    # Convert query to proper JSON payload
-    $payload = @{ query = $query } | ConvertTo-Json -Compress
+    # Convert to JSON format for GraphQL
+    $queryBody = @{ query = $query } | ConvertTo-Json -Compress
 
-    # Call Wiz GraphQL API
+    # Call API
     $response = Invoke-RestMethod 'https://api.us81.app.wiz.io/graphql' `
-        -Method 'POST' `
-        -Headers $headers `
-        -Body $payload
+        -Method POST -Headers $headers -Body $queryBody
 
-    # Get pagination info
-    $SendCursor = $response.data.vulnerabilityFindings.pageInfo.endCursor
+    $endCursor = $response.data.vulnerabilityFindings.pageInfo.endCursor
     $hasNextPage = $response.data.vulnerabilityFindings.pageInfo.hasNextPage
 
-    # Debug output
-    Write-Host "Next Cursor: $SendCursor"
-    Write-Host "Has Next Page: $hasNextPage"
+    $results = $response.data.vulnerabilityFindings.nodes
 
-} While ($hasNextPage -and $null -ne $SendCursor)
+    # Append to CSV
+    $results | Export-Csv -Path "E:\ETL\Wiz\Findings\WizCloudRes.csv" -NoTypeInformation -Append
+
+} while ($hasNextPage -eq $true)
