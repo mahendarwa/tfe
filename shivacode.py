@@ -21,22 +21,32 @@ do {
     }
 
     # GraphQL query
-    $query = @"
-query {
-  vulnerabilityFindings(first: $first, after: $cursorValue, orderBy: { field: CREATED_AT, direction: $orderBy }, filter: { createdAt: { gt: "$afterDate" }}) {
-    pageInfo {
-      endCursor
-      hasNextPage
+    $queryBody = @"
+{
+  "query": "query GraphSearch(`$first: Int = 10, `$sendCursor: String) {
+    graphSearch(
+      first: `$first,
+      after: `$sendCursor,
+      query: {
+        type: [VIRTUAL_MACHINE, VIRTUAL_DESKTOP, VIRTUAL_WORKSTATION]
+        select: true
+      }
+    ) {
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+      nodes {
+        id
+        name
+        nativeType
+        isEphemeral
+      }
     }
-    nodes {
-      id
-      name
-      severity
-      createdAt
-    }
-  }
+  }"
 }
 "@
+
 
     # Build JSON body
     $queryBody = @{ query = $query } | ConvertTo-Json -Compress
