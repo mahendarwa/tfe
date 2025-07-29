@@ -1,78 +1,55 @@
-# Auth headers
-$headers = @{
-    "Authorization" = "Bearer $accessToken"
-    "Content-Type"  = "application/json"
-}
-
-$first = 100
-$afterDate = "2024-06-02"
-$orderBy = "DESC"
-
-$SendCursor = $null
-$hasNextPage = $true
 $allResults = @()
+$firstRun = $true
+$sendCursor = $null
+$hasNextPage = $true
 
-do {
-    # Format cursor
-    if ($null -eq $SendCursor) {
-        $cursorValue = "null"
-    } else {
-        $cursorValue = "`"$SendCursor`""
+Do {
+    # Prepare GraphQL query without over-restrictive filters
+    $query = @"
+query GraphSearch(\$first: Int = 1000, \$sendCursor: String) {
+  graphSearch(
+    first: \$first
+    after: \$sendCursor
+    query: {
+      type: [VIRTUAL_MACHINE, VIRTUAL_DESKTOP, VIRTUAL_WORKSTATION]
+      select: true
     }
-
-    # GraphQL query
-    $queryBody = @"
-{
-  "query": "query GraphSearch(`$first: Int = 10, `$sendCursor: String) {
-    graphSearch(
-      first: `$first,
-      after: `$sendCursor,
-      query: {
-        type: [VIRTUAL_MACHINE, VIRTUAL_DESKTOP, VIRTUAL_WORKSTATION]
-        select: true
-      }
-    ) {
-      pageInfo {
-        endCursor
-        hasNextPage
-      }
-      nodes {
-        id
-        name
-        nativeType
-        isEphemeral
-      }
+  ) {
+    pageInfo {
+      endCursor
+      hasNextPage
     }
-  }"
+    nodes {
+      id
+      name
+      nativeType
+      isEphemeral
+    }
+  }
 }
 "@
 
-
-    # Build JSON body
     $queryBody = @{ query = $query } | ConvertTo-Json -Compress
 
-    # Call Wiz GraphQL API
     $response = Invoke-RestMethod 'https://api.us81.app.wiz.io/graphql' `
-        -Method 'POST' `
-        -Headers $headers `
-        -Body $queryBody
+        -Method POST -Headers $headers -Body $queryBody
 
-    # Update pagination vars
-    $SendCursor = $response.data.vulnerabilityFindings.pageInfo.endCursor
-    $hasNextPage = $response.data.vulnerabilityFindings.pageInfo.hasNextPage
-
-    # Store results only if present
-    if ($response.data.vulnerabilityFindings.nodes) {
-        $allResults += $response.data.vulnerabilityFindings.nodes
+    # Extract and append nodes
+    $nodes = $response.data.graphSearch.nodes
+    if ($nodes) {
+        $allResults += $nodes
+        Write-Host "Fetched $($allResults.Count) so far..."
     }
 
-    Write-Host "Fetched $($allResults.Count) so far..."
+    # Update pagination variables
+    $sendCursor = $response.data.graphSearch.pageInfo.endCursor
+    $hasNextPage = $response.data.graphSearch.pageInfo.hasNextPage
 
-} while ($hasNextPage -and $null -ne $SendCursor)
+} while ($hasNextPage -eq $true -and $null -ne $sendCursor)
 
-# Export once at the end
+# Export only if we have results
 if ($allResults.Count -gt 0) {
-    $allResults | Export-Csv -Path "C:\Users\C880938\Downloads\wizcloudRes.csv" -NoTypeInformation
+    $allResults | Export-Csv -Path "C:\Users\c880938\Downloads\wizcloudRes.csv" -NoTypeInformation
     Write-Host "Export complete: $($allResults.Count) records saved."
 } else {
     Write-Host "No results found."
