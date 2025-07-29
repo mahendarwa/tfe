@@ -1,82 +1,60 @@
-
- 
-# The GraphQL query that defines which data you wish to fetch
-$query = '
-query UserDocsToken {
-    viewerTokens {
-        docs
-    }
-}'
-
-function getwizauth($client_id, $client_secret) {
-    $authuri = 'https://auth.app.wiz.io/oauth/token'
-    $header = @{
-        Headers = @{ 'content-type' = "application/x-www-form-urlencoded" }
-    }
-
-    $tokenPayload = $access_token.Split(".")[1].Replace('-', '+').Replace('_', '/')
-    while ($tokenPayload.Length % 4) { $tokenPayload += "=" }
-    $tokenByteArray = [System.Convert]::FromBase64String($tokenPayload)
-    $tokenArray = [System.Text.Encoding]::ASCII.GetString($tokenByteArray)
-    $tokobj = $tokenArray | ConvertFrom-Json
-    $dc = $tokobj.dc
-
-    return $access_token, $dc
+# Authentication headers
+$headers = @{
+    "Authorization" = "Bearer $accessToken"
+    "Content-Type"  = "application/json"
 }
 
-function Test-WizConnection($token, $dc) {
-    $headers = @{
-        "content-type" = "application/json"
-        "Authorization" = "bearer " + $token
+# Query parameters
+$first = 100
+$afterDate = "2024-06-02"
+$orderBy = "DESC"
+
+# Variables
+$response = $null
+$SendCursor = $null
+$hasNextPage = $true
+
+Do {
+    # Set cursor value for GraphQL query
+    if ($null -eq $SendCursor) {
+        $cursorValue = "null"
+    } else {
+        $cursorValue = "`"$SendCursor`""
     }
 
-    $testQuery = 'query { systemHealthIssues { totalCount } }'
-
-    try {
-        $result = Invoke-GraphQLQuery -Query $testQuery -Uri https://api.$dc.app.wiz.io/graphql -Headers $headers -ErrorAction Stop
-        if ($null -ne $result.data) {
-            Write-Host "✅ Successfully connected to Wiz API." -ForegroundColor Green
-            return $true
-        }
-        else {
-            Write-Host "❌ Connected to Wiz API but no data returned." -ForegroundColor Yellow
-            return $false
-        }
+    # Build GraphQL query string
+    $query = @"
+query {
+  vulnerabilityFindings(first: $first, after: $cursorValue, orderBy: { field: "CREATED_AT", direction: $orderBy }, filter: { createdAt: { gt: "$afterDate" }}) {
+    pageInfo {
+      endCursor
+      hasNextPage
     }
-    catch {
-        Write-Host "❌ Failed to connect to Wiz API: $($_.Exception.Message)" -ForegroundColor Red
-        return $false
+    nodes {
+      id
+      name
+      severity
+      createdAt
     }
+  }
 }
+"@
 
-function query_wiz_api($token, $query, $variables, $dc) {
-    $headers = @{
-        "content-type" = "application/json"
-        "Authorization" = "bearer " + $token
-    }
+    # Convert query to proper JSON payload
+    $payload = @{ query = $query } | ConvertTo-Json -Compress
 
-    try {
-        $result = Invoke-GraphQLQuery -Query $query -Variables $variables -Uri https://api.$dc.app.wiz.io/graphql -Headers $headers -ErrorAction Stop
-        return $result
-    }
-    catch {
-        Write-Host "❌ API query failed: $($_.Exception.Message)" -ForegroundColor Red
-        return $null
-    }
-}
+    # Call Wiz GraphQL API
+    $response = Invoke-RestMethod 'https://api.us81.app.wiz.io/graphql' `
+        -Method 'POST' `
+        -Headers $headers `
+        -Body $payload
 
-# --- Main Execution ---
-Write-Host "Getting token..."
-$token, $dc = getwizauth $client_id $client_secret
+    # Get pagination info
+    $SendCursor = $response.data.vulnerabilityFindings.pageInfo.endCursor
+    $hasNextPage = $response.data.vulnerabilityFindings.pageInfo.hasNextPage
 
-if (-not (Test-WizConnection $token $dc)) {
-    Write-Host "Exiting script due to connection failure." -ForegroundColor Red
-    exit
-}
+    # Debug output
+    Write-Host "Next Cursor: $SendCursor"
+    Write-Host "Has Next Page: $hasNextPage"
 
-Write-Host "Getting data..."
-$result = query_wiz_api $token $query $variables $dc
-
-if ($null -ne $result) {
-    Write-Host $result.data.systemHealthIssues.nodes
-}
+} While ($hasNextPage -and $null -ne $SendCursor)
