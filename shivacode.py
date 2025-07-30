@@ -16,9 +16,10 @@ result := "fail" {
     not input.object.metadata.ownerReferences
 }
 
-# Fail if any ownerReference kind is not allowed
+# Fail if any ownerReference.kind is NOT in allowed list
 result := "fail" {
     some i
+    input.object.metadata.ownerReferences[i].kind
     not input.object.metadata.ownerReferences[i].kind in allowed_kinds
 }
 
