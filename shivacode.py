@@ -1,6 +1,5 @@
 package wiz
 
-
 allowed_kinds := {
     "ReplicaSet",
     "DaemonSet",
@@ -14,10 +13,11 @@ default result := "pass"
 
 
 result := "fail" {
+    not input.spec.ownerReferences
+} else := "fail" {
     some i
-    not input.ownerReferences[i].kind in allowed_kinds
+    not input.spec.ownerReferences[i].kind in allowed_kinds
 }
 
-
-currentConfiguration := sprintf("%v", [input.ownerReferences])
+currentConfiguration := sprintf("%v", [input.spec.ownerReferences])
 expectedConfiguration := "Pods must be managed by one of: ReplicaSet, DaemonSet, CronJob, StatefulSet, Deployment, Job"
