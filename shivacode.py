@@ -1,11 +1,1 @@
-package wiz
-
-default result := "pass"
-
-# Fail if ownerReferences is missing or empty
-result := "fail" {
-    not input.object.metadata.ownerReferences
-}
-
-currentConfiguration := sprintf("%v", [input.object.metadata.ownerReferences])
-expectedConfiguration := "Pods must have ownerReferences"
+We have observed a recurring pattern where the spike in failed scans is significantly higher every Wednesday. Could you please check if this information can be utilized?
