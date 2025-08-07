@@ -18,26 +18,28 @@ result = "fail" {
   count(invalid_hosts) > 0
 }
 
-invalid_hosts := {host |
-  some i
-  host := input.object.spec.servers[i].hosts[_]
+invalid_hosts = hosts {
+  hosts := [host |
+    some i
+    some j
+    host := input.object.spec.servers[i].hosts[j]
 
-  not startswith(host, concat("/", [input.namespace, ""]))
-  not startswith(host, "./")
+    not startswith(host, concat("/", [input.namespace, ""]))
+    not startswith(host, "./")
+  ]
 
-} union {host |
-  some i
-  server := input.object.spec.servers[i]
-  some j
-  host := server.hosts[j]
-  parts := split(host, "/")
-  count(parts) > 1
-  startswith(parts[1], "*")
+  wildcards := [host |
+    some i
+    some j
+    host := input.object.spec.servers[i].hosts[j]
+    parts := split(host, "/")
+    count(parts) > 1
+    startswith(parts[1], "*")
+  ]
+
+  hosts := array.concat(hosts, wildcards)
 }
 
 startswith(str, prefix) = true {
   substring(str, 0, count(prefix)) == prefix
 }
-
-currentConfiguration := sprintf("Host values: %v", [input.object.spec.servers[_].hosts])
-expectedConfiguration := "Host values should not start with '*' after 'namespace/'"
