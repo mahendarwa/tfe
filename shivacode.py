@@ -1,1 +1,1 @@
-sudo rsync -av --relative /opt/versions/python/./ /pythonPROD/python/
+sudo rsync -av --relative --delete --no-o --no-g --no-perms --no-xattrs /opt/versions/python/./ /pythonPROD/python/ || true
