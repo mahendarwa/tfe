@@ -1,5 +1,5 @@
-sudo rsync -av --delete /opt/versions/python/ /tmp/python_copy/ && \
-sudo mkdir -p /pythonPROD/python && \
-cd /tmp/python_copy && \
-sudo find . -type d -exec mkdir -p /pythonPROD/python/{} \; && \
-sudo find . -type f -exec cp {} /pythonPROD/python/{} \;
+cd /opt/versions
+sudo tar -czf /tmp/python-etl.tar.gz python
+sudo cp /tmp/python-etl.tar.gz /pythonPROD/
+cd /pythonPROD/
+sudo tar -xzf python-etl.tar.gz
