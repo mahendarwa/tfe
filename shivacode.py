@@ -1,2 +1,1 @@
-sudo mkdir -p /pythonPROD/python
-sudo cp -R /opt/versions/python/ /pythonPROD/
+sudo rsync -av --relative /opt/versions/python/./ /pythonPROD/python/
