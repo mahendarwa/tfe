@@ -22,11 +22,9 @@ invalid_hosts := {host |
   some i
   host := input.object.spec.servers[i].hosts[_]
 
-  # Reject if host doesn't start with expected namespace or "./"
   not startswith(host, concat("/", [input.namespace, ""]))
   not startswith(host, "./")
 
-  # OR reject if host has wildcard "*" after namespace (e.g., "namespace/*")
 } union {host |
   some i
   server := input.object.spec.servers[i]
