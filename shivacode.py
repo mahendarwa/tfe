@@ -1,13 +1,9 @@
-Follow-Up: Issue Trend View Not Displaying When Filtering by Specific Cloud Platform
+Follow-Up: Visio License Activation Request
 
-Hi Team,
+Hi Oscar,
 
-I am following up on a support request I raised a couple of days ago but haven’t received any response yet.
+I’m following up on my request for assistance with activating Visio. I have installed the application, but it still shows as unlicensed when I open it.
 
-In the Wiz tool, under Issues, I selected a specific filter (rule) which is a Security Graph Query spanning multiple clouds — meaning it generates issues across multiple cloud platforms.
+It has been a couple of weeks since I raised this request, and I’ve also sent follow-up messages on chat without a response. Could you please let me know when you will be able to help in resolving this issue, either by providing a license key or activating Visio?
 
-If I do not filter by Cloud Platform, I can see the Open and Resolved trending chart. However, when I filter by a specific Cloud Platform (e.g., Azure), the trending chart is not displayed, even though there are issues present for that platform.
-
-Could you please confirm if this is expected behavior or if there is a way to enable the trending view for a specific cloud platform when a cross-cloud rule is selected?
-
-Screenshots are attached for reference.
+Your assistance on this would be appreciated.
