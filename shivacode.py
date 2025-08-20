@@ -1,3 +1,1 @@
-In the “Failed scans by Resource Region” report, the dashboard is showing failed scans for the last 5 days, even though there were no errors during that period. The failures are shown across multiple regions, including Azure (CentralUS, EastUS2) and GCP (us-east4).
-
-Could you please confirm why these errors are appearing retroactively when they were not present earlier, and also check if there are any active errors now?
+I'm reviewing how Security Scores are visualized in the dashboard and see that a score of 90% is shown in green. The formula only generates the numeric score and doesn’t specify color logic. Could you please confirm the official thresholds used to determine when the score turns green, yellow/orange, or red?
