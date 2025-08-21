@@ -1,17 +1,32 @@
-Hi Team,
+ssh -o StrictHostKeyChecking=no "$ADMINUSER@$SERVER.enterprisenet.org" bash <<'EOSS'
+echo "Checking for process on port $PORT..."
+pid=$(lsof -i :$PORT -sTCP:LISTEN -t)
 
-Could you please confirm if there is currently a way in Wiz to restrict board visibility options—specifically, to allow users to create only private, only public, or only organization-wide boards—using RBAC or any other permission settings?
+if [ -n "$pid" ]; then
+  echo "Found PID $pid, killing..."
+  kill -9 $pid || exit 1
+  echo "Killed PID $pid successfully"
+else
+  echo "No process found on port $PORT"
+fi
 
-From what I found in the Wiz documentation, it appears that this level of granular control is not currently supported. If that’s the case, could you confirm and let us know if we can raise this as a formal feature request?
+cd /$ADMINUSER/bin || { echo "❌ /$ADMINUSER/bin not found"; exit 1; }
 
-This functionality would be helpful for enforcing stricter governance over board usage within our environment.
+LOGDIR="/tmp/patservice"
+mkdir -p "$LOGDIR"
+LOGFILE="$LOGDIR/${ENVNAME}_start.log"
 
+echo "Starting service and writing log to $LOGFILE ..."
+nohup ./startPGPATservice_${ENVNAME}.sh > "$LOGFILE" 2>&1 &
 
+sleep 10
 
+if [ -f "$LOGFILE" ]; then
+  tail -n 50 "$LOGFILE"
+else
+  echo "❌ Log file $LOGFILE not found"
+  exit 1
+fi
 
-====
-I looked into the Wiz documentation regarding restricting board visibility (i.e., allowing users to create only private, public, or org-wide boards). Based on the current documentation, there doesn’t seem to be a way to enforce this level of control via RBAC or permissions.
-I’ve drafted a message to Wiz Support to confirm this and to check if we can raise it as a formal feature request. Let me know if you’re okay with me proceeding.
-
-
-This means that if a user has permission to create boards, they have access to all visibility options (private, public, organization) and you cannot restrict them to only certain visibility levels through the current permission system.
+echo "✅ Service restarted for $ENVNAME"
+EOSS
