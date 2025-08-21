@@ -1,32 +1,35 @@
-ssh -o StrictHostKeyChecking=no "$ADMINUSER@$SERVER.enterprisenet.org" bash <<'EOSS'
-echo "Checking for process on port $PORT..."
-pid=$(lsof -i :$PORT -sTCP:LISTEN -t)
+      - name: Kill and Restart PAT Service
+        env:
+          ADMINUSER: ${{ steps.map.outputs.adminuser }}
+          SERVER: ${{ steps.map.outputs.server }}
+          PORT: ${{ steps.map.outputs.port }}
+          ENVNAME: ${{ matrix.envname }}
+        run: |
+          echo "Resolved values:"
+          echo "ADMINUSER=$ADMINUSER"
+          echo "SERVER=$SERVER"
+          echo "PORT=$PORT"
+          echo "ENVNAME=$ENVNAME"
+          if [ -z "$PORT" ]; then
+            echo "PORT is not set. Exiting..."
+            exit 1
+          fi
 
-if [ -n "$pid" ]; then
-  echo "Found PID $pid, killing..."
-  kill -9 $pid || exit 1
-  echo "Killed PID $pid successfully"
-else
-  echo "No process found on port $PORT"
-fi
+          LOGS=$(ssh -o StrictHostKeyChecking=no "$ADMINUSER@$SERVER.enterprisenet.org" bash <<EOSSH
+            echo "Checking for process on port $PORT..."
+            pid=\$(lsof -i :$PORT -sTCP:LISTEN -t)
+            if [ -n "\$pid" ]; then
+              echo "Found PID \$pid, killing..."
+              kill -9 \$pid || exit 1
+              echo "Killed PID \$pid successfully"
+            else
+              echo "No process found on port $PORT"
+            fi
+            cd /$ADMINUSER/bin || { echo "❌ /$ADMINUSER/bin not found"; exit 1; }
+            nohup ./startPGPATservice_$ENVNAME.sh > /dev/null 2>&1 &
+            echo "✅ Service restarted for $ENVNAME"
+          EOSSH
+          )
 
-cd /$ADMINUSER/bin || { echo "❌ /$ADMINUSER/bin not found"; exit 1; }
-
-LOGDIR="/tmp/patservice"
-mkdir -p "$LOGDIR"
-LOGFILE="$LOGDIR/${ENVNAME}_start.log"
-
-echo "Starting service and writing log to $LOGFILE ..."
-nohup ./startPGPATservice_${ENVNAME}.sh > "$LOGFILE" 2>&1 &
-
-sleep 10
-
-if [ -f "$LOGFILE" ]; then
-  tail -n 50 "$LOGFILE"
-else
-  echo "❌ Log file $LOGFILE not found"
-  exit 1
-fi
-
-echo "✅ Service restarted for $ENVNAME"
-EOSS
+          echo "📋 Captured logs:"
+          echo "$LOGS"
