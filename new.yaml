@@ -75,3 +75,12 @@ jobs:
 
           echo "📋 Captured logs:"
           echo "$LOGS"
+
+          mkdir -p logs
+          echo "$LOGS" > "logs/patservice-${ENVNAME}.log"
+
+      - name: Upload startup logs as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: "${{ matrix.envname }}-patservice-start-log"
+          path: logs/
