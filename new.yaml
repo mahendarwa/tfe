@@ -1,3 +1,45 @@
+name: Restart QA PAT Service
+
+on:
+  workflow_dispatch:
+
+jobs:
+  validate-actor:
+    runs-on: qa14-runner
+    steps:
+      - name: Validate Actor
+        run: |
+          echo "GitHub actor: '${{ github.actor }}'"
+          IFS=',' read -ra USERS <<< "${{ vars.USERS }}"
+          for u in "${USERS[@]}"; do
+            CLEAN_USER=$(echo "$u" | xargs)
+            if [[ "$CLEAN_USER" == "${{ github.actor }}" ]]; then
+              echo "✅ Authorized actor: $CLEAN_USER"
+              exit 0
+            fi
+          done
+          echo "❌ Unauthorized actor: ${{ github.actor }}"
+          exit 1
+
+  restart-pat-service:
+    needs: validate-actor
+    runs-on: qa14-runner
+    strategy:
+      matrix:
+        envname: [qa12, qa22, qa36, qa42]
+
+    steps:
+      - name: Map environment details
+        id: map
+        run: |
+          ENV="${{ matrix.envname }}"
+          declare -A ADMINUSERS=( [qa12]=pflqa12 [qa22]=pflqa22 [qa36]=pflqa36 [qa42]=pflqa42 )
+          declare -A SERVERS=( [qa12]=daylnxcpsq013 [qa22]=daylnxcpsq013 [qa36]=daylnxcpsq013 [qa42]=daylnxcpsq013 )
+          declare -A PORTS=( [qa12]=8202 [qa22]=8203 [qa36]=8205 [qa42]=8207 )
+          echo "adminuser=${ADMINUSERS[$ENV]}" >> $GITHUB_OUTPUT
+          echo "server=${SERVERS[$ENV]}" >> $GITHUB_OUTPUT
+          echo "port=${PORTS[$ENV]}" >> $GITHUB_OUTPUT
+
       - name: Kill and Restart PAT Service
         env:
           ADMINUSER: ${{ steps.map.outputs.adminuser }}
