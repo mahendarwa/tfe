@@ -1,5 +1,7 @@
+Hi Team,
+
 We noticed an inconsistency in the scan failure reporting. Specifically, for Aug 21, no errors were visible yesterday, but today the dashboard is showing failures for that date (regions: Eastus2 (Azure), us-east1 & us-east4 (AWS)).
 
-Could you please confirm if the scan results are designed to reflect with a 24-hour delay due to data loading or processing? We want to ensure that this is expected behavior and not an issue with the reporting logic.
+This also happened previously — no errors were visible for 6–7 days, and then failures appeared retroactively for those dates.
 
-Looking forward to your clarification.
+Could you please confirm if this delay is expected behavior (due to data loading/processing) or if there is an issue with the reporting logic?
