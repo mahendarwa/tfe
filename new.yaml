@@ -1,4 +1,14 @@
-- name: Execute SSH Commands
+- name: SSH sanity check
+  env:
+    ADMIN_USR: ${{ vars.ADMIN_USR }}   # or secrets.ADMIN_USR if that's where you store it
+  run: |
+    ssh -o BatchMode=yes -o ConnectTimeout=10 \
+        -o StrictHostKeyChecking=no -i ~/.ssh/vscode \
+        "${ADMIN_USR}"@daylnxcpsq014.enterprisenet.org "echo Connected OK: \$(whoami)@\$(hostname)"
+
+- name: Copy ETL assets to remote
+  env:
+    ADMIN_USR: ${{ vars.ADMIN_USR }}
   run: |
     ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}"@daylnxcpsq014.enterprisenet.org bash -s <<'EOF'
       chmod 750 /${{ matrix.env_name }}/bin
@@ -9,14 +19,38 @@
       cp -rvf ${ORG_PATH}ETL/sql_pg/* /${{ matrix.env_name }}/bin/etl/sql_pg/
       cp -rvf ${ORG_PATH}ETL/ref_pg/* /${{ matrix.env_name }}/bin/etl/ref_pg/
       cp -rvf ${ORG_PATH}unix/PFW_UNIX/shellscripts_pg/* /${{ matrix.env_name }}/bin/
+EOF
 
-      # Replace only the auth_key line with GitHub secret
-      sed -i "s|^auth_key=.*|auth_key=${SECRET_QA_AUTH}|" /${{ matrix.env_name }}/bin/etl/config_pg/pat_etl_config.ini
 
+- name: Inject auth_key secret into INI
+  env:
+    ADMIN_USR: ${{ vars.ADMIN_USR }}
+    SECRET_QA_AUTH: ${{ secrets.SECRET_QA_AUTH }}
+  run: |
+    REMOTE_PATH="/${{ matrix.env_name }}/bin/etl/config_pg/pat_etl_config.ini"
+    # escape /, &, \ so sed replacement can't break
+    SAFE_SECRET="$(printf '%s' "$SECRET_QA_AUTH" | sed -e 's/[\/&]/\\&/g' -e 's/\\/\\\\/g')"
+
+    ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}"@daylnxcpsq014.enterprisenet.org \
+      "set -e;
+       if [ ! -f '$REMOTE_PATH' ]; then
+         echo 'ERROR: ini not found: $REMOTE_PATH'; exit 1;
+       fi
+       if grep -q '^auth_key=' '$REMOTE_PATH'; then
+         sed -i 's|^auth_key=.*|auth_key=$SAFE_SECRET|' '$REMOTE_PATH'
+       else
+         printf '\nauth_key=%s\n' '$SAFE_SECRET' >> '$REMOTE_PATH'
+       fi
+       echo 'auth_key updated in: $REMOTE_PATH'"
+
+
+- name: Fix permissions
+  env:
+    ADMIN_USR: ${{ vars.ADMIN_USR }}
+  run: |
+    ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}"@daylnxcpsq014.enterprisenet.org "
       chmod -R 750 /${{ matrix.env_name }}/bin/* || true
       chmod -R 550 /${{ matrix.env_name }}/bin/* || true
       chgrp -R stdd /${{ matrix.env_name }}/bin/* || true
       chmod -R 550 /${{ matrix.env_name }}/bin || true
-EOF
-  env:
-    SECRET_QA_AUTH: ${{ secrets.SECRET_QA_AUTH }}
+    "
