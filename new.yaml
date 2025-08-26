@@ -1,86 +1,22 @@
-name: Restart QA PAT Service
+- name: Execute SSH Commands
+  run: |
+    ssh -o StrictHostKeyChecking=no -i ~/.ssh/vscode "${ADMIN_USR}"@daylnxcpsq014.enterprisenet.org bash -s <<'EOF'
+      chmod 750 /${{ matrix.env_name }}/bin
+      chmod -R 750 /${{ matrix.env_name }}/bin/* || true
+      cp -rv /tmp/actions/* /${{ matrix.env_name }}/bin/
+      find ${ORG_PATH}ETL/config_pg/SQA/${PATH_ENV} -type f -exec cp -v {} /${{ matrix.env_name }}/bin/etl/config_pg/ \;
+      cp -rvf ${ORG_PATH}ETL/scripts_pg/* /${{ matrix.env_name }}/bin/etl/scripts_pg/
+      cp -rvf ${ORG_PATH}ETL/sql_pg/* /${{ matrix.env_name }}/bin/etl/sql_pg/
+      cp -rvf ${ORG_PATH}ETL/ref_pg/* /${{ matrix.env_name }}/bin/etl/ref_pg/
+      cp -rvf ${ORG_PATH}unix/PFW_UNIX/shellscripts_pg/* /${{ matrix.env_name }}/bin/
 
-on:
-  workflow_dispatch:
+      # Replace only the auth_key line with GitHub secret
+      sed -i "s|^auth_key=.*|auth_key=${SECRET_QA_AUTH}|" /${{ matrix.env_name }}/bin/etl/config_pg/pat_etl_config.ini
 
-jobs:
-  validate-actor:
-    runs-on: qa14-runner
-    steps:
-      - name: Validate Actor
-        run: |
-          echo "GitHub actor: '${{ github.actor }}'"
-          IFS=',' read -ra USERS <<< "${{ vars.USERS }}"
-          for u in "${USERS[@]}"; do
-            CLEAN_USER=$(echo "$u" | xargs)
-            if [[ "$CLEAN_USER" == "${{ github.actor }}" ]]; then
-              echo "✅ Authorized actor: $CLEAN_USER"
-              exit 0
-            fi
-          done
-          echo "❌ Unauthorized actor: ${{ github.actor }}"
-          exit 1
-
-  restart-pat-service:
-    needs: validate-actor
-    runs-on: qa14-runner
-    strategy:
-      matrix:
-        envname: [qa12, qa22, qa36, qa42]
-
-    steps:
-      - name: Map environment details
-        id: map
-        run: |
-          ENV="${{ matrix.envname }}"
-          declare -A ADMINUSERS=( [qa12]=pflqa12 [qa22]=pflqa22 [qa36]=pflqa36 [qa42]=pflqa42 )
-          declare -A SERVERS=( [qa12]=daylnxcpsq013 [qa22]=daylnxcpsq013 [qa36]=daylnxcpsq013 [qa42]=daylnxcpsq013 )
-          declare -A PORTS=( [qa12]=8202 [qa22]=8203 [qa36]=8205 [qa42]=8207 )
-          echo "adminuser=${ADMINUSERS[$ENV]}" >> $GITHUB_OUTPUT
-          echo "server=${SERVERS[$ENV]}" >> $GITHUB_OUTPUT
-          echo "port=${PORTS[$ENV]}" >> $GITHUB_OUTPUT
-
-      - name: Kill and Restart PAT Service
-        env:
-          ADMINUSER: ${{ steps.map.outputs.adminuser }}
-          SERVER: ${{ steps.map.outputs.server }}
-          PORT: ${{ steps.map.outputs.port }}
-          ENVNAME: ${{ matrix.envname }}
-        run: |
-          echo "Resolved values:"
-          echo "ADMINUSER=$ADMINUSER"
-          echo "SERVER=$SERVER"
-          echo "PORT=$PORT"
-          echo "ENVNAME=$ENVNAME"
-          if [ -z "$PORT" ]; then
-            echo "PORT is not set. Exiting..."
-            exit 1
-          fi
-
-          LOGS=$(ssh -o StrictHostKeyChecking=no "$ADMINUSER@$SERVER.enterprisenet.org" bash <<EOSSH
-            echo "Checking for process on port $PORT..."
-            pid=\$(lsof -i :$PORT -sTCP:LISTEN -t)
-            if [ -n "\$pid" ]; then
-              echo "Found PID \$pid, killing..."
-              kill -9 \$pid || exit 1
-              echo "Killed PID \$pid successfully"
-            else
-              echo "No process found on port $PORT"
-            fi
-            cd /$ADMINUSER/bin || { echo "❌ /$ADMINUSER/bin not found"; exit 1; }
-            nohup ./startPGPATservice_$ENVNAME.sh > /dev/null 2>&1 &
-            echo "✅ Service restarted for $ENVNAME"
-          EOSSH
-          )
-
-          echo "📋 Captured logs:"
-          echo "$LOGS"
-
-          mkdir -p logs
-          echo "$LOGS" > "logs/patservice-${ENVNAME}.log"
-
-      - name: Upload startup logs as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: "${{ matrix.envname }}-patservice-start-log"
-          path: logs/
+      chmod -R 750 /${{ matrix.env_name }}/bin/* || true
+      chmod -R 550 /${{ matrix.env_name }}/bin/* || true
+      chgrp -R stdd /${{ matrix.env_name }}/bin/* || true
+      chmod -R 550 /${{ matrix.env_name }}/bin || true
+EOF
+  env:
+    SECRET_QA_AUTH: ${{ secrets.SECRET_QA_AUTH }}
