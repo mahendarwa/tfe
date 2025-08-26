@@ -1,7 +1,16 @@
-Hi Team,
+default result := "pass"
 
-We noticed an inconsistency in the scan failure reporting. Specifically, for Aug 21, no errors were visible yesterday, but today the dashboard is showing failures for that date (regions: Eastus2 (Azure), us-east1 & us-east4 (AWS)).
+# List of namespaces to ignore
+skip_namespaces := {"kube-system", "monitoring", "logging"}
 
-This also happened previously — no errors were visible for 6–7 days, and then failures appeared retroactively for those dates.
+# Skip logic: if resource namespace is in skip list
+result := "skip" {
+    input.resource.namespace == ns
+    ns := skip_namespaces[_]
+}
 
-Could you please confirm if this delay is expected behavior (due to data loading/processing) or if there is an issue with the reporting logic?
+# Fail logic
+result := "fail" {
+    # Add the actual failing condition here
+    some condition
+}
