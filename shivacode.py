@@ -6,17 +6,18 @@ default result = "pass"
 
 result = "fail" {
     some j
-    input.bucketEncryptionConfiguration.ServerSideEncryptionConfiguration.Rules[j].BucketKeyEnabled = false
+    rule := input.bucketEncryptionConfiguration.ServerSideEncryptionConfiguration.Rules[j]
+    rule.BucketKeyEnabled = false
 }
 
 result = "fail" {
     some j
-    not cloudLib.isNullOrEmpty(
-        input.bucketEncryptionConfiguration.ServerSideEncryptionConfiguration.Rules[j].ApplyServerSideEncryptionByDefault.KMSMasterKeyID
-    )
+    rule := input.bucketEncryptionConfiguration.ServerSideEncryptionConfiguration.Rules[j]
+    not cloudLib.isNullOrEmpty(rule.ApplyServerSideEncryptionByDefault.KMSMasterKeyID)
 }
 
 result = "fail" {
     some j
-    input.bucketEncryptionConfiguration.ServerSideEncryptionConfiguration.Rules[j].ApplyServerSideEncryptionByDefault.SSEAlgorithm != "AES256"
+    rule := input.bucketEncryptionConfiguration.ServerSideEncryptionConfiguration.Rules[j]
+    rule.ApplyServerSideEncryptionByDefault.SSEAlgorithm != "AES256"
 }
