@@ -1,11 +1,5 @@
-Justification: Installation of Apache Airflow to support workflow orchestration and automation requirements.
+Short description:
+Installation of Apache Airflow on Enterprise Linux server for CSS reporting workflows
 
-Test plan: Verified installation steps in lower environment; installation completed successfully without issues.
-
-Risk and impact analysis: Low risk; limited to installation activity, minimal impact expected on existing services.
-
-Communication plan: Change details communicated to the application and platform teams prior to implementation.
-
-Implementation plan: Install Apache Airflow on the target server as per approved steps; estimated duration ~1 hour.
-
-Validation plan: Confirm Airflow service installation, successful startup, and web UI accessibility; validation by application team.
+Description:
+This change is to install Apache Airflow on the target Enterprise Linux VM (eac4csgapl10v) using the cssaccnt user account. The installation will support workflow orchestration, automation requirements, and scheduling of data pipelines for CSS reporting
