@@ -1,5 +1,1 @@
-Total OCI VMs: 83
-CrowdStrike installation: None of the VMs have it installed
-VMs with container: 1
-Workload scan skipped: 2
-Scan results showing: 80 (because 1 container VM + 2 skipped VMs are excluded)
+I see the below items in the attached sheet from the request. They are slightly different from css-cc-ManagedAcc. Can I go ahead and suppress these? I have already suppressed the issues mentioned in request RITM0902430.
