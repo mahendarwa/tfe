@@ -1,11 +1,11 @@
-Re-check exact path
-dir "C:\Users\C879571\IdeaProjects\rebate-rules\frontend\node_modules\@isaacs\cliui\node_modules\ansi-styles" -Recurse
-dir "C:\Users\C879571\IdeaProjects\rebate-rules\frontend\node_modules\error-ex" -Recurse
+Justification: Installation of Apache Airflow to support workflow orchestration and automation requirements.
 
-Search entire drive
-Get-ChildItem -Path C:\Users\C879571\ -Recurse -Include "ansi-styles","error-ex" -ErrorAction SilentlyContinue
+Test plan: Verified installation steps in lower environment; installation completed successfully without issues.
 
-Check Windows Installer/Temp
-Get-ChildItem C:\Windows\Installer -Recurse | findstr ansi
-Get-ChildItem $env:TEMP -Recurse | findstr error-ex
+Risk and impact analysis: Low risk; limited to installation activity, minimal impact expected on existing services.
 
+Communication plan: Change details communicated to the application and platform teams prior to implementation.
+
+Implementation plan: Install Apache Airflow on the target server as per approved steps; estimated duration ~1 hour.
+
+Validation plan: Confirm Airflow service installation, successful startup, and web UI accessibility; validation by application team.
