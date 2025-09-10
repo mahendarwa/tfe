@@ -1,5 +1,1 @@
-Short description:
-Installation of Apache Airflow on Enterprise Linux server for CSS reporting workflows
-
-Description:
-This change is to install Apache Airflow on the target Enterprise Linux VM (eac4csgapl10v) using the cssaccnt user account. The installation will support workflow orchestration, automation requirements, and scheduling of data pipelines for CSS reporting
+If any issues occur during or after the installation, uninstall Apache Airflow and restore the system to its pre-change state. Remove all created directories, Python packages, and dependencies related to Airflow. Validate that no Airflow services or processes are running, and confirm normal system operation with the internal team.
