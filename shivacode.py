@@ -1,1 +1,1 @@
-If any issues occur during or after the installation, uninstall Apache Airflow and restore the system to its pre-change state. Remove all created directories, Python packages, and dependencies related to Airflow. Validate that no Airflow services or processes are running, and confirm normal system operation with the internal team.
+python3 -m pip uninstall -y apache-airflow python-ldap
