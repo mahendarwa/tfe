@@ -1,13 +1,5 @@
-edp-pdev-restrict-pssprdcteng
-edp-pdev-aetnapsra
-edp-pdev-scratch
-edp-prod-hrmdap-dm
-edp-pdev-restrict-scratch
-edp-prod-restrict-hrmdap-pyadt
-edp-pdev-ceng
-edp-pdev-restrict-hrmdap-orch
-edp-pdev-hrmdap-dm
-pbm-ppoc-mcse-genai-poc
-edp-pdev-restrict-hrmdap-pyadt
-edp-prod-restrict-hrmdap-orch
-edp-prod-restrict-pssprdcteng
+"Runtime event in Preview mode – excluded from calculation."
+
+"Preview mode runtime event – not included in calculation."
+
+"Runtime event triggered in Preview mode; excluded from metrics."
