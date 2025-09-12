@@ -12,6 +12,7 @@ invalid_hosts[host] {
   server := input.spec.servers[i]
   host := server.hosts[j]
 
+  # Condition 1: Not starting with current namespace or "./"
   not startswith(host, concat("/", [input.metadata.namespace, ""]))
   not startswith(host, "./")
 }
@@ -22,6 +23,7 @@ invalid_hosts[host] {
   server := input.spec.servers[i]
   host := server.hosts[j]
 
+  # Condition 2: Host exactly equals "*"
   host == "*"
 }
 
@@ -31,6 +33,7 @@ invalid_hosts[host] {
   server := input.spec.servers[i]
   host := server.hosts[j]
 
+  # Condition 3: Namespace/* pattern
   parts := split(host, "/")
   count(parts) > 1
   startswith(parts[1], "*")
