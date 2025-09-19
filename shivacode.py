@@ -1,5 +1,11 @@
-We are from the Wiz Security team, which continuously scans and detects potential vulnerabilities across environments. Recently, Wiz has detected an OpenShift cluster created on-prem.
-
-As part of our project mapping process, we want to add this OpenShift cluster into the respective Wiz project for better visibility and governance. We have received your contact details for this cluster.
-
-Could you please help us with the datacenter details related to this OpenShift cluster, so that we can complete the mapping in Wiz?
+dev.cloudpak-midnp.aetna.com
+dev.cloudpak-winnp.aetna.com
+pcw-qa-pond
+dev.cloudpak-sheanp.corp.cvsccaremark.com
+pcw-dev-pond
+caplab-dev-gcp2-use4-general
+dev.cloudpak-rin.corp.cvsccaremark.com
+dev.cloudpak-midnp.aetna.com
+dev.cloudpak-winnp.aetna.com
+dev.cloudpak-midnp.aetna.com
+pcw-ppoc-aymedia-genai-poc
