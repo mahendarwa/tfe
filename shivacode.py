@@ -1,3 +1,8 @@
-The Threat Detection rules in Wiz are created and managed by the vendor, so we do not have the ability to edit or modify them directly.
+We are seeing an issue with a new CCR policy where negative test cases are not being blocked.
+Working Policy: TDSTIG-GCPPLAT-CSM-02-WIZ-CCR-K8S-001
+Negative test cases are blocked as expected through the admission controller policy: TD-ADMISSION-CONTROLLER-GKE-ENGLAB-BLOCK.
+Issue Policy: TDSTIG-GCPPLAT-CSM-10-WIZ-CCR-K8S-001
+Same Rego code and applied through the same admission controller, but negative test cases are not blocked.
+Tests are run in the same GKE cluster.
 
-However, if there are specific Threat Detection findings that are eligible for exceptions, we have the option to create Ignore Rules to move those findings into an ignored state. This helps ensure that only valid and actionable threats remain visible while exceptions are properly tracked.
+Could you please help investigate why the new policy is not behaving as expected?
