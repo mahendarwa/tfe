@@ -1,8 +1,2 @@
-We are seeing an issue with a new CCR policy where negative test cases are not being blocked.
-Working Policy: TDSTIG-GCPPLAT-CSM-02-WIZ-CCR-K8S-001
-Negative test cases are blocked as expected through the admission controller policy: TD-ADMISSION-CONTROLLER-GKE-ENGLAB-BLOCK.
-Issue Policy: TDSTIG-GCPPLAT-CSM-10-WIZ-CCR-K8S-001
-Same Rego code and applied through the same admission controller, but negative test cases are not blocked.
-Tests are run in the same GKE cluster.
-
-Could you please help investigate why the new policy is not behaving as expected?
+The creation of Ignore Rules in Wiz is managed by our admin team..
+If you have specific Threat Detection findings that need to be ignored, please raise a request using the link below, and our team will review and create the Ignore Rule as appropriate:
