@@ -1,26 +1,8 @@
-# 🔹 Cluster info & config
-kubectl config view
-kubectl config current-context
-kubectl cluster-info
+: FIM Changes Not Detected in AKS Cluster Container
 
-# 🔹 Check if you can create pods
-kubectl auth can-i create pods -n <namespace>
+Hi Eamon,
 
-# 🔹 Describe resources
-kubectl describe pod <pod-name> -n <namespace>
-kubectl describe node <node-name>
-kubectl describe deployment <deploy-name> -n <namespace>
+We have enabled Agentless File Integrity Monitoring (FIM) in our environment.
+As part of our testing, we made some changes under the /etc/ path inside a container running in our AKS cluster and triggered a manual scan.
 
-# 🔹 Logs from a pod
-kubectl logs <pod-name> -n <namespace>
-kubectl logs <pod-name> -n <namespace> --previous      # previous container
-kubectl logs -f <pod-name> -n <namespace>              # stream
-kubectl logs <pod-name> -c <container-name> -n <namespace>
-
-# 🔹 Exec into pod
-kubectl exec -it <pod-name> -n <namespace> -- /bin/bash
-kubectl exec -it <pod-name> -n <namespace> -- /bin/sh
-
-# 🔹 Test pod creation (dry-run)
-kubectl run test-pod --image=nginx --dry-run=client -o yaml > test-pod.yaml
-kubectl apply -f test-pod.yaml --dry-run=server
+However, even after waiting 24 hours, no detection alerts were triggered in Wiz.
