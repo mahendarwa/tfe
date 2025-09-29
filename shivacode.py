@@ -1,8 +1,3 @@
-: FIM Changes Not Detected in AKS Cluster Container
+The Threat Detection rules in Wiz are created and managed by the vendor, so we do not have the ability to edit or modify them directly.
 
-Hi Eamon,
-
-We have enabled Agentless File Integrity Monitoring (FIM) in our environment.
-As part of our testing, we made some changes under the /etc/ path inside a container running in our AKS cluster and triggered a manual scan.
-
-However, even after waiting 24 hours, no detection alerts were triggered in Wiz.
+However, if there are specific Threat Detection findings that are eligible for exceptions, we have the option to create Ignore Rules to move those findings into an ignored state. This helps ensure that only valid and actionable threats remain visible while exceptions are properly tracked.
