@@ -1,2 +1,8 @@
-https://docs.wiz.io/docs/azure-cloud-events
-https://docs.wiz.io/docs/supported-log-types
+edp-pdev-retobtfr
+edp-qa-retobtfr
+edp-pdev-pbmobtfr
+edp-pdev-hrmstorage
+edp-qa-pbmobtfr
+edp-dev-retobtfr
+edp-pdev-cet
+edp-dev-pbmobtfr
