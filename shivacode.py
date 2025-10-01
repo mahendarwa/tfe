@@ -1,8 +1,1 @@
-edp-pdev-retobtfr
-edp-qa-retobtfr
-edp-pdev-pbmobtfr
-edp-pdev-hrmstorage
-edp-qa-pbmobtfr
-edp-dev-retobtfr
-edp-pdev-cet
-edp-dev-pbmobtfr
+Can you confirm which AKS diagnostic log category (API Server, Audit, Audit Admin Logs, etc.) provides the user identity (who connected to the AKS cluster) when streamed to Wiz via Event Hub? Also, does Wiz surface fields like user.username and sourceIPs from these logs?
