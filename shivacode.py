@@ -1,1 +1,7 @@
-We’ve seen this issue earlier as well. Even though the message appears on the screen, you’ll still be able to view all the properties and available options. From our experience, this looks like a Viz-related bug — it usually clears up automatically. The message itself doesn’t block access to any specific item or functionality, and you can still view everything on that page. If you can’t view anything from that page, please do let me know.
+For subscription [add subscription ID/name here], could you please configure the following:
+
+Enable AKS Kubernetes Audit logs under Diagnostic Settings (to capture who connects to the cluster and related activities).
+
+Route these logs via Event Hub so that Wiz can ingest them.
+
+As confirmed by Wiz support, when AKS diagnostic logs are streamed via Event Hub, the Kubernetes Audit log category provides the required user identity and activity details. Wiz normalizes these fields to give us visibility into actions performed within the AKS environment.
