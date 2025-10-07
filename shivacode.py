@@ -1,1 +1,4 @@
-=IF(C2<>"", LEN(C2)-LEN(SUBSTITUTE(C2,",",""))+1, 0)
+CSS InsightOps
+CSS DataShield Engineering
+CSS Data Intelligence Hub
+CSS-IQ (Cloud Security Service Intelligence & Quality)
