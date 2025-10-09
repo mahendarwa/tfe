@@ -1,1 +1,1 @@
-It usually completes within 24 hours, though timing can vary slightly depending on Outpost load. Once that sync finishes, Wiz should auto-refresh the finding state
+can you confirm, we hav create to exluded ediabled account, if you guys good with number, pulease put SNOw and promot this and emote this OOTB policy
