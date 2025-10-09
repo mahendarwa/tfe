@@ -1,13 +1,3 @@
-Understand that /Partition=68168BD6/ ≈ C:\ or another drive
-
-That “Partition” ID is an internal volume ID used by the scanner.
-
-It usually refers to your main drive (like C:\), unless you have multiple volumes.
-
-Convert the path manually
-Take the path from your report and remove the partition prefix.
-Example:
-/Partition=68168BD6/ProgramData/AppDynamics/MachineAgent/extensions/ServerMonitoring/lib/commons-beanutils-1.9.4.jar
-becomes
-
-C:\ProgramData\AppDynamics\MachineAgent\extensions\ServerMonitoring\lib\commons-beanutils-1.9.
+The manual scan was successful 👍
+Since the file was deleted before the scan, Wiz still shows the previous state until the next full metadata ingestion confirms the removal.
+It will auto-clear once the system revalidates that the file no longer exists (usually within the next sync cycle).
