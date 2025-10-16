@@ -1,4 +1,20 @@
-As per your recommendation, we implemented the exclusion for AWSReservedSSO and CSS accounts in our custom policy. However, the issue count dropped from 2691 to 166, which seems too high a reduction.
-We validated that only about 39 accounts are actually AWSReservedSSO or CSS — so the overall count should reduce by around 39, not more.
-
-Could you please review the logic used in the exclusion filter and confirm if it’s applied correctly?
+"PAC4AMTATW11V",
+  "cmcfwhubprodglr2",
+  "azhrtrust02-vmss__10",
+  "cmcfwhubprodglr1",
+  "rac4ovmwhw22v",
+  "e55d4c9a-e05f-4b77-8c09-82dce9ca5f2b",
+  "HCCPUSCADOLT03",
+  "ETPUSCQUALYS1",
+  "dmt-uat-kafka",
+  "pac4satcpl10v",
+  "rescuevm",
+  "zsuscnp-ccvm-1-pa9e0oop",
+  "zsuscnp-ccvm-2-pa9e0oop",
+  "HCCPUSCADOLB01",
+  "pac4db2dpl10v",
+  "CTPR0DAP01",
+  "ICLDSYNCZW01",
+  "oshaabotprodvm2",
+  "IDSKUTILZW01",
+  "PDATAZIRZW02"
