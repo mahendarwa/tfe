@@ -1,23 +1,4 @@
-[
-  "PAC4VDIPPS03942",
-  "PAC4VDIPPS02143",
-  "PAC4VISPPS00001",
-  "PAC4VDIPPS02452",
-  "PAC4VDIPPS03981",
-  "PAC4VDIPPS02103",
-  "PAC4VDIPPS00565",
-  "PAC4VDIPPS02292",
-  "PAC4VDIPPS03297",
-  "cmcfwhubprodglr2",
-  "azhrtrust02-vmss__11",
-  "azhrtrust02-vmss__10",
-  "cmcfwhubprodglr1",
-  "PAC4AMTATW11V",
-  "HCCPUSCADOLT03",
-  "e55d4c9a-e05f-4b77-8c09-82dce9ca9df6",
-  "dmt-uat-kafka",
-  "ETPUSCQUALYS1",
-  "rescuevm",
-  "sh-az-daas-of4b",
-  "HCCPUSCWINBLD02"
-]
+We worked with Wiz support to create and validate the custom policy. The validation results look correct — the OOTB policy shows 173 issues, while the custom one reports 167 issues.
+We verified that the difference (6 AWSReserved + 1 CSS account) is expected due to the exclusions applied.
+
+Please review and proceed to raise a SNOW request to promote this custom policy.
