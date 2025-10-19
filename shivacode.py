@@ -1,29 +1,51 @@
-Short description:
-Delete decommissioned GCP project `prisma-13368` (ITPM ID: apm0014613)
+Got it ✅ — you’ve now **moved from subscription-level to organization-level onboarding** in Wiz.
+Here’s the **updated process summary** (that should replace the older document section):
 
-Description:
-GCP Project `prisma-13368` has been decommissioned as the associated Prisma application is no longer in use. This change removes the entire GCP project to ensure cost optimization, data hygiene, and compliance.
+---
 
-Justification:
-Project belongs to a decommissioned Prisma application. Safe to delete as no active workloads or dependencies remain.
+### 🆕 Updated Wiz Account Onboarding Model
 
-Test plan:
-Validate project removal via:
-gcloud projects list | grep prisma-13368
-Ensure project no longer appears after deletion.
+**Objective:**
+To simplify onboarding and reduce manual mapping, Wiz projects now use **organization-level resource scopes** for all major clouds. Subscription-level scoping is only required for exceptions or standalone accounts.
 
-Risk and impact analysis:
-Low risk. Project is inactive with no dependencies or integrations. No user impact expected.
+---
 
-Communication plan:
-Stakeholders notified — Satish.Chandramohan@CVSHealth.com
+### **New Model Overview**
 
-Implementation plan:
-1. Confirm ownership and IAM permissions for project `prisma-13368`.
-2. Verify no active resources (VMs, buckets, service accounts, etc.) remain.
-3. Run deletion command:
-   gcloud projects delete prisma-13368
-4. Validate using:
-   gcloud projects list | grep prisma-13368
-5. Update change ticket with confirmation.
-Duration: ~45 minutes
+#### **Scope 1 – Organization Level (Automatic)**
+
+* All **GCP, Azure, and AWS** environments are now added **at the organization level**.
+* Any new account under these organizations is **automatically included** in Wiz.
+* Covers:
+
+  * All-GCP (Org-based)
+  * All-Azure (Org-based)
+  * All-AWS (Org-based)
+
+✅ **Purpose:** Auto-onboard all accounts under each CSP org and keep global coverage consistent.
+
+---
+
+#### **Scope 2 – Subscription Level (Manual, Exception Cases)**
+
+* Used **only when**:
+
+  * The account/project is **not part of an existing org-level integration**, or
+  * It belongs to a **separate/isolated organization**.
+* These are mapped manually under “Specific Subscriptions” in the **second resource scope**.
+
+✅ **Purpose:** Handle exceptions and special cases not included in the main org mapping.
+
+---
+
+### **Grouping Still Required (Same 3 as Before)**
+
+1. **Individual Line of Business (LOB)** → e.g., *Data & Analytics LOB*
+2. **CSP CVS / Affiliate Grouping** → *All-GCP-CVS-Subscriptions*, *All-Azure-Affiliate*, etc.
+3. **CSP Grouping by Cloud** → *All_GCP*, *All_Azure*, *All_AWS*
+
+➡ Every account must still appear in all **three groupings**, only the **scoping method** has changed (org-level default + subscription-level fallback).
+
+---
+
+Would you like me to format this as a **Word/Markdown document** with your screenshots embedded and version-tagged (e.g., *“Onboarding Process v2 – Org-level Integration Model, Oct 2025”*)? That would make it ready for your internal sharepoint or Confluence upload.
