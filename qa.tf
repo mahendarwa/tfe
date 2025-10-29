@@ -9,3 +9,7 @@ Get-Module -ListAvailable Microsoft.Graph* | Select Name, Version
 
 Update-Module Microsoft.Graph
 Install-Module Microsoft.Graph -Force
+
+
+Restart-Service WinRM
+
