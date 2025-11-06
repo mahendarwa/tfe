@@ -1,8 +1,1 @@
-detect-unauthorized-hostpath-access-except-o11y
-
-===
-
-/etc/**, /var/**, /root/**, /usr/**, /opt/**, /home/**, /tmp/**
-
-===
-^(?!/var/log/pods)(?!/var/lib/otelcol).*
+“Just to confirm — these exclusions for /var/log/pods (read-only) and /var/lib/otelcol (read/write) mean that if any pod from the o11y-collectors namespace accesses them, no alert will be generated, but if accessed by any other namespace, it should still trigger an alert, right?
