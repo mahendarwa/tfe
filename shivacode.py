@@ -1,1 +1,8 @@
-Got it, thanks Michael. Just to confirm — does Reed’s script or your Tuesday review align with the updated 180-day threshold from the new custom policy, or should we manually validate a few flagged accounts from Wiz to confirm accuracy?
+Namespace	Path	Expected Behavior
+o11y-collectors	/var/log/pods (read)	No alert
+o11y-collectors	/var/lib/otelcol (read/write)	No alert
+o11y-collectors	/etc or other dirs	Alert
+default / others	Any hostPath	Blocked or Alert
+
+
+Create test pods in o11y-collectors (for allowed paths /var/log/pods, /var/lib/otelcol) and in another namespace (for blocked paths like /etc) to verify alert behavior.
