@@ -1,3 +1,4 @@
-^(?!\/var\/log\/pods)(?!\/var\/lib\/otelcol).*$
+^/var/log/pods(/.*)?$
+
 
 detect-unauthorized-hostpath-access-except-o11y
