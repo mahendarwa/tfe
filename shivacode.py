@@ -1,25 +1,9 @@
-^/var/log/pods(/.*)?$
+Validated — all looks good for both the custom policies.
 
+Raja, could you please help with creating a ticket and getting it approved so we can proceed with promoting the custom policies and demoting the OOTB ones?
 
-detect-unauthorized-hostpath-access-except-o11y
+Adam (Azure): Confirmed, everything looks good.
 
+Raja (AWS): Reviewed 5 issues — all inactive for 180 days.
 
-apiVersion: v1
-kind: Pod
-metadata:
-  name: fim-test-default
-  namespace: default
-spec:
-  containers:
-  - name: test
-    image: busybox
-    command: ["/bin/sh", "-c", "sleep 3600"]
-    volumeMounts:
-    - name: varlog
-      mountPath: /var/log/pods
-      readOnly: true
-  volumes:
-  - name: varlog
-    hostPath:
-      path: /var/log/pods
-      type: Directory
+Michael (GCP): Same validation results as above.
