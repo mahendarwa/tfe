@@ -1,13 +1,5 @@
-Subject: No Email Triggered from Wiz Sign-In (noreply@app.wiz.io
-)
+90-Day Inactive High-Privilege Accounts and Service Keys Report
 
-Hi Team,
+You can write this simple one-liner in your email:
 
-We are facing an issue where the sign-in verification email from Wiz (noreply@app.wiz.io) is not being triggered.
-Our internal email server team has confirmed that no email traffic is observed from Wiz to our domain (@cvshealth.com) during the login attempts.
-
-Please help verify whether the email generation from Wiz’s end is functioning correctly for the below user:
-
-User: Lakshminarayanan.Dhanushkodi@CVSHealth.com
-
-Let us know if there are any tenant-level settings or configurations that might be preventing the email from being sent.
+> Please find the attached sheet for 90-day inactive accounts and high-privilege service users.
