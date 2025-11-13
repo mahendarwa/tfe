@@ -1,5 +1,1 @@
-90-Day Inactive High-Privilege Accounts and Service Keys Report
-
-You can write this simple one-liner in your email:
-
-> Please find the attached sheet for 90-day inactive accounts and high-privilege service users.
+Apologies for the delay in getting back. We’re currently reviewing the best possible approach to build the required view and will provide an update once validated.
