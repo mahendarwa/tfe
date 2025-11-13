@@ -1,27 +1,9 @@
-apiVersion: v1
-kind: Pod
-metadata:
-  name: fim-test-var-log
-  namespace: o11y-collectors-test
-spec:
-  containers:
-  - name: test
-    image: busybox
-    command: ["/bin/sh", "-c", "sleep 3600"]
-    volumeMounts:
-    - name: varlog
-      mountPath: /var/log/pods
-      readOnly: false
-  volumes:
-  - name: varlog
-    hostPath:
-      path: /var/log/pods
-      type: Directory
+While testing the FIM rule, we noticed two issues —
+Email alerts are not triggering consistently (delay varies between 1–10 mins).
+Recursive file changes under /var/** or /etc/** are not always detected.
+We’ll need to raise a support case with Wiz to confirm if this is expected behavior or a configuration limitation.
 
 
-===
-# Read (should NOT alert)
-kubectl exec -it fim-test-var-log -n o11y-collectors-test -- cat /var/log/pods/some.log
 
-# Write (should trigger alert)
-kubectl exec -it fim-test-var-log -n o11y-collectors-test -- sh -c 'echo "fim write test" >> /var/log/pods/test.log'
+Hi Wiz Support,
+We’re noticing FIM alerts triggering inconsistently (1–10 min delay) and not detecting recursive file changes under /var/** or /etc/**. Could you confirm if nested path monitoring and consistent alert timing are fully supported in Runtime FIM or if configuration adjustments are needed?
