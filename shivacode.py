@@ -1,9 +1,13 @@
-Validated — all looks good for both the custom policies.
+Subject: No Email Triggered from Wiz Sign-In (noreply@app.wiz.io
+)
 
-Raja, could you please help with creating a ticket and getting it approved so we can proceed with promoting the custom policies and demoting the OOTB ones?
+Hi Team,
 
-Adam (Azure): Confirmed, everything looks good.
+We are facing an issue where the sign-in verification email from Wiz (noreply@app.wiz.io) is not being triggered.
+Our internal email server team has confirmed that no email traffic is observed from Wiz to our domain (@cvshealth.com) during the login attempts.
 
-Raja (AWS): Reviewed 5 issues — all inactive for 180 days.
+Please help verify whether the email generation from Wiz’s end is functioning correctly for the below user:
 
-Michael (GCP): Same validation results as above.
+User: Lakshminarayanan.Dhanushkodi@CVSHealth.com
+
+Let us know if there are any tenant-level settings or configurations that might be preventing the email from being sent.
