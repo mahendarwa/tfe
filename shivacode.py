@@ -1,6 +1,7 @@
-We already capture this information in Tableau through the weekly ingestion from Wiz and send out scorecards accordingly.
-If you are not part of those emails, please let us know — we can add you so you receive the weekly updates.
+Thanks, Raul. So just to confirm — any files inside subfolders under /var/<folder> or /etc/<folder> will not be monitored by Runtime FIM because recursive monitoring is not supported. Only top-level files are monitored. Please confirm.
 
-We can also provide you access to Tableau, where you can view and download reports specific to your LOB or cloud provider.
 
-If you have any questions, we can schedule some time with Satish to walk you through it.
+Feature	Supported?	Notes
+Monitor exact file	✔ Yes	e.g., /etc/passwd
+Monitor all files directly in a folder	✔ Yes	e.g., everything immediately inside /etc/
+Monitor nested subfolders	❌ No	/etc/ssl/certs/* won't work
