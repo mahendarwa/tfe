@@ -1,1 +1,2 @@
-I’m not able to see the “Wiz” webhook workflow in my Workflows tab. Since Teams workflows are visible only to the creator, can you please add me as a co-owner so I can access it?
+Messages are reaching Teams, but the Adaptive Card formatting is not rendering correctly — the payload is posting as raw JSON. I’ve followed the steps and added the action templates, but the output is still not structured.
+A quick call would help resolve this faster.
