@@ -1,5 +1,2 @@
-docker pull rduscedsacr.azurecr.io/<repository>/<tag>
-curl -v https://rduscedsacr.azurecr.io/v2/_catalog
-
-
-az acr login -n rduscedsacr
+Since Mason is not responding, can we request temporary Gembox access so we can reach the AKS cluster’s isolated domain and run the required pod/ACR connectivity tests ourselves?
+He only needs to allow our IP so we can log into Gembox and execute the commands directly, which will speed up the troubleshooting.
