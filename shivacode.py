@@ -1,2 +1,1 @@
-Since Mason is not responding, can we request temporary Gembox access so we can reach the AKS cluster’s isolated domain and run the required pod/ACR connectivity tests ourselves?
-He only needs to allow our IP so we can log into Gembox and execute the commands directly, which will speed up the troubleshooting.
+The Outpost image pull test reached the registry, but authentication failed because the cluster is missing a valid ACR credential (wiz-registry-creds). Connectivity is confirmed; the remaining issue is ACR auth at the cluster level.
