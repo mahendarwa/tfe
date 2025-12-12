@@ -1,1 +1,1 @@
-The Outpost image pull test reached the registry, but authentication failed because the cluster is missing a valid ACR credential (wiz-registry-creds). Connectivity is confirmed; the remaining issue is ACR auth at the cluster level.
+kubectl get secrets -n mmason-testing
