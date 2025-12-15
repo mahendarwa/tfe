@@ -1,1 +1,1 @@
-item()?['content']
+triggerBody()?['integrationAction']?['params']?['body']?['attachments']
