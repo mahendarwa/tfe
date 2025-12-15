@@ -1,3 +1,3 @@
-A new critical Wiz issue has been opened on the John Lang AWS account.
+he mentioned resources in the ticket have been taken care of and are now exempted from the reported issues.
 
-Please review and take action.
+Please let me know if anything further is required.
