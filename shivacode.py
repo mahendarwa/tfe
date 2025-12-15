@@ -1,2 +1,3 @@
-From your earlier screenshot, the command was run in the mmason-testing namespace.
-Wiz Support needs the output of the following to confirm if the wiz-registry-creds secret exists there:
+This issue was reopened recently and is currently back in OPEN / IN PROGRESS status.
+
+Could you please review and take the necessary action on the below Wiz alert?
