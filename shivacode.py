@@ -1,1 +1,2 @@
-triggerBody()?['integrationAction']?['params']?['body']?['attachments']
+body('Parse_JSON')?['integrationAction']?['params']?['body']?['attachments']
+item()?['content']
