@@ -1,3 +1,3 @@
-This issue was reopened recently and is currently back in OPEN / IN PROGRESS status.
+A new critical Wiz issue has been opened on the John Lang AWS account.
 
-Could you please review and take the necessary action on the below Wiz alert?
+Please review and take action.
