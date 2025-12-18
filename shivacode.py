@@ -1,3 +1,7 @@
-Wiz has flagged a weak password for the local user Btheerth on the listed Azure VMs. As the Wiz platform admin, I don’t have OS-level access to perform local password changes; this remediation needs to be completed by the respective Azure VM/application owner in line with CVS password complexity standards.
+Hi Dan / Marty,
 
-Once the password is updated, we’ll monitor the Wiz rescan and confirm closure of the finding.
+Thanks for confirming. Revoking Azure access will not address the Wiz finding, as the issue relates to a local OS user (Btheerth) configured on the VMs, not Azure RBAC access.
+
+The remediation requires the VM/application owner to rotate or remove the local user in line with CVS password complexity standards. Once completed, we’ll validate closure via a Wiz rescan.
+
+Could you please help identify the appropriate owner for the VMs in AS-RTL-USE2-DBA-DB, or confirm if the local user can be removed if no longer required?
