@@ -1,1 +1,1 @@
-“Just to confirm — is this PR intended for our team to provision the ADF resources using this spoke, or is it meant for your team to handle the provisioning?
+we noticed a new High alert in the Data Security (DSPM/DLP) dashboard, opened yesterday. This appears to be from a sandbox subscription and likely related to dummy / test data (possible false positive).
