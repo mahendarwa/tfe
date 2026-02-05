@@ -1,1 +1,3 @@
-Just a quick update— all critical vulnerabilities identified earlier have been fixed and are no longer showing on the
+Scheduling Wiz reports is not possible at the moment due to limits.
+Your role has been updated with Project Boards creation access — please refresh and try sending the reports to the required teams.
+You may need to set up some automation for recurring reportin
