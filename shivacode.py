@@ -1,3 +1,3 @@
-I noticed that one of the ITPRs expected for the current time period is not visible in Clarity PPM and does not appear to be allocated to me.
+As requested, I’ve started with SSN and created a sample widget (US SSN PII Findings), which is now visible in the board:
 
-Could you please check and confirm if the ITPR is pending allocation or assign it so I can proceed with time entry?
+Please let me know if you’d like me to create any additional sample widget
