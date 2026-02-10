@@ -1,3 +1,51 @@
-As requested, I’ve started with SSN and created a sample widget (US SSN PII Findings), which is now visible in the board:
-
-Please let me know if you’d like me to create any additional sample widget
+{
+  "relationships": [
+    {
+      "type": [
+        {
+          "type": "USES"
+        }
+      ],
+      "with": {
+        "relationships": [
+          {
+            "type": [
+              {
+                "reverse": true,
+                "type": "ENCRYPTS"
+              }
+            ],
+            "with": {
+              "select": true,
+              "type": [
+                "MANAGEMENT_SERVICE"
+              ],
+              "where": {
+                "nativeType": {
+                  "EQUALS": [
+                    "Microsoft.Compute/diskEncryptionSets"
+                  ]
+                }
+              }
+            }
+          }
+        ],
+        "select": true,
+        "type": [
+          "VOLUME"
+        ]
+      }
+    }
+  ],
+  "select": true,
+  "type": [
+    "VIRTUAL_MACHINE"
+  ],
+  "where": {
+    "cloudPlatform": {
+      "EQUALS": [
+        "Azure"
+      ]
+    }
+  }
+}
