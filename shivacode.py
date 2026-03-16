@@ -1,1 +1,3 @@
-Container runtime techniques are not included in the Cloud Matrix and are categorized under the Containers platform within the Enterprise framework. Although platforms like EKS or AKS run in cloud environments, cloud techniques apply to the cloud infrastructure layer, while container-specific techniques apply to Kubernetes and container runtime activities.
+Discuss the approach for enabling connectivity between VM and ADF when they are in different networks.
+
+Evaluate the option of moving the VM to the same VNet as Azure Data Factory to simplify connectivity
