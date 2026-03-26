@@ -1,3 +1,27 @@
-High-level summary: Server build request raised on Feb 2, 2026 and, despite completing intake, approvals, provisioning, and post-build activities, the server is still not delivered as of Mar 19, 2026 due to pending backup dependency.
+Please use the below configuration for the Internal Azure Load Balancer requested for VM EAC2WIZADW10V in EastUS2.
 
-The request progressed through intake, DR clarification, budgeting, approvals, resource fulfillment, and handoff to the actual delivery/build team. The server build was completed on Feb 27, 2026, and post-build activities started the same day. From that point, final ORC check and delivery became dependent on closure of downstream tasks, with backup raised as one of the required pending items on Feb 27, 2026. As of Mar 19, 2026, the backup dependency is still pending from the backup team, and the server has not yet been delivered for use.
+Health Probe Details
+
+Protocol: TCP
+Port: 5432
+Interval: 5 seconds
+Unhealthy threshold: 2
+
+Load Balancing Rule Details
+
+Type: Internal Load Balancer
+IP Version: IPv4
+Frontend IP: Configured private frontend IP
+Protocol: TCP
+Frontend Port: 5432
+Backend Port: 5432
+Backend Pool: VM EAC2WIZADW10V
+Health Probe: TCP 5432
+Session Persistence: None
+Idle Timeout: Default
+TCP Reset: Disabled
+
+Additional Request
+
+Please ensure the required NSG rules are configured to allow traffic on TCP 5432 from the relevant private connectivity path/subnet.
+This ILB is required in front of the VM to support the ADF/SHIR private connectivity path for PostgreSQL access.
