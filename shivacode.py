@@ -9,24 +9,13 @@ The below upcoming policies are expected to generate **Significant (>24 issues)*
 Kindly review and confirm if any concerns or exceptions are required before rollout.
 
 ---
+Policy Name,Severity,Impact Level,Estimated Issues
+VM with high privileges hosting a suspicious AI model,High,Significant,>24
+VM hosting a suspicious AI model,Medium,Significant,>24
+VM with cleartext cloud keys hosting a suspicious AI model,Medium,Significant,>24
 
-### 🔴 **Significant Impact Policies (>24 Issues)**
 
-| Policy Name                                                | Severity | Impact Level | Estimated Issues |
-| ---------------------------------------------------------- | -------- | ------------ | ---------------- |
-| VM with high privileges hosting a suspicious AI model      | High     | Significant  | >24              |
-| VM hosting a suspicious AI model                           | Medium   | Significant  | >24              |
-| VM with cleartext cloud keys hosting a suspicious AI model | Medium   | Significant  | >24              |
 
----
-
-### 🟠 **Moderate Impact Policies (5–24 Issues)**
-
-| Policy Name                                                          | Severity | Impact Level | Estimated Issues |
-| -------------------------------------------------------------------- | -------- | ------------ | ---------------- |
-| VM with sensitive data hosting a suspicious AI model                 | Medium   | Moderate     | 5–24             |
-| VM with lateral movement path to admin hosting a suspicious AI model | High     | Moderate     | 5–24             |
-
----
-
-Let me know if you want a **short Teams version (2–3 lines)** or **owner/app mapping added**.
+  Policy Name,Severity,Impact Level,Estimated Issues
+VM with sensitive data hosting a suspicious AI model,Medium,Moderate,5-24
+VM with lateral movement path to admin hosting a suspicious AI model,High,Moderate,5-24
