@@ -1,10 +1,3 @@
-As discussed, there are two key points regarding write access and policy changes:
+https://certified.training.wiz.io/8c0ce5f1-b4a7-483a-9841-79f2fee5aa8e?utm_source=whatsapp&utm_medium=social
 
-Write Access Control
-Write access will be provided to only one nominated individual from your team. This person should be well-versed with Wiz and capable of handling policy modifications. Please confirm who will take up this responsibility.
-HCR Requests in the Interim
-Until the above access is finalized, please share the list of HCRs (including count and details) that need to be created or modified. Our team will handle the implementation from our end.
-
-Additionally, for any dashboard or wireframe changes, please share the details or draft (Excel/wireframe), and we can review and assist with necessary modifications.
-
-Let me know if you have any questions.
+https://certified.training.wiz.io/8c0ce5f1-b4a7-483a-9841-79f2fee5aa8e#acc.qgL2FoVN
