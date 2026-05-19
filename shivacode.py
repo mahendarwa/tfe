@@ -1,5 +1,2 @@
-https://certified.training.wiz.io/8c0ce5f1-b4a7-483a-9841-79f2fee5aa8e?utm_source=whatsapp&utm_medium=social
-
-https://certified.training.wiz.io/8c0ce5f1-b4a7-483a-9841-79f2fee5aa8e#acc.qgL2FoVN
-
-I’m happy to share that I have successfully cleared the Wiz Certified Cloud User (WCCU) certification.
+the Service Principal is created successfully, but I could not find the CR-DataFactory-Deployment role assigned in IAM.
+Could you please help who can assist on this role assignment?
