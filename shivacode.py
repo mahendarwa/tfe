@@ -1,3 +1,5 @@
-I have raised the request with “Yes” selected for Client ID and Secret for the below Service Principal and would like to proceed with onboarding. Kindly help share the client secret for the below Service Principal.
+The request is for granting the Website Contributor role at the Resource Group level (rg-corp-use2-snap-prod) to the Azure AD group clgrp-aad-css-developer, as advised by the application team.
 
-Service Principal: sp-sssharedservices-wizcloudsecurityplatform-dev
+This request is for user/group access to manage the Function App and is not related to the Function App's Managed Identity.
+
+Could you please review and process the role assignment accordingly?
