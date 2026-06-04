@@ -1,1 +1,2 @@
 I have already submitted the IAM request for the required role assignments. However, the request is still pending and has not been processed yet.
+The VM build request has already gone through the required approval process. As part of the CMDB creation during the build process, it has again been routed to the Executive Director for approval. Can we change the CMDB approval for this request to Satish instead, to avoid duplicate Executive Director approvals?
