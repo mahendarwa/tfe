@@ -1,2 +1,14 @@
-I have already submitted the IAM request for the required role assignments. However, the request is still pending and has not been processed yet.
-The VM build request has already gone through the required approval process. As part of the CMDB creation during the build process, it has again been routed to the Executive Director for approval. Can we change the CMDB approval for this request to Satish instead, to avoid duplicate Executive Director approvals?
+Service Plan: Flex Consumption
+Region:
+Resource Group:
+Runtime Stack: Python
+Version: 3.11
+Instance Memory Size: 4096 MB
+Maximum Execution Time: 1 Hour
+System Assigned Managed Identity: Enabled
+Storage Account: Create New
+Azure OpenAI: Create New Azure OpenAI Resource and integrate with Function App
+Resource Authentication:
+Host Storage – Managed Identity
+Deployment Storage – Managed Identity
+Azure OpenAI – Managed Identity
