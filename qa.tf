@@ -1,478 +1,117 @@
-Based on your environment, I would **not** start with multiple AI agents immediately. That's where many projects fail. Build it in phases so that every phase delivers value and you can demo it to your manager.
+The VM Vulnerability Search page is already working.
 
-Your current ecosystem is:
+Do NOT change the existing search functionality.
 
-* Wiz
-* Azure Data Factory
-* PostgreSQL
-* Tableau
-* Azure
-* Python
-* Linux VM
-* MCP
-* AI (OpenAI/Azure OpenAI)
+After the user searches a VM and the vulnerability results are displayed, add a new section below the existing results called
 
-This is enough to build an enterprise-grade AI platform. 
+"AI Recommendation"
 
----
+This section should help the end user understand the vulnerability and take action.
 
-# Phase 1 (2–3 weeks): Build the foundation
+Use the same Material UI theme as the existing application.
 
-Don't think about AI yet.
+Create a clean card with the following layout.
 
-Build a simple web application.
+------------------------------------------------
 
-```
-React UI
+AI Recommendation
 
-↓
+Policy Name
 
-FastAPI
+Display the Wiz policy name that flagged this VM.
 
-↓
+Severity
 
-PostgreSQL
-```
+Critical / High / Medium
 
-### Features
+Why is this vulnerability flagged?
 
-* Login
-* Search VM
-* Search Policy
-* Search Subscription
-* View Vulnerabilities
-* View AI Risks
+Display a short 2-3 line explanation describing why this policy is violated.
 
-At this point, the UI simply calls PostgreSQL.
+Example:
 
-No AI.
+"This VM is running an unsupported OpenSSL version that contains known security vulnerabilities."
 
-No MCP.
+Business Impact
 
-No agents.
-
----
-
-# Phase 2: Connect Wiz
-
-Instead of using only PostgreSQL
-
-```
-React
-
-↓
-
-FastAPI
-
-↓
-
-Wiz API
-```
-
-Learn
-
-* Wiz GraphQL API
-* Authentication
-* Pagination
-* Filters
-
-Create APIs like
-
-```
-GET /vm
-
-GET /policy
-
-GET /critical
-
-GET /subscriptions
-
-GET /owner
-```
-
----
-
-# Phase 3: Build MCP Server ⭐⭐⭐⭐⭐
-
-This is where things become interesting.
-
-Create an MCP server.
-
-```
-mcp-server/
-
-    server.py
-
-    tools/
-
-        vm.py
-
-        report.py
-
-        exception.py
-
-        sql.py
-
-        pipeline.py
-```
-
-Expose tools
-
-```python
-search_vm(vm_name)
-
-search_policy(policy_name)
-
-run_sql(query)
-
-trigger_pipeline(name)
-
-create_exception()
-
-generate_ppt()
-```
-
-Now every AI model can use these tools.
-
----
-
-# Phase 4: Add one AI Agent
-
-Don't build 8 agents.
-
-Build only one.
+Display a short explanation of the security impact.
 
 Example
 
-Security Investigation Agent.
+"This vulnerability could allow attackers to exploit the server if left unpatched."
 
-User types
+------------------------------------------------
 
-> Show Critical Vulnerabilities in VM abc123
+Actions
 
-Agent
+Create three buttons.
 
-↓
+1.
 
-Calls MCP
+View Remediation Steps
 
-↓
+When clicked, expand a collapsible section below the button.
 
-search_vm()
+Display numbered remediation steps.
 
-↓
+Example
 
-run_sql()
+1. Login to the VM.
 
-↓
+2. Update the vulnerable package.
 
-Returns
+3. Restart the required service.
 
-* Critical
-* High
-* AI
-* Owner
-* Recommendation
+4. Run vulnerability scan again.
 
-Once this works
+5. Verify the issue is resolved.
 
-then create the second agent.
+Initially use placeholder text.
 
----
+Later this will come from FastAPI.
 
-# Phase 5: Add RAG
+------------------------------------------------
 
-People misunderstand RAG.
+2.
 
-RAG is NOT for querying PostgreSQL.
+Raise Exception
 
-RAG is for documents.
+Display a button.
 
-Store
+On click open the configured Exception Request URL in a new browser tab.
 
-* Wiz documentation
-* SOPs
-* Runbooks
-* Policy explanations
-* Exception guidelines
-* Architecture documents
-* Remediation guides
+The URL should be configurable through a constant or environment variable.
 
-Then user asks
+Do not hardcode the URL inside the component.
 
-> Why is this policy failing?
+------------------------------------------------
 
-AI searches documentation
+3.
 
-↓
+Open in Wiz
 
-Returns explanation.
+Display a button that opens the Wiz resource page in a new tab.
 
-Use
+The Wiz URL should be passed from the backend.
 
-```
-pgvector
+------------------------------------------------
 
-or
+UI Requirements
 
-ChromaDB
+Use Material UI Card.
 
-or
+Use Material UI Accordion for remediation steps.
 
-FAISS
-```
+Use Material UI Buttons.
 
----
+Keep spacing consistent with the rest of the application.
 
-# Phase 6: Supervisor Agent
+Do not add charts.
 
-Now build
+Do not add tables.
 
-```
-User
+Do not redesign the existing page.
 
-↓
+Simply append this new AI Recommendation card below the search results.
 
-Supervisor
-
-↓
-
-Which agent?
-
-↓
-
-Report
-
-Exception
-
-Investigation
-
-Executive
-
-Pipeline
-```
-
-LangGraph handles this beautifully.
-
----
-
-# Phase 7: Automation
-
-Now AI becomes useful.
-
-User
-
-```
-Generate Monthly Report
-```
-
-AI performs
-
-```
-Run Report
-
-↓
-
-Trigger ADF
-
-↓
-
-Wait
-
-↓
-
-Verify DB
-
-↓
-
-Generate PPT
-
-↓
-
-Notify User
-```
-
-No manual work.
-
----
-
-# Tech Stack
-
-## Frontend
-
-* React
-* Material UI
-* AG Grid (great for vulnerability tables)
-* Chart.js or ECharts
-
----
-
-## Backend
-
-* FastAPI
-* SQLAlchemy
-* PostgreSQL
-* Async Python
-
----
-
-## AI
-
-* Azure OpenAI (or OpenAI)
-* LangChain
-* LangGraph
-
----
-
-## MCP
-
-* MCP Python SDK
-* MCP Server
-* MCP Client
-
----
-
-## RAG
-
-* pgvector (recommended since you already use PostgreSQL)
-
----
-
-## Authentication
-
-* Azure Entra ID (Azure AD)
-
----
-
-## Deployment
-
-* Azure App Service or Azure Functions
-* Docker
-* Linux VM
-
----
-
-# Folder Structure
-
-```text
-AI-SecOps/
-
-    frontend/
-
-    backend/
-
-    mcp-server/
-
-    agents/
-
-        supervisor.py
-
-        report_agent.py
-
-        investigation_agent.py
-
-        exception_agent.py
-
-        executive_agent.py
-
-        pipeline_agent.py
-
-    rag/
-
-    prompts/
-
-    services/
-
-        wiz.py
-
-        postgres.py
-
-        adf.py
-
-        tableau.py
-
-    models/
-
-    api/
-
-    ppt/
-
-    docs/
-```
-
----
-
-# Learning Order
-
-Don't try to learn everything together.
-
-### Week 1
-
-✅ FastAPI
-
-✅ React basics
-
----
-
-### Week 2
-
-✅ Wiz API
-
-✅ PostgreSQL
-
----
-
-### Week 3
-
-✅ MCP
-
-Build
-
-```
-search_vm()
-
-search_policy()
-```
-
----
-
-### Week 4
-
-✅ LangGraph
-
-Build one Investigation Agent.
-
----
-
-### Week 5
-
-✅ RAG
-
-Index SOPs and Wiz documentation.
-
----
-
-### Week 6
-
-Add
-
-* Executive Agent
-* Exception Agent
-* Report Agent
-
----
-
-# If I were starting from scratch
-
-This is the exact order I'd follow:
-
-1. **React UI** → a clean self-service portal.
-2. **FastAPI backend** → expose REST APIs and business logic.
-3. **Wiz integration** → connect to GraphQL APIs and PostgreSQL.
-4. **MCP Server** → wrap Wiz, ADF, PostgreSQL, and PowerPoint as reusable tools.
-5. **One AI agent** (Investigation Agent) → prove the concept end-to-end.
-6. **RAG** → answer policy, SOP, and remediation questions from documentation.
-7. **Supervisor Agent (LangGraph)** → orchestrate multiple specialized agents.
-8. **Automation workflows** → report generation, exception handling, ADF pipeline creation, and PPT generation.
-
-This phased approach lets you deliver something useful every few weeks instead of spending months building a complex multi-agent system before anyone can use it.
+Structure the component so the remediation text, policy name, business impact and URLs can later be populated from FastAPI APIs.
