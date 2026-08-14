@@ -1,16 +1,7 @@
-If one service needs to securely communicate with another service in the same cloud environment, how would you design that connectivity?
+Use Case
 
-How would you handle authentication and authorization when one cloud service needs to access another?
+Use GenAI to simplify consumption of Wiz vulnerability data for security stakeholders and application/resource owners. The solution will identify the relevant owner, resources, vulnerability/policy details, severity and counts, explain the root cause, and provide remediation guidance. It will also guide users to raise exception requests or required access/ticket requests when remediation is not immediately possible.
 
-If the services are deployed in different subscriptions/accounts/projects, how would you enable secure connectivity
+Justification
 
-
-What is the purpose of a NAT Gateway in a private cloud network? 
-
-What is VNet/VPC peering, and when would you use it?   
-
-What is a private endpoint, and why would you use one?  
-
-What is the difference between a private endpoint and VNet/VPC peering? 
-
-What is the difference between security groups/NSGs and network ACLs?  
+The goal is to reduce manual investigation across multiple Wiz reports and dashboards and provide stakeholders with only the information required to remediate issues. This will improve remediation efficiency without requiring broader Wiz access, while keeping existing Wiz data and processes as the source of truth. The solution will be implemented as a controlled GenAI use case and will be subject to the required AI approval process.
