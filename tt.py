@@ -1,1 +1,2 @@
-The output will be used by security stakeholders and application/resource owners to understand their Wiz vulnerabilities, identify affected resources, understand the root cause, and follow recommended remediation steps. It will also guide users on exception or access-request processes where remediation is not immediately possible.
+https://learn.microsoft.com/en-us/azure/data-factory/continuous-integration-delivery-improvements
+https://github.com/manishknarang/az-data-eng/blob/main/ADFcicdGitHubActions/main.yml
